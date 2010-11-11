@@ -3127,6 +3127,7 @@ void tty_default_fops(struct file_operations *fops)
  * Just do some early initializations, and do the complex setup
  * later.
  */
+extern void prom_printf(char *fmt, ...);
 void __init console_init(void)
 {
 	initcall_t *call;

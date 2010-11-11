@@ -41,6 +41,8 @@ static inline void *drm_vmalloc_dma(unsigned long size)
 {
 #if defined(__powerpc__) && defined(CONFIG_NOT_COHERENT_CACHE)
 	return __vmalloc(size, GFP_KERNEL, PAGE_KERNEL | _PAGE_NO_CACHE);
+#elif defined(CONFIG_CPU_LOONGSON3)
+	return __vmalloc(size, GFP_KERNEL, PAGE_KERNEL);
 #else
 	return vmalloc_32(size);
 #endif

@@ -249,7 +249,11 @@ static int uncached_access(struct file *file, unsigned long addr)
 	 */
 	if (file->f_flags & O_DSYNC)
 		return 1;
+#if defined(CONFIG_CPU_LOONGSON3) && defined(CONFIG_64BIT)
+	return (addr >= __pa(high_memory)) || ((addr >=0x10000000) && (addr < 0x80000000));
+#else
 	return addr >= __pa(high_memory);
+#endif
 #endif
 }
 #endif

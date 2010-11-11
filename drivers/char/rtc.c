@@ -259,6 +259,9 @@ static irqreturn_t rtc_interrupt(int irq, void *dev_id)
 		rtc_irq_data |= (CMOS_READ(RTC_INTR_FLAGS) & 0xF0);
 	}
 
+#if defined(CONFIG_CPU_LOONGSON3)
+	(void)CMOS_READ(RTC_VALID);
+#endif
 	if (rtc_status & RTC_TIMER_ON)
 		mod_timer(&rtc_irq_timer, jiffies + HZ/rtc_freq + 2*HZ/100);
 

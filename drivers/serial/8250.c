@@ -2077,6 +2077,7 @@ static int serial8250_startup(struct uart_port *port)
 	 * hardware interrupt, we use a timer-based system.  The original
 	 * driver used to do this with IRQ0.
 	 */
+	up->port.irq = 58;//by_cww
 	if (!is_real_interrupt(up->port.irq)) {
 		up->timer.data = (unsigned long)up;
 		mod_timer(&up->timer, jiffies + poll_timeout(up->port.timeout));
@@ -2170,6 +2171,7 @@ dont_test_tx_en:
 		(void) inb_p(icp);
 	}
 
+	*(volatile unsigned int*)(0xffffffffbfe00200 + 0x04) = 0x10; //cww
 	return 0;
 }
 
