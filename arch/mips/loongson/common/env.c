@@ -67,6 +67,9 @@ void __init prom_init_env(void)
 		case PRID_REV_LOONGSON2F:
 			cpu_clock_freq = 797000000;
 			break;
+		case PRID_REV_LOONGSON3A:
+			cpu_clock_freq = 797000000;
+			break;
 		default:
 			cpu_clock_freq = 100000000;
 			break;

@@ -47,6 +47,17 @@ static struct plat_serial8250_port uart8250_data[][2] = {
 	[MACH_DEXXON_GDIUM2F10]         {PORT_M(3), {} },
 	[MACH_LEMOTE_NAS]               {PORT_M(3), {} },
 	[MACH_LEMOTE_LL2F]              {PORT(3), {} },
+	[MACH_LOONGSON3A]		{
+						{
+							.membase = (void*)(0xffffffffbfe001e0), 
+					 		.irq = 58,
+					 		.uartclk = (33000000),
+					 		.iotype = UPIO_MEM,
+					 		.flags = UPF_BOOT_AUTOCONF | UPF_SKIP_TEST ,
+					 		.regshift = 0,
+					 	},
+					 	{}
+					},
 	[MACH_LOONGSON_END]             {},
 };
 
@@ -55,6 +66,7 @@ static struct platform_device uart8250_device = {
 	.id = PLAT8250_DEV_PLATFORM,
 };
 
+extern void prom_printf(char *fmt, ...);
 static int __init serial_init(void)
 {
 	unsigned char iotype;

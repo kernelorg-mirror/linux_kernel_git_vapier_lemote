@@ -38,15 +38,17 @@ void __init prom_init_memory(void)
 	}
 #endif /* !CONFIG_CPU_SUPPORTS_ADDRWINCFG */
 
+#if 1
 #ifdef CONFIG_64BIT
 	if (highmemsize > 0)
 		add_memory_region(LOONGSON_HIGHMEM_START,
-				  highmemsize << 20, BOOT_MEM_RAM);
+				  (highmemsize - 8) << 20, BOOT_MEM_RAM);
 
 	add_memory_region(LOONGSON_PCI_MEM_END + 1, LOONGSON_HIGHMEM_START -
 			  LOONGSON_PCI_MEM_END - 1, BOOT_MEM_RESERVED);
 
 #endif /* !CONFIG_64BIT */
+#endif
 }
 
 /* override of arch/mips/mm/cache.c: __uncached_access */

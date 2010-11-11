@@ -59,6 +59,37 @@ config LEMOTE_MACH2F
 
 	  These family machines include fuloong2f mini PC, yeeloong2f notebook,
 	  LingLoong allinone PC and so forth.
+
+config LOONGSON3A_RS780E
+	bool "Loongson 3A with RS780E"
+	select ARCH_SPARSEMEM_ENABLE
+	select CEVT_R4K
+	select CSRC_R4K
+	select SYS_HAS_CPU_LOONGSON3A
+	#select DMA_NONCOHERENT
+	select CPU_UART
+	select BOOT_ELF32
+	select BOARD_SCACHE
+	#select HAVE_STD_PC_SERIAL_PORT
+	select HW_HAS_PCI
+	select I8259
+	select ISA
+	select IRQ_CPU
+	select SYS_SUPPORTS_32BIT_KERNEL
+	select SYS_SUPPORTS_64BIT_KERNEL
+	select SYS_SUPPORTS_LITTLE_ENDIAN
+	select SYS_SUPPORTS_HIGHMEM
+	select SYS_HAS_EARLY_PRINTK
+	select GENERIC_HARDIRQS_NO__DO_IRQ
+	select GENERIC_ISA_DMA_SUPPORT_BROKEN
+	select CPU_HAS_WB
+	#select SYS_SUPPORTS_SMP
+	#select SYS_SUPPORTS_NUMA
+	#select ZONE_DMA32 if 64BIT
+	#select RS780
+	help
+	  Loongson3a RS780E board based on the Chinese loongson3a CPU
+
 endchoice
 
 config CS5536
@@ -89,3 +120,7 @@ config LOONGSON_UART_BASE
 config LOONGSON_MC146818
 	bool
 	default n
+
+config CPU_UART
+	bool
+

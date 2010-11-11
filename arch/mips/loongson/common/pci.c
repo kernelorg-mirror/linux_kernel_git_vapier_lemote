@@ -79,7 +79,7 @@ static void __init setup_pcimap(void)
 
 static int __init pcibios_init(void)
 {
-	setup_pcimap();
+	//setup_pcimap(); //cww
 
 	loongson_pci_controller.io_map_base = mips_io_port_base;
 

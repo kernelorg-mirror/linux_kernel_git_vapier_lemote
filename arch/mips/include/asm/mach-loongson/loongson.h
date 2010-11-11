@@ -103,6 +103,19 @@ static inline void do_perfcnt_IRQ(void)
 #define LOONGSON_PCIIO_SIZE	0x00100000	/* 1M */
 #define LOONGSON_PCIIO_TOP	(LOONGSON_PCIIO_BASE+LOONGSON_PCIIO_SIZE-1)
 
+/* Loongson3A HT Address cww */
+
+#define LOONGSON_HTIO_BASE	0x90000efdfc000000
+#define LOONGSON_HTIO_SIZE	0x00100000	/* 1M */
+
+/* Loongson3A UART Base cww */
+
+#ifdef CONFIG_CPU_UART
+#define LOONGSON_UART_BASE	0x1fe001e0	/* CPU UART */
+#else 
+#define LOONGSON_UART_BASE	0xffffffffbff003f8	/* CPU LPC UART */
+#endif
+
 /* Loongson Register Bases */
 
 #define LOONGSON_PCICONFIGBASE	0x00

@@ -24,4 +24,10 @@
 
 #endif
 
+#ifdef CONFIG_LOONGSON3A_RS780E
+
+#define LOONGSON_MACHTYPE MACH_LOONGSON3A
+
+#endif
+
 #endif /* __ASM_MACH_LOONGSON_MACHINE_H */

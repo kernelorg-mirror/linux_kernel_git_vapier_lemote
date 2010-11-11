@@ -40,8 +40,8 @@ extern struct pci_ops loongson_pci_ops;
 #else	/* loongson2f/32bit & loongson2e */
 
 /* this pci memory space is mapped by pcimap in pci.c */
-#define LOONGSON_PCI_MEM_START	LOONGSON_PCILO1_BASE
-#define LOONGSON_PCI_MEM_END	(LOONGSON_PCILO1_BASE + 0x04000000 * 2)
+#define LOONGSON_PCI_MEM_START	LOONGSON_PCILO0_BASE //cww
+#define LOONGSON_PCI_MEM_END	(LOONGSON_PCILO0_BASE + 0x04000000 * 2)
 /* this is an offset from mips_io_port_base */
 #define LOONGSON_PCI_IO_START	0x00004000UL
 
