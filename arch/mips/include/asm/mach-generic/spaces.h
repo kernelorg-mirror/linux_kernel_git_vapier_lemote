@@ -44,7 +44,11 @@
 #ifdef CONFIG_DMA_NONCOHERENT
 #define CAC_BASE		_AC(0x9800000000000000, UL)
 #else
+#ifdef CONFIG_CPU_LOONGSON3A
+#define CAC_BASE		_AC(0x9800000000000000, UL)
+#else
 #define CAC_BASE		_AC(0xa800000000000000, UL)
+#endif
 #endif
 #endif
 

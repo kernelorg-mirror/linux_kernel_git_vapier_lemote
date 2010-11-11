@@ -18,9 +18,10 @@ static inline dma_addr_t plat_map_dma_mem(struct device *dev, void *addr,
 {
 #if defined(CONFIG_CPU_LOONGSON3)
 	if(virt_to_phys(addr)>0x100000000){
-		//prom_printf("\n++++++addr(0x%lx)\n", virt_to_phys(addr));
-		//dump_stack();
+		prom_printf("\n++++++addr(0x%lx)\n", virt_to_phys(addr));
+		dump_stack();
 	}
+
 	if(virt_to_phys(addr) < 0x10000000){
 		return virt_to_phys(addr) | 0x0000000080000000;
 	} else {
@@ -35,8 +36,11 @@ static inline dma_addr_t plat_map_dma_mem_page(struct device *dev,
 					       struct page *page)
 {
 #if defined(CONFIG_CPU_LOONGSON3)
-	if(page_to_phys(page)>0x100000000)
-		//prom_printf("\n++++++page_addr(0x%lx)\n", page_to_phys(page));
+	if(page_to_phys(page)>0x100000000) {
+		prom_printf("\n++++++page_addr(0x%lx)\n", page_to_phys(page));
+		dump_stack();
+	}
+
 	if(page_to_phys(page)  < 0x10000000){
 		return page_to_phys(page) | 0x0000000080000000;
 	} else {

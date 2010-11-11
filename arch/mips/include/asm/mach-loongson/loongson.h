@@ -113,7 +113,7 @@ static inline void do_perfcnt_IRQ(void)
 #ifdef CONFIG_CPU_UART
 #define LOONGSON_UART_BASE	0x1fe001e0	/* CPU UART */
 #else 
-#define LOONGSON_UART_BASE	0xffffffffbff003f8	/* CPU LPC UART */
+#define LOONGSON_UART_BASE	0x1ff003f8	/* CPU LPC UART */
 #endif
 
 /* Loongson Register Bases */

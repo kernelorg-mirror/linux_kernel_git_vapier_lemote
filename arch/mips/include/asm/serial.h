@@ -3,7 +3,7 @@
 
 #include <asm-generic/serial.h>
 
-#if defined(CONFIG_LOONGSON3A_RS780E)
+#if defined(CONFIG_CPU_LOONGSON3A)
 #ifdef CONFIG_CPU_UART
 	#define BASE_BAUD (33000000 / 16)
 #else
@@ -20,7 +20,7 @@
 #define STD_COM4_FLAGS ASYNC_BOOT_AUTOCONF
 #endif
 
-#if defined(CONFIG_LOONGSON3A_RS780E)
+#if defined(CONFIG_CPU_LOONGSON3A)
 #ifdef CONFIG_CPU_UART
 #undef STD_SERIAL_PORT_DEFNS
 #define STD_SERIAL_PORT_DEFNS \

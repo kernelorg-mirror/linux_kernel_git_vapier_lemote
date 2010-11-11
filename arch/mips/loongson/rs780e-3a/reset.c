@@ -25,22 +25,11 @@ extern void _rdmsr(u32 reg, u32 *hi, u32 *lo);
 //static void loongson3a_restart(char *command)
 void mach_prepare_reboot(void)
 {
-//#ifdef CONFIG_LEMOTE_FULONG2F
-#if defined(CONFIG_LEMOTE_FULONG2F) || defined(CONFIG_GODSON2G_FPGA) || defined(CONFIG_LOONGSON3A_EVA) || defined(CONFIG_LOONGSON3A_SERVER) || defined(CONFIG_LOONGSON3A_RS780E)
 	u32 hi, lo;
 	_rdmsr(0xe0000014, &hi, &lo);
 	lo |= 0x00000001;
 	_wrmsr(0xe0000014, hi, lo);
-#else
 
-#ifdef CONFIG_32BIT
-	*(unsigned long *)0xbfe00104 &= ~(1 << 2);
-	*(unsigned long *)0xbfe00104 |= (1 << 2);
-#else
-	*(unsigned long *)0xffffffffbfe00104 &= ~(1 << 2);
-	*(unsigned long *)0xffffffffbfe00104 |= (1 << 2);
-#endif
-#endif
 	printk("Hard reset not take effect!!\n");
 	__asm__ __volatile__ (
 					".long 0x3c02bfc0\n"
@@ -59,8 +48,6 @@ static void delay(void)
 //static void loongson3a_halt(void)
 void mach_prepare_shutdown(void)
 {
-//#ifdef CONFIG_LEMOTE_FULONG2F
-#if defined(CONFIG_LEMOTE_FULONG2F) || defined(CONFIG_GODSON2G_FPGA) || defined(CONFIG_LOONGSON3A_EVA) || defined(CONFIG_LOONGSON3A_SERVER) || defined(CONFIG_LOONGSON3A_RS780E)
 #ifdef CONFIG_32BIT
 	u32 base;
 #else
@@ -83,20 +70,4 @@ void mach_prepare_shutdown(void)
 	delay();
 	*(__volatile__ u32 *)(base + 0x00) = val;
 	delay();
-#else
-#ifdef CONFIG_32BIT
-	*(unsigned short*)0xbfd0b000 = 0x8100;
-	delay();
-	*(unsigned short *)0xbfd0b004 = 0x2800;
-	delay();
-	*(unsigned int *)0xbfe00148 = 0x120002;
-#else
-	*(unsigned short *)0xffffffffbfd0b000 = 0x8100;
-	delay();
-	*(unsigned short *)0xffffffffbfd0b004 = 0x2800;
-	delay();
-	*(unsigned int *)0xffffffffbfe00148 = 0x120002;
-#endif
-#endif
-
 }
