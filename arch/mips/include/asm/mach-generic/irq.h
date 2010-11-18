@@ -22,8 +22,11 @@
 
 #ifndef MIPS_CPU_IRQ_BASE
 #ifdef CONFIG_I8259
-//#define MIPS_CPU_IRQ_BASE 16
+#ifdef CONFIG_CPU_LOONGSON3A
 #define MIPS_CPU_IRQ_BASE 56  //cww??
+#else
+#define MIPS_CPU_IRQ_BASE 16
+#endif
 #else
 #define MIPS_CPU_IRQ_BASE 0
 #endif /* CONFIG_I8259 */

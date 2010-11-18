@@ -2171,7 +2171,9 @@ dont_test_tx_en:
 		(void) inb_p(icp);
 	}
 
+#ifndef CONFIG_CPU_UART
 	*(volatile unsigned int*)(0xffffffffbfe00200 + 0x04) = 0x10; //cww
+#endif
 	return 0;
 }
 
@@ -2179,6 +2181,10 @@ static void serial8250_shutdown(struct uart_port *port)
 {
 	struct uart_8250_port *up = (struct uart_8250_port *)port;
 	unsigned long flags;
+
+#ifndef CONFIG_CPU_UART
+	*(volatile unsigned int*)(0xffffffffbfe00200 + 0x04) = 0x0;
+#endif
 
 	/*
 	 * Disable interrupts from this port

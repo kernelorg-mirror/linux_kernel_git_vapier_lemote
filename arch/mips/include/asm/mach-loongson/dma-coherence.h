@@ -16,17 +16,14 @@ struct device;
 static inline dma_addr_t plat_map_dma_mem(struct device *dev, void *addr,
 					  size_t size)
 {
-#if defined(CONFIG_CPU_LOONGSON3)
-	if(virt_to_phys(addr)>0x100000000){
+#ifdef CONFIG_CPU_LOONGSON3
+	if(virt_to_phys(addr) >= 0x100000000){
 		prom_printf("\n++++++addr(0x%lx)\n", virt_to_phys(addr));
 		dump_stack();
 	}
 
-	if(virt_to_phys(addr) < 0x10000000){
-		return virt_to_phys(addr) | 0x0000000080000000;
-	} else {
-		return virt_to_phys(addr); 
-	}
+	return (virt_to_phys(addr) < 0x10000000) ?
+			(virt_to_phys(addr) | 0x0000000080000000) : virt_to_phys(addr); 
 #else
 	return virt_to_phys(addr) | 0x80000000;
 #endif
@@ -35,17 +32,14 @@ static inline dma_addr_t plat_map_dma_mem(struct device *dev, void *addr,
 static inline dma_addr_t plat_map_dma_mem_page(struct device *dev,
 					       struct page *page)
 {
-#if defined(CONFIG_CPU_LOONGSON3)
-	if(page_to_phys(page)>0x100000000) {
+#ifdef CONFIG_CPU_LOONGSON3
+	if(page_to_phys(page) >= 0x100000000) {
 		prom_printf("\n++++++page_addr(0x%lx)\n", page_to_phys(page));
 		dump_stack();
 	}
 
-	if(page_to_phys(page)  < 0x10000000){
-		return page_to_phys(page) | 0x0000000080000000;
-	} else {
-		return page_to_phys(page) ;
-	}
+	return (page_to_phys(page) < 0x10000000) ?
+			(page_to_phys(page) | 0x0000000080000000) : page_to_phys(page);
 #else
 	return page_to_phys(page) | 0x80000000;
 #endif
@@ -54,18 +48,16 @@ static inline dma_addr_t plat_map_dma_mem_page(struct device *dev,
 static inline unsigned long plat_dma_addr_to_phys(struct device *dev,
 	dma_addr_t dma_addr)
 {
-#if defined(CONFIG_CPU_LOONGSON3)
-	if(dma_addr < 0x90000000 && dma_addr >= 0x80000000){
-		//prom_printf("dma_addr=%p, phy=%p\n", dma_addr, dma_addr & 0x0fffffff);
-		return dma_addr & 0x0fffffff;
-	} else {
-		//prom_printf("dma_addr=%p, phy=%p\n", dma_addr, dma_addr);
-		return dma_addr;
-	}
+#ifdef CONFIG_64BIT
+#ifdef CONFIG_CPU_LOONGSON3
+	return (dma_addr < 0x90000000 && dma_addr >= 0x80000000) ?
+			(dma_addr & 0x0fffffff) : dma_addr;
 #endif
 
-#if defined(CONFIG_CPU_LOONGSON2F) && defined(CONFIG_64BIT)
+#ifdef CONFIG_CPU_LOONGSON2F
 	return (dma_addr > 0x8fffffff) ? dma_addr : (dma_addr & 0x0fffffff);
+#endif
+
 #else
 	return dma_addr & 0x7fffffff;
 #endif

@@ -177,8 +177,7 @@ void __init mach_init_irq(void)
 	t = IO_control_regs_Intenset;
 	prom_printf("the new IO intset is %x\n", t);
 
-#ifdef CONFIG_CPU_UART
-#else
+#ifndef CONFIG_CPU_UART
 	/* Enable the LPC interrupt */
 	/* the all interrupt enable bit */
 	*(volatile unsigned int*)(0xffffffffbfe00200 + 0x00) = 0x80000000;
@@ -205,8 +204,7 @@ void __init mach_init_irq(void)
 	/* 8259 irq at IP3 */
 	setup_irq(56 + 3, &cascade_irqaction);
 	/* open the serial port irq */
-#ifdef CONFIG_CPU_UART
-#else
+#ifndef CONFIG_CPU_UART
 	set_c0_status(STATUSF_IP2);
 #endif
 	set_c0_status(STATUSF_IP6);

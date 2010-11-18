@@ -38,17 +38,19 @@ void __init prom_init_memory(void)
 	}
 #endif /* !CONFIG_CPU_SUPPORTS_ADDRWINCFG */
 
-#if 1
 #ifdef CONFIG_64BIT
-	if (highmemsize > 0)
+	if (highmemsize > 256) {
+		add_memory_region(memsize << 20, (highmemsize + 256) << 20, BOOT_MEM_RESERVED);
+		add_memory_region((highmemsize + 512) << 20, (highmemsize - 128) << 20, BOOT_MEM_RAM);
+	} else if (highmemsize > 0) {
 		add_memory_region(LOONGSON_HIGHMEM_START,
-				  (highmemsize - 8) << 20, BOOT_MEM_RAM);
+				  highmemsize << 20, BOOT_MEM_RAM);
 
-	add_memory_region(LOONGSON_PCI_MEM_END + 1, LOONGSON_HIGHMEM_START -
-			  LOONGSON_PCI_MEM_END - 1, BOOT_MEM_RESERVED);
+		add_memory_region(LOONGSON_PCI_MEM_END + 1, LOONGSON_HIGHMEM_START -
+			  	LOONGSON_PCI_MEM_END - 1, BOOT_MEM_RESERVED);
+	}
 
 #endif /* !CONFIG_64BIT */
-#endif
 }
 
 /* override of arch/mips/mm/cache.c: __uncached_access */
@@ -59,7 +61,7 @@ int __uncached_access(struct file *file, unsigned long addr)
 
 	return addr >= __pa(high_memory) ||
 		((addr >= LOONGSON_MMIO_MEM_START) &&
-		 (addr < LOONGSON_MMIO_MEM_END));
+		 (addr < LOONGSON_MMIO_MEM_END)); //cww??
 }
 
 #ifdef CONFIG_CPU_SUPPORTS_UNCACHED_ACCELERATED

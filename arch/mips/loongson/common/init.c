@@ -25,15 +25,8 @@ unsigned long __maybe_unused _loongson_addrwincfg_base;
 void __init prom_init(void)
 {
 	/* init base address of io space */
-#ifdef CONFIG_HT_PCI
-	//cww??
-	//set_io_port_base((unsigned long)
-	//	ioremap(LOONGSON_HTIO_BASE, LOONGSON_HTIO_SIZE));
-	set_io_port_base(LOONGSON_HTIO_BASE);
-#else
 	set_io_port_base((unsigned long)
 		ioremap(LOONGSON_PCIIO_BASE, LOONGSON_PCIIO_SIZE));
-#endif
 
 #ifdef CONFIG_CPU_SUPPORTS_ADDRWINCFG
 	_loongson_addrwincfg_base = (unsigned long)

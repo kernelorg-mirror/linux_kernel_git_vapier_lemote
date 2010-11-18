@@ -49,9 +49,14 @@ static struct plat_serial8250_port uart8250_data[][2] = {
 	[MACH_LEMOTE_LL2F]              {PORT(3), {} },
 	[MACH_LOONGSON3A]		{
 						{
+#ifdef CONFIG_CPU_UART
 							.membase = (void*)(0xffffffffbfe001e0), 
+					 		.uartclk = (25000000),
+#else
+							.membase = (void*)(0xffffffffbff003f8), 
+					 		.uartclk = (368640),
+#endif
 					 		.irq = 58,
-					 		.uartclk = (33000000),
 					 		.iotype = UPIO_MEM,
 					 		.flags = UPF_BOOT_AUTOCONF | UPF_SKIP_TEST ,
 					 		.regshift = 0,
