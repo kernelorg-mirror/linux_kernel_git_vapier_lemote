@@ -11,6 +11,7 @@
 #include <linux/bootmem.h>
 
 #include <loongson.h>
+#include <asm/smp-ops.h>
 
 #define HT_control_regs_base	0x90000EFDFB000000
 #define HT_uncache_enable_reg0	*(volatile unsigned int *)(HT_control_regs_base + 0xF0)
@@ -18,6 +19,7 @@
 #define HT_uncache_enable_reg1	*(volatile unsigned int *)(HT_control_regs_base + 0xF8)
 #define HT_uncache_base_reg1	*(volatile unsigned int *)(HT_control_regs_base + 0xFC)
 extern void prom_printf(char *fmt, ...);
+extern struct plat_smp_ops loongson3_smp_ops;
 
 /* Loongson CPU address windows config space base address */
 unsigned long __maybe_unused _loongson_addrwincfg_base;
@@ -39,6 +41,10 @@ void __init prom_init(void)
 
 	/*init the uart base address */
 	prom_init_uart_base();
+
+#ifdef CONFIG_SMP
+	register_smp_ops(&loongson3_smp_ops);
+#endif
 
 #ifdef CONFIG_DMA_NONCOHERENT
 //set HT-access uncache
