@@ -90,6 +90,36 @@ config LOONGSON3A_RS780E
 	help
 	  Loongson3a RS780E board based on the Chinese loongson3a CPU
 
+config LOONGSON3A_DAWNING
+	bool "Loongson 3A in Dawning"
+	select ARCH_SPARSEMEM_ENABLE
+	select CEVT_R4K
+	select CSRC_R4K
+	select SYS_HAS_CPU_LOONGSON3A
+	#select DMA_NONCOHERENT
+	select CPU_UART
+	select BOOT_ELF32
+	select BOARD_SCACHE
+	#select HAVE_STD_PC_SERIAL_PORT
+	select HW_HAS_PCI
+	select I8259
+	select ISA
+	select IRQ_CPU
+	select SYS_SUPPORTS_32BIT_KERNEL
+	select SYS_SUPPORTS_64BIT_KERNEL
+	select SYS_SUPPORTS_LITTLE_ENDIAN
+	select SYS_SUPPORTS_HIGHMEM
+	select SYS_HAS_EARLY_PRINTK
+	select GENERIC_HARDIRQS_NO__DO_IRQ
+	select GENERIC_ISA_DMA_SUPPORT_BROKEN
+	select CPU_HAS_WB
+	select SYS_SUPPORTS_SMP
+	#select SYS_SUPPORTS_NUMA
+	#select ZONE_DMA32 if 64BIT
+	#select RS780
+	help
+	  Loongson3a Dawning board based on the Chinese loongson3a CPU
+
 endchoice
 
 config CS5536
