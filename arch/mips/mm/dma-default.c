@@ -105,7 +105,7 @@ void *dma_alloc_noncoherent(struct device *dev, size_t size,
 
 EXPORT_SYMBOL(dma_alloc_noncoherent);
 
-void *dma_alloc_coherent(struct device *dev, size_t size,
+static void *mips_dma_alloc_coherent(struct device *dev, size_t size,
 	dma_addr_t * dma_handle, gfp_t gfp)
 {
 	void *ret;
@@ -130,8 +130,6 @@ void *dma_alloc_coherent(struct device *dev, size_t size,
 	return ret;
 }
 
-EXPORT_SYMBOL(dma_alloc_coherent);
-
 void dma_free_noncoherent(struct device *dev, size_t size, void *vaddr,
 	dma_addr_t dma_handle)
 {
@@ -141,7 +139,7 @@ void dma_free_noncoherent(struct device *dev, size_t size, void *vaddr,
 
 EXPORT_SYMBOL(dma_free_noncoherent);
 
-void dma_free_coherent(struct device *dev, size_t size, void *vaddr,
+static void mips_dma_free_coherent(struct device *dev, size_t size, void *vaddr,
 	dma_addr_t dma_handle)
 {
 	unsigned long addr = (unsigned long) vaddr;
@@ -157,8 +155,6 @@ void dma_free_coherent(struct device *dev, size_t size, void *vaddr,
 
 	free_pages(addr, get_order(size));
 }
-
-EXPORT_SYMBOL(dma_free_coherent);
 
 static inline void __dma_sync(unsigned long addr, size_t size,
 	enum dma_data_direction direction)
@@ -181,7 +177,7 @@ static inline void __dma_sync(unsigned long addr, size_t size,
 	}
 }
 
-dma_addr_t dma_map_single(struct device *dev, void *ptr, size_t size,
+static dma_addr_t mips_dma_map_single(struct device *dev, void *ptr, size_t size,
 	enum dma_data_direction direction)
 {
 	unsigned long addr = (unsigned long) ptr;
@@ -192,9 +188,7 @@ dma_addr_t dma_map_single(struct device *dev, void *ptr, size_t size,
 	return plat_map_dma_mem(dev, ptr, size);
 }
 
-EXPORT_SYMBOL(dma_map_single);
-
-void dma_unmap_single(struct device *dev, dma_addr_t dma_addr, size_t size,
+static void mips_dma_unmap_single(struct device *dev, dma_addr_t dma_addr, size_t size,
 	enum dma_data_direction direction)
 {
 	if (cpu_is_noncoherent_r10000(dev) || cpu_is_noncoherent_loongson(dev))
@@ -204,9 +198,7 @@ void dma_unmap_single(struct device *dev, dma_addr_t dma_addr, size_t size,
 	plat_unmap_dma_mem(dev, dma_addr, size, direction);
 }
 
-EXPORT_SYMBOL(dma_unmap_single);
-
-int dma_map_sg(struct device *dev, struct scatterlist *sg, int nents,
+static int mips_dma_map_sg(struct device *dev, struct scatterlist *sg, int nents,
 	enum dma_data_direction direction)
 {
 	int i;
@@ -226,12 +218,14 @@ int dma_map_sg(struct device *dev, struct scatterlist *sg, int nents,
 	return nents;
 }
 
-EXPORT_SYMBOL(dma_map_sg);
-
-dma_addr_t dma_map_page(struct device *dev, struct page *page,
+static dma_addr_t mips_dma_map_page(struct device *dev, struct page *page,
 	unsigned long offset, size_t size, enum dma_data_direction direction)
 {
+	unsigned long addr;
+
 	BUG_ON(direction == DMA_NONE);
+
+	addr = (unsigned long) page_address(page) + offset;
 
 	if (!plat_device_is_coherent(dev)) {
 		unsigned long addr;
@@ -240,12 +234,10 @@ dma_addr_t dma_map_page(struct device *dev, struct page *page,
 		__dma_sync(addr, size, direction);
 	}
 
-	return plat_map_dma_mem_page(dev, page) + offset;
+	return plat_map_dma_mem(dev, (void *)addr, size);
 }
 
-EXPORT_SYMBOL(dma_map_page);
-
-void dma_unmap_sg(struct device *dev, struct scatterlist *sg, int nhwentries,
+static void mips_dma_unmap_sg(struct device *dev, struct scatterlist *sg, int nhwentries,
 	enum dma_data_direction direction)
 {
 	unsigned long addr;
@@ -264,9 +256,17 @@ void dma_unmap_sg(struct device *dev, struct scatterlist *sg, int nhwentries,
 	}
 }
 
-EXPORT_SYMBOL(dma_unmap_sg);
+static void mips_dma_unmap_page(struct device *dev, dma_addr_t dma_addr,
+	size_t size, enum dma_data_direction direction, struct dma_attrs *attrs)
+{
+	if (cpu_is_noncoherent_r10000(dev) || cpu_is_noncoherent_loongson(dev))
+		__dma_sync(dma_addr_to_virt(dev, dma_addr), size,
+			direction);
 
-void dma_sync_single_for_cpu(struct device *dev, dma_addr_t dma_handle,
+	plat_unmap_dma_mem(dev, dma_addr, size, direction);
+}
+
+static void mips_dma_sync_single_for_cpu(struct device *dev, dma_addr_t dma_handle,
 	size_t size, enum dma_data_direction direction)
 {
 	BUG_ON(direction == DMA_NONE);
@@ -279,9 +279,7 @@ void dma_sync_single_for_cpu(struct device *dev, dma_addr_t dma_handle,
 	}
 }
 
-EXPORT_SYMBOL(dma_sync_single_for_cpu);
-
-void dma_sync_single_for_device(struct device *dev, dma_addr_t dma_handle,
+static void mips_dma_sync_single_for_device(struct device *dev, dma_addr_t dma_handle,
 	size_t size, enum dma_data_direction direction)
 {
 	BUG_ON(direction == DMA_NONE);
@@ -295,8 +293,7 @@ void dma_sync_single_for_device(struct device *dev, dma_addr_t dma_handle,
 	}
 }
 
-EXPORT_SYMBOL(dma_sync_single_for_device);
-
+#if 0
 void dma_sync_single_range_for_cpu(struct device *dev, dma_addr_t dma_handle,
 	unsigned long offset, size_t size, enum dma_data_direction direction)
 {
@@ -327,8 +324,9 @@ void dma_sync_single_range_for_device(struct device *dev, dma_addr_t dma_handle,
 }
 
 EXPORT_SYMBOL(dma_sync_single_range_for_device);
+#endif
 
-void dma_sync_sg_for_cpu(struct device *dev, struct scatterlist *sg, int nelems,
+static void mips_dma_sync_sg_for_cpu(struct device *dev, struct scatterlist *sg, int nelems,
 	enum dma_data_direction direction)
 {
 	int i;
@@ -337,15 +335,13 @@ void dma_sync_sg_for_cpu(struct device *dev, struct scatterlist *sg, int nelems,
 
 	/* Make sure that gcc doesn't leave the empty loop body.  */
 	for (i = 0; i < nelems; i++, sg++) {
-		if (cpu_is_noncoherent_r10000(dev))
+		if (cpu_is_noncoherent_r10000(dev) || cpu_is_noncoherent_loongson(dev))
 			__dma_sync((unsigned long)page_address(sg_page(sg)),
 			           sg->length, direction);
 	}
 }
 
-EXPORT_SYMBOL(dma_sync_sg_for_cpu);
-
-void dma_sync_sg_for_device(struct device *dev, struct scatterlist *sg, int nelems,
+static void mips_dma_sync_sg_for_device(struct device *dev, struct scatterlist *sg, int nelems,
 	enum dma_data_direction direction)
 {
 	int i;
@@ -360,21 +356,15 @@ void dma_sync_sg_for_device(struct device *dev, struct scatterlist *sg, int nele
 	}
 }
 
-EXPORT_SYMBOL(dma_sync_sg_for_device);
-
-int dma_mapping_error(struct device *dev, dma_addr_t dma_addr)
+static int mips_dma_mapping_error(struct device *dev, dma_addr_t dma_addr)
 {
 	return plat_dma_mapping_error(dev, dma_addr);
 }
 
-EXPORT_SYMBOL(dma_mapping_error);
-
-int dma_supported(struct device *dev, u64 mask)
+static int mips_dma_supported(struct device *dev, u64 mask)
 {
 	return plat_dma_supported(dev, mask);
 }
-
-EXPORT_SYMBOL(dma_supported);
 
 void dma_cache_sync(struct device *dev, void *vaddr, size_t size,
 	       enum dma_data_direction direction)
@@ -387,3 +377,48 @@ void dma_cache_sync(struct device *dev, void *vaddr, size_t size,
 }
 
 EXPORT_SYMBOL(dma_cache_sync);
+
+dma_addr_t mips_unity_phys_to_dma(struct device *dev, phys_addr_t paddr)
+{
+#if 0
+	printk("\n+++%s %s\n", __FILE__, __func__);
+	dump_stack();
+#endif
+	return (paddr < 0x10000000) ?
+			(paddr | 0x0000000080000000) : paddr; 
+}
+
+phys_addr_t mips_unity_dma_to_phys(struct device *dev, dma_addr_t daddr)
+{
+#if 0
+	printk("\n+++%s %s\n", __FILE__, __func__);
+	dump_stack();
+#endif
+	return (daddr < 0x90000000 && daddr >= 0x80000000) ?
+			(daddr & 0x0fffffff) : daddr;
+	return daddr;
+}
+
+static struct mips_dma_map_ops mips_default_dma_map_ops = {
+	.dma_map_ops = {
+		.alloc_coherent = mips_dma_alloc_coherent,
+		.free_coherent = mips_dma_free_coherent,
+		//.map_single = mips_dma_map_single,
+		//.unmap_single = mips_dma_unmap_single, 
+		.map_page = mips_dma_map_page,
+		.unmap_page = mips_dma_unmap_page,
+		.map_sg = mips_dma_map_sg,
+		.unmap_sg = mips_dma_unmap_sg,
+		.sync_single_for_cpu = mips_dma_sync_single_for_cpu,
+		.sync_single_for_device = mips_dma_sync_single_for_device,
+		.sync_sg_for_cpu = mips_dma_sync_sg_for_cpu,
+		.sync_sg_for_device = mips_dma_sync_sg_for_device,
+		.mapping_error = mips_dma_mapping_error,
+		.dma_supported = mips_dma_supported
+	},
+	.phys_to_dma = mips_unity_phys_to_dma,
+	.dma_to_phys = mips_unity_dma_to_phys
+};
+
+struct mips_dma_map_ops *mips_dma_map_ops = &mips_default_dma_map_ops;
+EXPORT_SYMBOL(mips_dma_map_ops);

@@ -154,3 +154,20 @@ config LOONGSON_MC146818
 config CPU_UART
 	bool
 
+config LOONGSON_BIGMEM
+	bool "Soft IOMMU Support for Big Memory (>2G)"
+	depends on CPU_LOONGSON3A
+	select SWIOTLB
+	select ZONE_DMA32
+
+config IOMMU_HELPER
+	bool
+
+config NEED_SG_DMA_LENGTH
+	bool
+
+config SWIOTLB
+	bool
+	select IOMMU_HELPER
+	select NEED_SG_DMA_LENGTH
+	select DMA_NEED_PCI_MAP_STATE

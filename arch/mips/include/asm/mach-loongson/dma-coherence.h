@@ -29,22 +29,6 @@ static inline dma_addr_t plat_map_dma_mem(struct device *dev, void *addr,
 #endif
 }
 
-static inline dma_addr_t plat_map_dma_mem_page(struct device *dev,
-					       struct page *page)
-{
-#ifdef CONFIG_CPU_LOONGSON3
-	if(page_to_phys(page) >= 0x100000000) {
-		prom_printf("\n++++++page_addr(0x%lx)\n", page_to_phys(page));
-		dump_stack();
-	}
-
-	return (page_to_phys(page) < 0x10000000) ?
-			(page_to_phys(page) | 0x0000000080000000) : page_to_phys(page);
-#else
-	return page_to_phys(page) | 0x80000000;
-#endif
-}
-
 static inline unsigned long plat_dma_addr_to_phys(struct device *dev,
 	dma_addr_t dma_addr)
 {

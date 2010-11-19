@@ -37,18 +37,6 @@ static inline dma_addr_t plat_map_dma_mem(struct device *dev, void *addr,
 	return pa;
 }
 
-static dma_addr_t plat_map_dma_mem_page(struct device *dev, struct page *page)
-{
-	dma_addr_t pa;
-
-	pa = page_to_phys(page) & RAM_OFFSET_MASK;
-
-	if (dev == NULL)
-		pa += CRIME_HI_MEM_BASE;
-
-	return pa;
-}
-
 /* This is almost certainly wrong but it's what dma-ip32.c used to use  */
 static unsigned long plat_dma_addr_to_phys(struct device *dev,
 	dma_addr_t dma_addr)

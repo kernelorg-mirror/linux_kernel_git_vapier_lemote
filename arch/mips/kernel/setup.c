@@ -488,6 +488,11 @@ static void __init arch_mem_init(char **cmdline_p)
 
 	bootmem_init();
 	sparse_init();
+
+#ifdef CONFIG_SWIOTLB
+	plat_swiotlb_setup();
+#endif
+
 	paging_init();
 }
 

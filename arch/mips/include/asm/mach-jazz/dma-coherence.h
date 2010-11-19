@@ -17,11 +17,6 @@ static dma_addr_t plat_map_dma_mem(struct device *dev, void *addr, size_t size)
 	return vdma_alloc(virt_to_phys(addr), size);
 }
 
-static dma_addr_t plat_map_dma_mem_page(struct device *dev, struct page *page)
-{
-	return vdma_alloc(page_to_phys(page), PAGE_SIZE);
-}
-
 static unsigned long plat_dma_addr_to_phys(struct device *dev,
 	dma_addr_t dma_addr)
 {

@@ -22,7 +22,14 @@ extern int swiotlb_force;
  */
 #define IO_TLB_SHIFT 11
 
+/*
+ * The memory range used by the swiotlb
+ */
+extern char *swiotlb_start;
+extern char *swiotlb_end;
+
 extern void swiotlb_init(int verbose);
+extern void swiotlb_init_with_default_size(size_t, int);
 extern void swiotlb_init_with_tbl(char *tlb, unsigned long nslabs, int verbose);
 
 /*
