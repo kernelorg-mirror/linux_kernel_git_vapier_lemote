@@ -37,7 +37,11 @@ void __init prom_init(void)
 
 	prom_init_cmdline();
 	prom_init_env();
+#ifdef CONFIG_NUMA
+	prom_init_numa_memory();
+#else
 	prom_init_memory();
+#endif
 
 	/*init the uart base address */
 	prom_init_uart_base();
@@ -57,26 +61,18 @@ void __init prom_init(void)
 	prom_printf("SET HT_DMA CACHED\n");
 #endif
 
-#if 1
+#if 0
 {
 	char * p = 0x900000003ff02000;
 	char * end = 0x900000003ff020b8;
 	for(;p<end; p+=8){
 		prom_printf("======== [%p]=%p ========\n", p, *(unsigned long long volatile *)p);
 	}
-}
-#endif
-#if 1
-{
 	char * p = 0x900000003ff00000;
 	char * end = 0x900000003ff000b8;
 	for(;p<end; p+=8){
 		prom_printf("======== [%p]=%p ========\n", p, *(unsigned long long volatile *)p);
 	}
-}
-#endif
-#if 1
-{
 	char * p = 0x900000003ff00100;
 	char * end = 0x900000003ff001b8;
 	for(;p<end; p+=8){

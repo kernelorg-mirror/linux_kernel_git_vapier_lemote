@@ -14,7 +14,11 @@
 #include <loongson.h>
 
 /* ioremapped */
-unsigned long _loongson_uart_base;
+#ifdef CONFIG_CPU_UART
+unsigned long _loongson_uart_base = 0x900000001fe001e0;
+#else
+unsigned long _loongson_uart_base = 0x900000001ff003f8;
+#endif
 EXPORT_SYMBOL(_loongson_uart_base);
 /* raw */
 unsigned long loongson_uart_base;

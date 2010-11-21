@@ -1937,6 +1937,7 @@ config ARCH_SPARSEMEM_ENABLE
 config NUMA
 	bool "NUMA Support"
 	depends on SYS_SUPPORTS_NUMA
+	select LOONGSON_BIGMEM if CPU_LOONGSON3A
 	help
 	  Say Y to compile the kernel to support NUMA (Non-Uniform Memory
 	  Access).  This option improves performance on systems with more
@@ -1948,8 +1949,9 @@ config SYS_SUPPORTS_NUMA
 	bool
 
 config NODES_SHIFT
-	int
-	default "6"
+	int "NODES_SHIFT (0-1)"
+	range 0 1
+	default "0"
 	depends on NEED_MULTIPLE_NODES
 
 source "mm/Kconfig"
