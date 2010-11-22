@@ -21,6 +21,9 @@
 #include <asm/time.h>
 #include <asm/wbflush.h>
 
+#define DIABLE_NODE1
+#undef DIABLE_NODE1
+
 extern void prom_printf(char *fmt, ...);
 
 static struct node_data prealloc__node_data[MAX_NUMNODES] ;
@@ -37,7 +40,7 @@ static unsigned int cpu_num = 1;
 
 static unsigned long per_node_addrspace_size;
 
-extern unsigned long highmemsize;
+extern unsigned long memsize, highmemsize;
 
 static void enable_lpa(void)
 {
@@ -91,7 +94,9 @@ static void __init szmem(void)
 		node_psize = (per_node_addrspace_size << 20) >> PAGE_SHIFT;
 		if(node == 0) 
 			node_psize -= ((8 << 20) >> PAGE_SHIFT); //cww
-		//if(node == 1) node_psize = 0; //cww
+#ifdef DIABLE_NODE1
+		if(node == 1) node_psize = 0; //cww
+#endif
 		num_physpages += node_psize;
 		switch(node)
 		{
@@ -111,7 +116,9 @@ static void __init szmem(void)
 				break;
 		}
 		end_pfn  = start_pfn + node_psize;
-		//if(node==1) end_pfn = start_pfn; //cww
+#ifdef DIABLE_NODE1
+		if(node==1) end_pfn = start_pfn; //cww
+#endif
 		prom_printf("NUMA: Node%d range(0x%lx-0x%lx) size(0x%lx) total(0x%lx)\n", 
 			node, start_pfn << PAGE_SHIFT, end_pfn << PAGE_SHIFT, 
 			node_psize << PAGE_SHIFT, num_physpages << PAGE_SHIFT);
@@ -164,10 +171,14 @@ static void __init node_mem_init(unsigned int node)
 	reserve_bootmem_node(NODE_DATA(node), start_pfn << PAGE_SHIFT,
 		((freepfn - start_pfn) << PAGE_SHIFT) + bootmap_size,
 		BOOTMEM_DEFAULT);
-	//if(node == 0) //cww
+#ifdef DIABLE_NODE1
+	if(node == 0) //cww
+#endif
 	reserve_bootmem_node(NODE_DATA(node), \
 		((unsigned long)node << 44) | 0x10000000, \
 		per_node_addrspace_size << (20 - 1) , BOOTMEM_DEFAULT); //add by cww
+	if((node == 0) && (memsize == 128)) /* Reserve for UMA */
+		reserve_bootmem_node(NODE_DATA(node), 0x08000000, 0x08000000, BOOTMEM_DEFAULT); 
 	sparse_memory_present_with_active_regions(node);
 }
 
