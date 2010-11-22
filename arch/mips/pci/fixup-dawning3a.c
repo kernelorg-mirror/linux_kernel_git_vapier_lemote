@@ -258,5 +258,14 @@ static void __init godson3a_sata_fixup(struct pci_dev *pdev)
 DECLARE_PCI_FIXUP_FINAL(0x1002, 0x4390, godson3a_sata_fixup);
 
 
+static void __init godson3a_graphic_fixup(struct pci_dev *pdev)
+{
+    pdev->irq = 6;
+    pci_write_config_byte(pdev,PCI_INTERRUPT_LINE,pdev->irq);
 
+	printk("Fixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n", pdev->bus->number, PCI_SLOT(pdev->devfn),      pdev->vendor, pdev->device, pdev->irq);
+}
+
+
+DECLARE_PCI_FIXUP_FINAL(0x1002, 0x9615, godson3a_graphic_fixup);
 

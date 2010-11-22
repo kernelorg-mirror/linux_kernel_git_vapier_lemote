@@ -2028,7 +2028,9 @@ void radeon_atombios_get_power_modes(struct radeon_device *rdev)
 							  power_info->info_4.ucClockInfoSize));
 						sclk = le16_to_cpu(clock_info->usLowEngineClockLow);
 						sclk |= clock_info->ucLowEngineClockHigh << 16;
+#if 0
 						rdev->pm.power_state[state_index].clock_info[mode_index].sclk = sclk;
+#endif
 						/* skip invalid modes */
 						if (rdev->pm.power_state[state_index].clock_info[mode_index].sclk == 0)
 							continue;

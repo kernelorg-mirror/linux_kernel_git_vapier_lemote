@@ -222,6 +222,14 @@ static void __init godson3a_hda_fixup(struct pci_dev *pdev){
 	printk("Fixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n", pdev->bus->number, PCI_SLOT(pdev->devfn),      pdev->vendor, pdev->device, pdev->irq);
 }
 
+static void __init godson3a_graphic_fixup(struct pci_dev *pdev)
+{
+    pdev->irq = 6;
+    pci_write_config_byte(pdev,PCI_INTERRUPT_LINE,pdev->irq);
+
+	printk("Fixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n", pdev->bus->number, PCI_SLOT(pdev->devfn),      pdev->vendor, pdev->device, pdev->irq);
+}
+
 DECLARE_PCI_FIXUP_EARLY(0x1002, 0x4385, godson3a_smbus_fixup);
 DECLARE_PCI_FIXUP_FINAL(0x1002, 0x4390, godson3a_sata_fixup);
 DECLARE_PCI_FIXUP_FINAL(0x1002, 0x439c, godson3a_ide_fixup);
@@ -231,3 +239,6 @@ DECLARE_PCI_FIXUP_FINAL(0x1002, 0x4399, godson3a_ohci2_fixup);
 DECLARE_PCI_FIXUP_FINAL(0x1002, 0x4396, godson3a_ehci_fixup);
 DECLARE_PCI_FIXUP_FINAL(0x1002, 0x439d, godson3a_lpc_fixup);
 DECLARE_PCI_FIXUP_FINAL(0x1002, 0x4383, godson3a_hda_fixup);
+//DECLARE_PCI_FIXUP_FINAL(0x1022, 0x9602, godson3a_graphic_fixup);
+DECLARE_PCI_FIXUP_FINAL(0x1002, 0x9615, godson3a_graphic_fixup);
+

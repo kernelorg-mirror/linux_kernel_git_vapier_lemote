@@ -46,7 +46,8 @@ static bool igp_read_bios_from_vram(struct radeon_device *rdev)
 {
 	uint8_t __iomem *bios;
 	resource_size_t vram_base;
-	resource_size_t size = 256 * 1024; /* ??? */
+	//resource_size_t size = 256 * 1024; /* ??? */
+	resource_size_t size = 512 * 1024; /* ??? */
 
 	if (!(rdev->flags & RADEON_IS_IGP))
 		if (!radeon_card_posted(rdev))
@@ -54,6 +55,11 @@ static bool igp_read_bios_from_vram(struct radeon_device *rdev)
 
 	rdev->bios = NULL;
 	vram_base = pci_resource_start(rdev->pdev, 0);
+
+    //for test  == by oldtai
+    printk("changed  vram_base  ===========================by oldtai\n");
+    vram_base = 0x13f00000;
+    //vram_base = 0xffffffffb3f00000;
 	bios = ioremap(vram_base, size);
 	if (!bios) {
 		return false;
