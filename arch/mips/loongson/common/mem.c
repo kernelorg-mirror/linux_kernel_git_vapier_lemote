@@ -41,7 +41,7 @@ void __init prom_init_memory(void)
 #ifdef CONFIG_64BIT
 	if (highmemsize > 256) {
 		add_memory_region(memsize << 20, (highmemsize + 256) << 20, BOOT_MEM_RESERVED);
-		add_memory_region((highmemsize + 512) << 20, (highmemsize - 128) << 20, BOOT_MEM_RAM);
+		add_memory_region((highmemsize + 512) << 20, (highmemsize - 8) << 20, BOOT_MEM_RAM);
 	} else if (highmemsize > 0) {
 		add_memory_region(LOONGSON_HIGHMEM_START,
 				  highmemsize << 20, BOOT_MEM_RAM);
