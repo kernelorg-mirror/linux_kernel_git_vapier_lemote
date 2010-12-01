@@ -145,17 +145,17 @@ int __init pcibios_map_irq( struct pci_dev *dev, u8 slot, u8 pin)
                         return dev->irq;
 
                 }
-#if 0
+#if 1
                 else if ((dev->vendor == 0x14e4)
                          && (dev->device == 0x163a)) { //NB :NIC irq fixup
-                        dev->irq = 7;
+                        dev->irq = 6;
                         /* set interrupt vector */
                         (void) pci_write_config_byte(dev, PCI_INTERRUPT_LINE, dev->irq);
 
                         /* nic PciA# connect to  Pci_intB# */
 			outb(0x01, 0xc00);
-                	outb(0x07, 0xc01);
-			outw(inw(0x4d0) | (1 << 7), 0x4d0);
+                	outb(0x06, 0xc01);
+			outw(inw(0x4d0) | (1 << 6), 0x4d0);
 
                         printk("fixup NB NIC interrupt routing 0x4d0=%x\n",inw(0x4d0));
                         return dev->irq;
