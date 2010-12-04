@@ -6132,7 +6132,8 @@ int ata_host_register(struct ata_host *host, struct scsi_host_template *sht)
 	/* perform each probe asynchronously */
 	for (i = 0; i < host->n_ports; i++) {
 		struct ata_port *ap = host->ports[i];
-		async_schedule(async_port_probe, ap);
+		async_port_probe((void *)ap, 0);
+		//async_schedule(async_port_probe, ap);
 	}
 
 	return 0;
