@@ -170,4 +170,4 @@ config SWIOTLB
 	bool
 	select IOMMU_HELPER
 	select NEED_SG_DMA_LENGTH
-	select DMA_NEED_PCI_MAP_STATE
+	select NEED_DMA_MAP_STATE
