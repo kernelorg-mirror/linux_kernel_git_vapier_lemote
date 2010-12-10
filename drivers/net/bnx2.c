@@ -2538,11 +2538,16 @@ bnx2_init_5709_context(struct bnx2 *bp)
 		else
 			return -ENOMEM;
 
+#ifdef CONFIG_SWIOTLB
+		REG_WR(bp, BNX2_CTX_HOST_PAGE_TBL_DATA0, 0x20000001); //cww
+		REG_WR(bp, BNX2_CTX_HOST_PAGE_TBL_DATA1, 0); //cww
+#else
 		REG_WR(bp, BNX2_CTX_HOST_PAGE_TBL_DATA0,
 		       (bp->ctx_blk_mapping[i] & 0xffffffff) |
 		       BNX2_CTX_HOST_PAGE_TBL_DATA0_VALID);
 		REG_WR(bp, BNX2_CTX_HOST_PAGE_TBL_DATA1,
 		       (u64) bp->ctx_blk_mapping[i] >> 32);
+#endif
 		REG_WR(bp, BNX2_CTX_HOST_PAGE_TBL_CTRL, i |
 		       BNX2_CTX_HOST_PAGE_TBL_CTRL_WRITE_REQ);
 		for (j = 0; j < 10; j++) {
