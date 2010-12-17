@@ -53,7 +53,9 @@ irqreturn_t c0_compare_interrupt(int irq, void *dev_id)
 	const int r2 = cpu_has_mips_r2;
 	struct clock_event_device *cd;
 	int cpu = smp_processor_id();
-
+#ifdef CONFIG_CPU_LOONGSON3A
+	if(!(read_c0_cause() & (1<<30)))  return IRQ_NONE;
+#endif
 	/*
 	 * Suckage alert:
 	 * Before R2 of the architecture there was no way to see if a
@@ -83,7 +85,11 @@ out:
 
 struct irqaction c0_compare_irqaction = {
 	.handler = c0_compare_interrupt,
+#ifdef CONFIG_CPU_LOONGSON3A
+	.flags = IRQF_DISABLED | IRQF_PERCPU | IRQF_SHARED,
+#else
 	.flags = IRQF_DISABLED | IRQF_PERCPU | IRQF_TIMER,
+#endif
 	.name = "timer",
 };
 
