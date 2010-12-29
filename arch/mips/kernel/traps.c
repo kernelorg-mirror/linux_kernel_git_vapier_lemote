@@ -975,6 +975,7 @@ asmlinkage void do_cpu(struct pt_regs *regs)
 		return;
 
 	case 1:
+	case 2:
 		if (used_math())	/* Using the FPU again.  */
 			own_fpu(1);
 		else {			/* First time FPU user.  */
@@ -993,10 +994,11 @@ asmlinkage void do_cpu(struct pt_regs *regs)
 		}
 
 		return;
-
+#if 0
 	case 2:
 		raw_notifier_call_chain(&cu2_chain, CU2_EXCEPTION, regs);
 		return;
+#endif
 
 	case 3:
 		break;
