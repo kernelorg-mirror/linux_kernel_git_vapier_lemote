@@ -81,13 +81,7 @@ static void __init szmem(void)
 
 	num_physpages = 0;
 
-	if(highmemsize == 768)
-		per_node_addrspace_size = 2048UL;
-	else if(highmemsize == 1792)
-		per_node_addrspace_size = 4096UL;
-	else if(highmemsize == 3840)
-		per_node_addrspace_size = 8192UL;
-
+	per_node_addrspace_size = (highmemsize + 256UL) * 2;
 	prom_printf("NUMA: per_node_addrspace_size = %d MB\n", per_node_addrspace_size);
 	for_each_online_node(node) {
 		//node_psize = (PER_NODE_ADDRSPACE_SIZE << 20) >> PAGE_SHIFT;
