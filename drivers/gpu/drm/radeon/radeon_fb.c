@@ -355,7 +355,9 @@ static struct drm_fb_helper_funcs radeon_fb_helper_funcs = {
 int radeon_fbdev_init(struct radeon_device *rdev)
 {
 	struct radeon_fbdev *rfbdev;
-	int bpp_sel = 32;
+	/* change bpp from 32 to 16 to accel display on console*/
+	//int bpp_sel = 32;
+	int bpp_sel = 16;
 	int ret;
 
 	/* select 8 bpp console on RN50 or 16MB cards */
