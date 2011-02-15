@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.36
-# Wed Jan  5 09:23:06 2011
+# Tue Feb 15 18:59:40 2011
 #
 CONFIG_MIPS=y
 
@@ -243,7 +243,7 @@ CONFIG_HAVE_DMA_API_DEBUG=y
 # GCOV-based kernel profiling
 #
 # CONFIG_GCOV_KERNEL is not set
-CONFIG_HAVE_GENERIC_DMA_COHERENT=y
+# CONFIG_HAVE_GENERIC_DMA_COHERENT is not set
 CONFIG_SLABINFO=y
 CONFIG_RT_MUTEXES=y
 CONFIG_BASE_SMALL=0
@@ -331,6 +331,7 @@ CONFIG_PM=y
 CONFIG_PM_RUNTIME=y
 CONFIG_PM_OPS=y
 CONFIG_NET=y
+CONFIG_COMPAT_NETLINK_MESSAGES=y
 
 #
 # Networking options
@@ -474,16 +475,32 @@ CONFIG_RPS=y
 # CONFIG_AF_RXRPC is not set
 CONFIG_FIB_RULES=y
 CONFIG_WIRELESS=y
-# CONFIG_CFG80211 is not set
-# CONFIG_LIB80211 is not set
-
-#
-# CFG80211 needs to be enabled for MAC80211
-#
+CONFIG_WEXT_CORE=y
+CONFIG_WEXT_PROC=y
+CONFIG_CFG80211=y
+# CONFIG_NL80211_TESTMODE is not set
+# CONFIG_CFG80211_DEVELOPER_WARNINGS is not set
+# CONFIG_CFG80211_REG_DEBUG is not set
+CONFIG_CFG80211_DEFAULT_PS=y
+# CONFIG_CFG80211_DEBUGFS is not set
+# CONFIG_CFG80211_INTERNAL_REGDB is not set
+CONFIG_CFG80211_WEXT=y
+CONFIG_WIRELESS_EXT_SYSFS=y
+CONFIG_LIB80211=y
+# CONFIG_LIB80211_DEBUG is not set
+CONFIG_MAC80211=y
+# CONFIG_MAC80211_HAS_RC is not set
+# CONFIG_MAC80211_RC_PID is not set
+# CONFIG_MAC80211_RC_MINSTREL is not set
+CONFIG_MAC80211_RC_DEFAULT=""
 
 #
 # Some wireless drivers require a rate control algorithm
 #
+# CONFIG_MAC80211_MESH is not set
+CONFIG_MAC80211_LEDS=y
+# CONFIG_MAC80211_DEBUGFS is not set
+# CONFIG_MAC80211_DEBUG_MENU is not set
 # CONFIG_WIMAX is not set
 # CONFIG_RFKILL is not set
 # CONFIG_NET_9P is not set
@@ -827,7 +844,8 @@ CONFIG_E1000E=y
 # CONFIG_NS83820 is not set
 # CONFIG_HAMACHI is not set
 # CONFIG_YELLOWFIN is not set
-CONFIG_R8169=y
+# CONFIG_R8169 is not set
+CONFIG_R8168=y
 # CONFIG_SIS190 is not set
 # CONFIG_SKGE is not set
 # CONFIG_SKY2 is not set
@@ -842,7 +860,41 @@ CONFIG_TIGON3=y
 # CONFIG_JME is not set
 # CONFIG_NETDEV_10000 is not set
 # CONFIG_TR is not set
-# CONFIG_WLAN is not set
+CONFIG_WLAN=y
+# CONFIG_LIBERTAS_THINFIRM is not set
+# CONFIG_AIRO is not set
+# CONFIG_ATMEL is not set
+# CONFIG_AT76C50X_USB is not set
+# CONFIG_PRISM54 is not set
+# CONFIG_USB_ZD1201 is not set
+# CONFIG_USB_NET_RNDIS_WLAN is not set
+# CONFIG_RTL8180 is not set
+# CONFIG_RTL8187 is not set
+# CONFIG_ADM8211 is not set
+# CONFIG_MAC80211_HWSIM is not set
+# CONFIG_MWL8K is not set
+CONFIG_ATH_COMMON=y
+# CONFIG_ATH_DEBUG is not set
+# CONFIG_ATH5K is not set
+CONFIG_ATH9K_HW=y
+CONFIG_ATH9K_COMMON=y
+CONFIG_ATH9K=y
+# CONFIG_ATH9K_DEBUGFS is not set
+# CONFIG_ATH9K_HTC is not set
+# CONFIG_AR9170_USB is not set
+# CONFIG_B43 is not set
+# CONFIG_B43LEGACY is not set
+# CONFIG_HOSTAP is not set
+# CONFIG_IPW2100 is not set
+# CONFIG_IPW2200 is not set
+# CONFIG_IWLWIFI is not set
+# CONFIG_IWM is not set
+# CONFIG_LIBERTAS is not set
+# CONFIG_HERMES is not set
+# CONFIG_P54_COMMON is not set
+# CONFIG_RT2X00 is not set
+# CONFIG_WL12XX is not set
+# CONFIG_ZD1211RW is not set
 
 #
 # Enable WiMAX (Networking options) to see the WiMAX drivers
@@ -902,6 +954,7 @@ CONFIG_KEYBOARD_ATKBD=y
 CONFIG_KEYBOARD_QT2160=y
 CONFIG_KEYBOARD_LKKBD=y
 CONFIG_KEYBOARD_TCA6416=y
+# CONFIG_KEYBOARD_LM8323 is not set
 CONFIG_KEYBOARD_MAX7359=y
 CONFIG_KEYBOARD_MCS=y
 CONFIG_KEYBOARD_NEWTON=y
@@ -1622,9 +1675,51 @@ CONFIG_USB_STORAGE=y
 #
 # CONFIG_NOP_USB_XCEIV is not set
 # CONFIG_UWB is not set
-# CONFIG_MMC is not set
+CONFIG_MMC=y
+# CONFIG_MMC_DEBUG is not set
+# CONFIG_MMC_UNSAFE_RESUME is not set
+
+#
+# MMC/SD/SDIO Card Drivers
+#
+CONFIG_MMC_BLOCK=y
+CONFIG_MMC_BLOCK_BOUNCE=y
+# CONFIG_SDIO_UART is not set
+# CONFIG_MMC_TEST is not set
+
+#
+# MMC/SD/SDIO Host Controller Drivers
+#
+# CONFIG_MMC_SDHCI is not set
+# CONFIG_MMC_WBSD is not set
+# CONFIG_MMC_TIFM_SD is not set
+# CONFIG_MMC_CB710 is not set
+# CONFIG_MMC_VIA_SDMMC is not set
 # CONFIG_MEMSTICK is not set
-# CONFIG_NEW_LEDS is not set
+CONFIG_NEW_LEDS=y
+CONFIG_LEDS_CLASS=y
+
+#
+# LED drivers
+#
+# CONFIG_LEDS_PCA9532 is not set
+# CONFIG_LEDS_LP3944 is not set
+# CONFIG_LEDS_PCA955X is not set
+# CONFIG_LEDS_BD2802 is not set
+CONFIG_LEDS_TRIGGERS=y
+
+#
+# LED Triggers
+#
+# CONFIG_LEDS_TRIGGER_TIMER is not set
+# CONFIG_LEDS_TRIGGER_IDE_DISK is not set
+# CONFIG_LEDS_TRIGGER_HEARTBEAT is not set
+# CONFIG_LEDS_TRIGGER_BACKLIGHT is not set
+# CONFIG_LEDS_TRIGGER_DEFAULT_ON is not set
+
+#
+# iptables trigger is under Netfilter config (LED target)
+#
 # CONFIG_ACCESSIBILITY is not set
 # CONFIG_INFINIBAND is not set
 # CONFIG_RTC_CLASS is not set
