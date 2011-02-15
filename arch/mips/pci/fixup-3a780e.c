@@ -46,9 +46,12 @@
 
 extern void prom_printf(char *fmt, ...);
 
+static int nic_count = 0;
+static struct pci_dev *first_nic;
 
 int __init pcibios_map_irq(struct pci_dev *dev, u8 slot, u8 pin)
 {
+#if 0
 	if ((dev->bus->number == 7) && (PCI_SLOT(dev->devfn) == 0)) {
 		if (dev->vendor == 0x10ec && dev->device == 0x8168) {
 			dev->irq = 5;
@@ -101,6 +104,76 @@ int __init pcibios_map_irq(struct pci_dev *dev, u8 slot, u8 pin)
 		return dev->irq;
 	} else
 		return 0;
+#else
+  	unsigned int val;
+
+        if (dev->vendor == 0x168c && dev->device == 0x002b) { /* wifi device */
+                ((struct pci_dev*)dev)->irq = 6;
+                (void) pci_write_config_byte(dev, PCI_INTERRUPT_LINE, dev->irq);
+ 
+                return dev->irq;
+        }
+	if (dev->vendor == 0x10ec && dev->device == 0x8168) { /* Realtek 8168 */
+		((struct pci_dev*)dev)->irq = 3;
+		(void) pci_write_config_byte(dev, PCI_INTERRUPT_LINE, dev->irq);
+
+		printk("Fixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n", 
+			dev->bus->number, PCI_SLOT(dev->devfn), 
+			dev->vendor, dev->device, dev->irq);
+
+	        return dev->irq;
+	}
+	/* IRQ fixup for on-board peripherals */
+	if ((dev->bus->number >= 3) && (PCI_SLOT(dev->devfn)) >= 3) {//PCI slot
+		val = 5;
+		(void) pci_write_config_byte(dev, PCI_INTERRUPT_LINE, dev->irq);
+		printk("Fixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n", 
+			dev->bus->number, PCI_SLOT(dev->devfn), 
+			dev->vendor, dev->device, dev->irq);
+
+		return val;
+	}
+	else if((dev->vendor == 0x8086) && (dev->device == 0x10d3)) {
+		nic_count++;
+		if(nic_count == 1){
+			val = 3;
+			first_nic = dev;
+			(void) pci_write_config_byte(dev, PCI_INTERRUPT_LINE, dev->irq);
+			printk("Fixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n", 
+				dev->bus->number, PCI_SLOT(dev->devfn), 
+				dev->vendor, dev->device, dev->irq);
+		}
+		else if(nic_count == 2){
+			val = 3;
+			first_nic->irq = 6;
+			(void) pci_write_config_byte(first_nic, PCI_INTERRUPT_LINE, dev->irq);
+			printk("Fixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n", 
+				dev->bus->number, PCI_SLOT(dev->devfn), 
+				dev->vendor, dev->device, dev->irq);
+			printk("Refixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n", 
+				first_nic->bus->number, PCI_SLOT(first_nic->devfn), 
+				first_nic->vendor, first_nic->device, first_nic->irq);
+		}
+		else{
+			printk("Sorry! There are too many Intel82574 net card!\n");
+			printk("Please make contact with Mr. XiaoCai!\n");
+		}
+
+		return val;
+	}
+	else if (dev->bus->number == 2) {
+		val = 6;
+		(void) pci_write_config_byte(dev, PCI_INTERRUPT_LINE, dev->irq);
+		printk("Fixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n", 
+			dev->bus->number, PCI_SLOT(dev->devfn), 
+			dev->vendor, dev->device, dev->irq);
+
+		return val;
+	}
+
+		return 0;
+
+#endif
 }
 
 /* Do platform specific device initialization at pci_enable_device() time */
