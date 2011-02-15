@@ -55,7 +55,7 @@ static struct plat_serial8250_port uart8250_data[][2] = {
 					 		.uartclk = (33000000),
 #endif
 #ifdef CONFIG_LOONGSON3A_RS780E
-					 		.uartclk = (25000000),
+					 		.uartclk = (33177600),
 #endif
 #else
 							.membase = (void*)(0xffffffffbff003f8), 
