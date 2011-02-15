@@ -32,6 +32,7 @@
 
 #define VIDEOMEMSIZE	(1*1024*1024)	/* 1 MB */
 
+extern unsigned int highmemsize;
 static void *videomemory;
 static u_long videomemorysize = VIDEOMEMSIZE;
 module_param(videomemorysize, ulong, 0);
@@ -495,6 +496,16 @@ static int __devinit vfb_probe(struct platform_device *dev)
 	 * VGA-based drivers MUST NOT clear memory if
 	 * they want to be able to take over vgacon
 	 */
+#if defined(CONFIG_RS690_UMA) || defined(CONFIG_RS780_UMA)
+	if (highmemsize > 1024)
+		videomemory = 0x98000000f8000000;
+	else
+		videomemory = 0x9800000078000000;
+#endif
+
+#if 1//defined(CONFIG_RS690_SP) || defined(CONFIG_RS780_SP)
+	videomemory = 0xffffffffb0000000;
+#endif
 	memset(videomemory, 0, videomemorysize);
 
 	info = framebuffer_alloc(sizeof(u32) * 256, &dev->dev);

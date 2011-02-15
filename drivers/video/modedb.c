@@ -509,6 +509,10 @@ int fb_find_mode(struct fb_var_screeninfo *var,
     if (!default_bpp)
 	default_bpp = 8;
 
+#if 1
+	default_mode = &db[2];
+	default_bpp = 16;
+#endif
     /* Did the user specify a video mode? */
     if (!mode_option)
 	mode_option = fb_mode_option;

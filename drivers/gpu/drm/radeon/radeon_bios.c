@@ -29,6 +29,7 @@
 #include "radeon_reg.h"
 #include "radeon.h"
 #include "atom.h"
+#include "vgarom_rs780.h"
 
 #include <linux/vga_switcheroo.h>
 #include <linux/slab.h>
@@ -57,8 +58,8 @@ static bool igp_read_bios_from_vram(struct radeon_device *rdev)
 	vram_base = pci_resource_start(rdev->pdev, 0);
 
     //for test  == by oldtai
-    printk("changed  vram_base  ===========================by oldtai\n");
-    vram_base = 0x13f00000;
+    //printk("changed  vram_base  ===========================by oldtai\n");
+    //vram_base = 0x13f00000;
     //vram_base = 0xffffffffb3f00000;
 	bios = ioremap(vram_base, size);
 	if (!bios) {
@@ -445,6 +446,12 @@ bool radeon_get_bios(struct radeon_device *rdev)
 	if (r == false) {
 		r = radeon_read_disabled_bios(rdev);
 	}
+	if (r == false) {
+		rdev->bios = kmalloc(sizeof(vgarom), GFP_KERNEL);
+		memcpy(rdev->bios, vgarom, sizeof(vgarom));
+		r = true;
+	}
+
 	if (r == false || rdev->bios == NULL) {
 		DRM_ERROR("Unable to locate a BIOS ROM\n");
 		rdev->bios = NULL;
