@@ -2227,6 +2227,17 @@ config R8169_VLAN
 
 	  If in doubt, say Y.
 
+config R8168
+	tristate "Realtek 8168 gigabit ethernet support"
+	depends on PCI
+	select CRC32
+	select MII
+	---help---
+	  Say Y here if you have a Realtek 8168 PCI Gigabit Ethernet adapter.
+
+	  To compile this driver as a module, choose M here: the module
+	  will be called r8168.  This is recommended.
+
 config SB1250_MAC
 	tristate "SB1250 Gigabit Ethernet support"
 	depends on SIBYTE_SB1xxx_SOC
