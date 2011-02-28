@@ -21,6 +21,8 @@
 
 extern void _wrmsr(u32 reg, u32 hi, u32 lo);
 extern void _rdmsr(u32 reg, u32 *hi, u32 *lo);
+extern int wpce775_reboot();
+extern int wpce775_poweroff();
 
 static void delay(void)
 {
@@ -87,6 +89,7 @@ static void watchdog_config(u32 cfg)
 
 }
 
+#if 0
 void mach_prepare_reboot(void)
 {
 	u32 halt = 0;
@@ -109,3 +112,20 @@ void mach_prepare_shutdown(void)
 
 	watchdog_config(halt);
 }
+#else
+
+void mach_prepare_reboot(void)
+{
+	printk(KERN_ERR "mach_prepare_reboot start\n");
+	wpce775_reboot();
+	printk(KERN_ERR "mach_prepare_reboot end\n");
+	delay();
+}
+
+void mach_prepare_shutdown(void)
+{
+	wpce775_poweroff();
+	delay();
+}
+
+#endif
