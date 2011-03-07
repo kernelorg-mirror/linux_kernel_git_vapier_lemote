@@ -1110,6 +1110,8 @@ no_irq:
 		guess = "Standard PC (1900)";
 #endif
 	}
+	epoch = 1900;
+	guess = "force epoch (1900)";
 	if (guess)
 		printk(KERN_INFO "rtc: %s epoch (%lu) detected\n",
 			guess, epoch);
