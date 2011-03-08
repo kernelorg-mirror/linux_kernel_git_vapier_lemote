@@ -63,17 +63,22 @@
 #define	FSP_PKT_TYPE_NORMAL_OPC	(0x03)
 #define	FSP_PKT_TYPE_SHIFT	(6)
 
+enum
+{
+	FSPDRV_FLAG_NULL =				(0),
+	FSPDRV_FLAG_ENABLE =			(1<<0),
+	FSPDRV_FLAG_CLICK_ENABLE = 		(1<<1),
+	FSPDRV_FLAG_VSCROLL_ENABLE =	(1<<2),
+	FSPDRV_FLAG_HSCROLL_ENABLE =	(1<<3)
+};
+
 #ifdef __KERNEL__
 
 struct fsp_data {
 	unsigned char	ver;		/* hardware version */
 	unsigned char	rev;		/* hardware revison */
 	unsigned char	buttons;	/* Number of buttons */
-	unsigned int	flags;
-#define	FSPDRV_FLAG_EN_OPC	(0x001)	/* enable on-pad clicking */
-
-	bool		vscroll;	/* Vertical scroll zone enabled */
-	bool		hscroll;	/* Horizontal scroll zone enabled */
+	unsigned int	flags;		/* control flags */
 
 	unsigned char	last_reg;	/* Last register we requested read from */
 	unsigned char	last_val;
