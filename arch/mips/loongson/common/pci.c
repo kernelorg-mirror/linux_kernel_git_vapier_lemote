@@ -77,6 +77,8 @@ static void __init setup_pcimap(void)
 #endif
 }
 
+extern int sb700_acpi_init(void);
+
 static int __init pcibios_init(void)
 {
 	//setup_pcimap(); //cww
@@ -85,6 +87,10 @@ static int __init pcibios_init(void)
 
 	register_pci_controller(&loongson_pci_controller);
 
+#ifdef CONFIG_CPU_LOONGSON3A
+	/* SCI setup, daway 2011-03-11 */
+	sb700_acpi_init();
+#endif
 	return 0;
 }
 

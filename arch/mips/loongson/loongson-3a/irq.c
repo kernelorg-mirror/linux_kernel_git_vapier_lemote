@@ -109,21 +109,19 @@ asmlinkage void mach_irq_dispatch(unsigned int pending)
 			do_IRQ(12);
 		if (irq & 0x100)
 			do_IRQ(8);
+		if (irq & 0x80)  //daway 2011-03-11, SCI->IRQ7
+			do_IRQ(7);
 		if (irq & 0x40)
 			do_IRQ(6);
 		if (irq & 0x20)
 			do_IRQ(5);
 		if (irq & 0x10)
 			do_IRQ(4);
-#if 0
-		if (irq & 0x80)
-			do_IRQ(7);
-#endif
 		if (irq & 0x8)
 			do_IRQ(3);
 		if (irq & 0x2)
 			do_IRQ(1);
-		if (irq & (~(0x8000 | 0x4000 | 0x1000 | 0x100 | 0x40 | 0x20 | 0x10 | 0x8 | 0x2)))
+		if (irq & (~(0x8000 | 0x4000 | 0x1000 | 0x100 | 0x80 | 0x40 | 0x20 | 0x10 | 0x8 | 0x2)))
 			prom_printf("more interrupt from HT is %x\n", irq);
     	} else { //(pending &(~(CAUSEF_IP7 |CAUSEF_IP6|CAUSEF_IP3|CAUSEF_IP2)))
 		prom_printf("spurious interrupt\n");

@@ -189,6 +189,7 @@ static void __init godson3a_smbus_fixup(struct pci_dev *pdev)
 {
 	unsigned short t16;
 	unsigned char t8;
+
 	prom_printf("\n-----------------godson3a_smbus_fixup---------------\n");
 
 	/*1. usb interrupt map smbus reg:0XBE  map usbint1map usbint3map(ohci use) to PCI_INTC#
@@ -248,7 +249,11 @@ static void __init godson3a_smbus_fixup(struct pci_dev *pdev)
 	outb(0x2, 0xC00);
 	outb(0x6, 0xC01);
 
-	outw(inw(0x4D0)|(1<<6)|(1<<5)|(1<<4)|(1<<3), 0x4D0);
+	/* SCI-->IRQ7*/
+	outb(0x4, 0xC00);
+	outb(0x7, 0xC01);
+	
+	outw(inw(0x4D0)|(1<<7)|(1<<6)|(1<<5)|(1<<4)|(1<<3), 0x4D0);
 }
 
 /* fixup sb700 sata controller configure.

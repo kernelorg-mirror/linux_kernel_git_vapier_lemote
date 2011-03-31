@@ -19,10 +19,7 @@
 #include <linux/pm.h>
 #include <linux/delay.h>
 
-extern void _wrmsr(u32 reg, u32 hi, u32 lo);
-extern void _rdmsr(u32 reg, u32 *hi, u32 *lo);
-extern int wpce775_reboot();
-extern int wpce775_poweroff();
+#include <ec_wpce775l.h>
 
 static void delay(void)
 {
@@ -89,43 +86,16 @@ static void watchdog_config(u32 cfg)
 
 }
 
-#if 0
-void mach_prepare_reboot(void)
-{
-	u32 halt = 0;
-
-	watchdog_config(halt);
-	delay();
-
-	printk("Hard reset not take effect!!\n");
-
-	__asm__ __volatile__ (
-					".long 0x3c02bfc0\n"
-					".long 0x00400008\n"
-					:::"v0"
-					);
-}
-
-void mach_prepare_shutdown(void)
-{
-	u32 halt = 1;
-
-	watchdog_config(halt);
-}
-#else
-
 void mach_prepare_reboot(void)
 {
 	printk(KERN_ERR "mach_prepare_reboot start\n");
-	wpce775_reboot();
+	ec_write_noindex(CMD_RESET, BIT_RESET_ON);
 	printk(KERN_ERR "mach_prepare_reboot end\n");
 	delay();
 }
 
 void mach_prepare_shutdown(void)
 {
-	wpce775_poweroff();
+	ec_write_noindex(CMD_RESET, BIT_PWROFF_ON);
 	delay();
 }
-
-#endif

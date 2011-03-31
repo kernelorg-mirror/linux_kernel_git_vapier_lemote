@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.36
-# Wed Mar 30 10:56:10 2011
+# Thu Mar 31 13:28:18 2011
 #
 CONFIG_MIPS=y
 
@@ -1011,7 +1011,7 @@ CONFIG_SLHC=m
 CONFIG_INPUT=y
 CONFIG_INPUT_FF_MEMLESS=m
 CONFIG_INPUT_POLLDEV=y
-# CONFIG_INPUT_SPARSEKMAP is not set
+CONFIG_INPUT_SPARSEKMAP=y
 
 #
 # Userland interfaces
