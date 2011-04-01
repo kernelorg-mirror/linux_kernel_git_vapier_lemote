@@ -1,0 +1,33 @@
+#
+# MIPS Platform Specific Drivers
+#
+
+menuconfig MIPS_PLATFORM_DEVICES
+	bool "MIPS Platform Specific Device Drivers"
+	default y
+	help
+	  Say Y here to get to see options for device drivers of various
+	  MIPS platforms, including vendor-specific netbook/laptop/pc extension
+	  drivers.  This option alone does not add any kernel code.
+
+	  If you say N, all options in this submenu will be skipped and disabled.
+
+if MIPS_PLATFORM_DEVICES
+
+config LS3A_LAPTOP
+	tristate "Loongson 3A Laptop Driver."
+	depends on LOONGSON3A_RS780E
+	select BACKLIGHT_LCD_SUPPORT
+	select LCD_CLASS_DEVICE
+	select BACKLIGHT_CLASS_DEVICE
+	select POWER_SUPPLY
+	select HWMON
+	select VIDEO_OUTPUT_CONTROL
+	select INPUT_SPARSEKMAP
+	select INPUT_EVDEV
+	depends on INPUT
+	default y
+	help
+	  Lemote Loongson 3A laptop driver.
+
+endif # MIPS_PLATFORM_DEVICES
