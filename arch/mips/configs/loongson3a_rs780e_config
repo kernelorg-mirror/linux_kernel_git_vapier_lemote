@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.36
-# Fri Apr  1 12:54:36 2011
+# Sat Apr  2 14:56:30 2011
 #
 CONFIG_MIPS=y
 
@@ -1169,7 +1169,7 @@ CONFIG_I2C_ALGOBIT=y
 # CONFIG_I2C_AMD8111 is not set
 # CONFIG_I2C_I801 is not set
 # CONFIG_I2C_ISCH is not set
-# CONFIG_I2C_PIIX4 is not set
+CONFIG_I2C_PIIX4=y
 # CONFIG_I2C_NFORCE2 is not set
 # CONFIG_I2C_SIS5595 is not set
 # CONFIG_I2C_SIS630 is not set

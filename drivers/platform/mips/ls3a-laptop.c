@@ -183,13 +183,7 @@ static int sci_pci_driver_init(void);
 /* SCI device pci driver exit handler */
 static void sci_pci_driver_exit(void);
 /* SCI device pci driver init */
-static int __devinit sci_pci_init(struct pci_dev * pdev, const struct pci_device_id * ent);
-/* SCI device pci driver remove handler */
-static void __devexit sci_pci_remove(struct pci_dev * pdev);
-/* SCI device pci suspend handler */
-static int sci_pci_suspend(struct pci_dev * pdev, pm_message_t msg);
-/* SCI device pci resume handler */
-static int sci_pci_resume(struct pci_dev * pdev);
+static int sci_pci_init(void);
 /* SCI event routine handler */
 static irqreturn_t ls3a_sci_int_routine(int irq, void * dev_id);
 /* SCI event handler */
@@ -212,7 +206,7 @@ static int ls3a_lid_handler(int status);
 static int ls3a_hotkey_init(void);
 /* Hotkey device exit handler */
 static void ls3a_hotkey_exit(void);
-
+extern int ec_query_get_event_num(void);
 
 /* Platform device object */
 static struct platform_device * ls3a_pdev = NULL;
@@ -320,26 +314,7 @@ static struct power_supply ls3a_ac =
 
 /* SCI device object */
 static struct sci_device * ls3a_sci_device = NULL;
-/* SCI device pci table */
-static struct pci_device_id sci_pci_tbl[] =
-{
-	/* 0x4385 = SMBus/ACPI PCI configuration space (PCI_reg) */
-	{ PCI_DEVICE(PCI_VENDOR_ID_ATI, 0x4385) },
-	{}
-};
-MODULE_DEVICE_TABLE(pci, sci_pci_tbl);
-/* SCI device pci driver object */
-static struct pci_driver sci_driver =
-{
-	.name		= EC_SCI_DEV,
-	.id_table	= sci_pci_tbl,
-	.probe		= sci_pci_init,
-	.remove		= __devexit_p(sci_pci_remove),
-#ifdef CONFIG_PM
-	.suspend	= sci_pci_suspend,
-	.resume		= sci_pci_resume
-#endif
-};
+
 /* SCI device event handler table */
 static const struct sci_event se[] =
 {
@@ -501,6 +476,8 @@ fail_backlight_device_register:
 /* Platform driver exit handler */
 static void __exit ls3a_exit(void)
 {
+	free_irq(ls3a_sci_device->irq, ls3a_sci_device);
+
 	/* Hotkey & SCI device */
 	ls3a_hotkey_exit();
 	sci_pci_driver_exit();
@@ -909,7 +886,7 @@ static int sci_pci_driver_init(void)
 {
 	int ret;
 
-	ret = pci_register_driver(&sci_driver);
+	ret = sci_pci_init();
 	if(ret)
 	{
 		printk(KERN_ERR "LS3A Drvier : Register pci driver error.\n");
@@ -925,15 +902,16 @@ static int sci_pci_driver_init(void)
 /* SCI device pci driver exit handler */
 static void sci_pci_driver_exit(void)
 {
-	pci_unregister_driver(&sci_driver);
-
 	printk(KERN_INFO "LS3A Driver : SCI event handler on WPCE775L Embedded Controll exit.\n");
 }
 
 /* SCI device pci driver init */
-static int __devinit sci_pci_init(struct pci_dev * pdev, const struct pci_device_id * ent)
+static int sci_pci_init(void)
 {
 	int ret = -EIO;
+	struct pci_dev *pdev;
+
+	pdev = pci_get_device(PCI_VENDOR_ID_ATI, PCI_DEVICE_ID_ATI_SBX00_SMBUS, NULL);
 
 	/* Create the sci device */
 	ls3a_sci_device = kmalloc(sizeof(struct sci_device), GFP_KERNEL);
@@ -987,62 +965,10 @@ out:
 	return ret;
 }
 
-/* SCI device pci driver remove handler */
-static void __devexit sci_pci_remove(struct pci_dev * pdev)
-{
-	free_irq(ls3a_sci_device->irq, ls3a_sci_device);
-	pci_disable_device(pdev);
-	kfree(ls3a_sci_device);
-}
-
-#ifdef CONFIG_PM
-/* SCI device pci suspend handler */
-static int sci_pci_suspend(struct pci_dev * pdev, pm_message_t msg)
-{
-	int ret;
-
-	/* Do suspend */
-	if(PM_EVENT_SUSPEND == msg.event)
-	{
-		ret = pci_save_state(pdev);
-		pci_disable_device(pdev);
-	}
-
-	pdev->dev.power.power_state = msg;
-
-	return 0;
-}
-
-/* SCI device pci resume handler */
-static int sci_pci_resume(struct pci_dev * pdev)
-{
-	int ret = -EIO;
-
-	/* Enable device */
-	if(pci_enable_device(pdev))
-	{
-		printk(KERN_ERR "LS3A Driver : Enable pci device failed!\n");
-		return -1;
-	}
-
-	return ret;
-}
-#else
-static int sci_pci_suspend(struct pci_dev * pdev, pm_message_t msg)
-{
-	return 0;
-}
-
-static int sci_pci_resume(struct pci_dev * pdev)
-{
-	return 0;
-}
-#endif /* CONFIG_PM */
- 
 /* SCI event routine handler */
 static irqreturn_t ls3a_sci_int_routine(int irq, void * dev_id)
 {
-	int ret, event;
+	int event;
 
 	//printk(KERN_CRIT "LS3A Driver : Entry sci_int_routine...\n");
 	if(ls3a_sci_device->irq != irq)
@@ -1050,7 +976,7 @@ static irqreturn_t ls3a_sci_int_routine(int irq, void * dev_id)
 		return IRQ_NONE;
 	}
 
-	event =  ec_query_get_event_num();
+	event = ec_query_get_event_num();
 	printk(KERN_DEBUG "LS3A Driver : Entry sci_int_routine(): event = 0x%x\n", event);
 	if((SCI_EVENT_NUM_START > event) || (SCI_EVENT_NUM_END < event))
 	{
