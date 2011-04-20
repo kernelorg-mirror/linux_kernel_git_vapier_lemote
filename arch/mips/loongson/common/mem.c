@@ -14,6 +14,9 @@
 #include <mem.h>
 #include <pci.h>
 
+/* this address is fix by pmon */
+#define LOONGSON3A_512MB_START 0x20000000
+
 void __init prom_init_memory(void)
 {
 	add_memory_region(0x0, (memsize << 20), BOOT_MEM_RAM);
@@ -43,7 +46,7 @@ void __init prom_init_memory(void)
 		add_memory_region(memsize << 20, (highmemsize + 256) << 20, BOOT_MEM_RESERVED);
 		add_memory_region((highmemsize + 512) << 20, (highmemsize - 8) << 20, BOOT_MEM_RAM);
 	} else if (highmemsize > 0) {
-		add_memory_region(LOONGSON_HIGHMEM_START,
+		add_memory_region(LOONGSON3A_512MB_START,
 				  highmemsize << 20, BOOT_MEM_RAM);
 
 		add_memory_region(LOONGSON_PCI_MEM_END + 1, LOONGSON_HIGHMEM_START -
