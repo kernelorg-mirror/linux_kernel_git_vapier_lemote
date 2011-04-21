@@ -177,29 +177,8 @@ static inline void __dma_sync(unsigned long addr, size_t size,
 	}
 }
 
-static dma_addr_t mips_dma_map_single(struct device *dev, void *ptr, size_t size,
-	enum dma_data_direction direction)
-{
-	unsigned long addr = (unsigned long) ptr;
-
-	if (!plat_device_is_coherent(dev))
-		__dma_sync(addr, size, direction);
-
-	return plat_map_dma_mem(dev, ptr, size);
-}
-
-static void mips_dma_unmap_single(struct device *dev, dma_addr_t dma_addr, size_t size,
-	enum dma_data_direction direction)
-{
-	if (cpu_is_noncoherent_r10000(dev) || cpu_is_noncoherent_loongson(dev))
-		__dma_sync(dma_addr_to_virt(dev, dma_addr), size,
-		           direction);
-
-	plat_unmap_dma_mem(dev, dma_addr, size, direction);
-}
-
 static int mips_dma_map_sg(struct device *dev, struct scatterlist *sg, int nents,
-	enum dma_data_direction direction)
+	enum dma_data_direction direction, struct dma_attrs *attrs)
 {
 	int i;
 
@@ -219,7 +198,7 @@ static int mips_dma_map_sg(struct device *dev, struct scatterlist *sg, int nents
 }
 
 static dma_addr_t mips_dma_map_page(struct device *dev, struct page *page,
-	unsigned long offset, size_t size, enum dma_data_direction direction)
+	unsigned long offset, size_t size, enum dma_data_direction direction, struct dma_attrs *attrs)
 {
 	unsigned long addr;
 
@@ -238,7 +217,7 @@ static dma_addr_t mips_dma_map_page(struct device *dev, struct page *page,
 }
 
 static void mips_dma_unmap_sg(struct device *dev, struct scatterlist *sg, int nhwentries,
-	enum dma_data_direction direction)
+	enum dma_data_direction direction, struct dma_attrs *attrs)
 {
 	unsigned long addr;
 	int i;
@@ -403,8 +382,6 @@ static struct mips_dma_map_ops mips_default_dma_map_ops = {
 	.dma_map_ops = {
 		.alloc_coherent = mips_dma_alloc_coherent,
 		.free_coherent = mips_dma_free_coherent,
-		//.map_single = mips_dma_map_single,
-		//.unmap_single = mips_dma_unmap_single, 
 		.map_page = mips_dma_map_page,
 		.unmap_page = mips_dma_unmap_page,
 		.map_sg = mips_dma_map_sg,

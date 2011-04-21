@@ -27,65 +27,6 @@ static void delay(void)
 	for (i=0; i<0x10000; i++);
 }
 
-/* cfg 0: system reboot
- *     1: system halt
- */
-static void watchdog_config(u32 cfg)
-{
-#ifdef CONFIG_32BIT
-	unsigned char *watch_dog_base = 0xb8000cd6;
-	unsigned char *watch_dog_config = 0xba00a041;
-	unsigned char *watch_dog_mem = 0xbe010000;
-	unsigned char *reg_cf9 = (unsigned char *)0xb8000cf9;
-#else
-	unsigned char *watch_dog_base = 0x90000efdfc000cd6;
-	unsigned char *watch_dog_config = 0x90000efdfe00a041;
-	unsigned int *watch_dog_mem = 0x90000e0000010000;
-	unsigned char *reg_cf9 = (unsigned char *)0x90000efdfc000cf9;
-#endif
-	delay();
-	*reg_cf9 = 4;
-
-	/* Enable WatchDogTimer */
-	delay();
-	*watch_dog_base  = 0x69;
-	*(watch_dog_base + 1) = 0x0;
-
-	/* Set WatchDogTimer base address is 0x10000 */
-	delay();
-	*watch_dog_base = 0x6c;
-	*(watch_dog_base + 1) = 0x0;
-
-	delay();
-	*watch_dog_base = 0x6d;
-	*(watch_dog_base + 1) = 0x0;
-
-	delay();
-	*watch_dog_base = 0x6e;
-	*(watch_dog_base + 1) = 0x1;
-
-	delay();
-	*watch_dog_base = 0x6f;
-	*(watch_dog_base + 1) = 0x0;
-
-	delay();
-	*watch_dog_config = 0xff;
-
-	/* Set WatchDogTimer to starting */
-	delay();
-	if (cfg == 0) {
-		*watch_dog_mem = 0x01;
-	} else if (cfg == 1) {
-		*watch_dog_mem = 0x05;
-	}
-	delay();
-	*(watch_dog_mem + 1) = 0x500;
-	delay();
-	//*watch_dog_mem = 0x85;
-	*watch_dog_mem |= 0x80;
-
-}
-
 void mach_prepare_reboot(void)
 {
 	printk(KERN_ERR "mach_prepare_reboot start\n");

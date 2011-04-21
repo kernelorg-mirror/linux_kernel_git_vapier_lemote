@@ -55,7 +55,7 @@ __printf_HT_vector(5)
 __printf_HT_vector(6)
 __printf_HT_vector(7)
 
-void  printf_HT_vector()
+void  printf_HT_vector(void)
 {
 	_printf_HT_vector0();
 	_printf_HT_vector1();
@@ -70,7 +70,7 @@ void  printf_HT_vector()
 asmlinkage void mach_irq_dispatch(unsigned int pending)
 {
     	unsigned int irq;
-    	int cpu = smp_processor_id();
+
     	if (pending & CAUSEF_IP7) {
     		do_IRQ(63);
 #ifdef CONFIG_SMP

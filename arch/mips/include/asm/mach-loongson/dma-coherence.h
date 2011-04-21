@@ -13,6 +13,8 @@
 
 struct device;
 
+extern void prom_printf(char *fmt, ...);
+
 static inline dma_addr_t plat_map_dma_mem(struct device *dev, void *addr,
 					  size_t size)
 {

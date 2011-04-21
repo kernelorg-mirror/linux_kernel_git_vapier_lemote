@@ -162,10 +162,11 @@ int putDebugChar(u8 byte)
 
 extern void prom_putchar(char c);
 
+static char ppbuf[2048];
+
 void prom_printf(char *fmt, ...)
 {
 	va_list args;
-	char ppbuf[1024];
 	char *bptr;
 
 	va_start(args, fmt);

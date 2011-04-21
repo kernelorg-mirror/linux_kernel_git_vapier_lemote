@@ -152,7 +152,6 @@ void __init plat_swiotlb_setup(void)
 
 	swiotlbsize = 64 * (1<<20); 
 
-	printk("SWIOTLB: swiotlbsize = %d\n", swiotlbsize);
 	swiotlb_init_with_default_size(swiotlbsize, 1);
 
 	mips_dma_map_ops = &loongson_linear_dma_map_ops;

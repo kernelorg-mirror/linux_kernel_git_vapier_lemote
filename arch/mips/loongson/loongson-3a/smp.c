@@ -249,7 +249,7 @@ int loongson3_cpu_start(int cpu, void(*fn)(void), long sp, long gp, long a1)
     startargs[2] = gp;
     startargs[3] = a1;
 
-#if 1
+#if 0
     prom_printf("\n writeq buf is begin ! \n");
     prom_printf("\n CPU#%d mailbox_buf=%p ! \n", cpu, mailbox_buf[cpu]);
     prom_printf("fn=%p\n", fn);
@@ -263,7 +263,7 @@ int loongson3_cpu_start(int cpu, void(*fn)(void), long sp, long gp, long a1)
     loongson3_raw_writeq(startargs[1], mailbox_buf[cpu]+0x8);
     loongson3_raw_writeq(startargs[0], mailbox_buf[cpu]+0x0);
  
-#if 1
+#if 0
     prom_printf("\n readbackbuf is begin! \n");
     prom_printf("fn=%p\n",  *((unsigned int *)(mailbox_buf[cpu]+0x0)));
     prom_printf("sp=%lx\n", *((unsigned int *)(mailbox_buf[cpu]+0x8)));
