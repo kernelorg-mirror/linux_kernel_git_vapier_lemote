@@ -32,16 +32,21 @@ static __init int notify_temp_init(void)
 {
 	struct i2c_adapter *adapter = NULL;
 	struct i2c_board_info info;
-	int i=0;
+	int i = 0, found = 0;
 
-	do { 
-		adapter = i2c_get_adapter(i++);
-		if (strncmp(adapter->name, "SMBus PIIX4", 11) == 0) {
-			break;
-		}
-	} while(adapter);
-	
-	if (adapter == NULL)
+        memset(&info, 0, sizeof(struct i2c_board_info));
+        adapter = i2c_get_adapter(i++);
+
+        while(adapter) {
+                if (strncmp(adapter->name, "SMBus PIIX4", 11) == 0) {
+                        found = 1;
+                        break;
+                }
+
+                adapter = i2c_get_adapter(i++);
+        }
+
+        if (!found)
 		goto fail;
 
 #ifdef TEMP_DEBUG

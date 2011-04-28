@@ -432,15 +432,6 @@ static int __init ls3a_init(void)
 	}
 	/* Register power supply END */
 
-	/* SCI PCI Driver Init START  */
-	ret = sci_pci_driver_init();
-	if(ret)
-	{
-		printk(KERN_ERR "LS3A Driver : Fail to register sci pci driver.\n");
-		goto fail_sci_pci_driver_init;
-	}
-	/* SCI PCI Driver Init END */
-
 	/* Hotkey device START */
 	ret = ls3a_hotkey_init();
 	if(ret)
@@ -449,6 +440,15 @@ static int __init ls3a_init(void)
 		goto fail_hotkey_init;
 	}
 	/* Hotkey device END */
+
+	/* SCI PCI Driver Init START  */
+	ret = sci_pci_driver_init();
+	if(ret)
+	{
+		printk(KERN_ERR "LS3A Driver : Fail to register sci pci driver.\n");
+		goto fail_sci_pci_driver_init;
+	}
+	/* SCI PCI Driver Init END */
 
 	return 0;
 

@@ -35,7 +35,7 @@
  */
 #define EC_REG_DELAY		30000
 #define EC_CMD_TIMEOUT		0x1000
-#define EC_SEND_TIMEOUT		0x7ff
+#define EC_SEND_TIMEOUT		0x7fff
 #define EC_RECV_TIMEOUT		0xffff
 
 /*
