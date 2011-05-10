@@ -28,6 +28,7 @@
 #include <linux/input.h>
 #include <linux/input/sparse-keymap.h>
 #include <linux/jiffies.h>
+#include <asm/bootinfo.h>
 
 #include <ec_wpce775l.h>
 
@@ -363,6 +364,9 @@ static const struct key_entry ls3a_keymap[] =
 static int __init ls3a_init(void)
 {
 	int ret;
+
+	if (mips_machtype != MACH_LEMOTE_3A_A1004)
+		return -1;
 
 	printk(KERN_INFO "LS3A Driver : Load Platform Specific Driver V%s.\n", version);
 

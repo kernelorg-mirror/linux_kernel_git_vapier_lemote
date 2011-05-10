@@ -3,6 +3,7 @@
 #include <linux/i2c.h>
 #include <linux/kernel.h>
 #include <linux/workqueue.h>
+#include <asm/bootinfo.h>
 
 #define TEMP_SENSOR_ADDR	0x4c
 //#define TEMP_DEBUG
@@ -33,6 +34,9 @@ static __init int notify_temp_init(void)
 	struct i2c_adapter *adapter = NULL;
 	struct i2c_board_info info;
 	int i = 0, found = 0;
+
+	if (mips_machtype != MACH_LEMOTE_3A_A1004)
+		return 0;
 
         memset(&info, 0, sizeof(struct i2c_board_info));
         adapter = i2c_get_adapter(i++);

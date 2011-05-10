@@ -13,30 +13,111 @@
 #include <asm/processor.h>
 #include <asm/reboot.h>
 #include <asm/system.h>
+#include <asm/bootinfo.h>
 
 #include <linux/sched.h>
 #include <linux/mm.h>
 #include <linux/pm.h>
-#include <linux/delay.h>
-
+#include <linux/pci.h>
 #include <ec_wpce775l.h>
 
-static void delay(void)
+#define PM_INDEX        0xCD6
+#define PM_DATA         0xCD7
+
+void pmio_write(int index, u8 value)
 {
-	volatile int i;
-	for (i=0; i<0x10000; i++);
+	outb(index, PM_INDEX);
+	outb(value, PM_DATA);
+}
+
+void set_watchdog_base(u32 base)
+{
+	pmio_write(0x6c, (base >> 0) & 0xff);
+	pmio_write(0x6d, (base >> 8) & 0xff);
+	pmio_write(0x6e, (base >> 16) & 0xff);
+	pmio_write(0x6f, (base >> 24) & 0xff);
+}
+
+#ifdef CONFIG_32BIG
+u8 * watchdog_base = 0xbe010000;
+#else
+u8 * watchdog_base = (u8 *)0x90000e0000010000;
+#endif
+
+void enable_watchdog(void)
+{
+	struct pci_dev * pdev;
+
+	pdev = pci_get_device(PCI_VENDOR_ID_ATI, PCI_DEVICE_ID_ATI_SBX00_SMBUS, NULL);
+
+	pmio_write(0x69, 0); //enable watchdog
+
+	set_watchdog_base((u32)watchdog_base); // not in standard mem region
+
+	pci_write_config_byte(pdev, 0x41, 0xff); //eanble smbus watchdog decode
+}
+
+void start_watchdog_poweroff(void)
+{
+	*watchdog_base = 5; // powroff whan watchdog timeout
+	*(watchdog_base + 1) = 0x500; // set counter
+	*watchdog_base |= 0x80; //start watchdog
+}
+
+void watchdog_poweroff(void)
+{
+	enable_watchdog();
+	start_watchdog_poweroff();
+	
+	printk(KERN_ERR "Ohh, poweroff not work???? \n");
+}
+
+static void itx_a1101_reboot(void)
+{
+	// hard reset
+	outb(0xa, 0xcf9);
+	outb(0xe, 0xcf9);
+}
+
+static void notebook_a1004_reboot(void)
+{
+	ec_write_noindex(CMD_RESET, BIT_RESET_ON);
 }
 
 void mach_prepare_reboot(void)
 {
-	printk(KERN_ERR "mach_prepare_reboot start\n");
-	ec_write_noindex(CMD_RESET, BIT_RESET_ON);
-	printk(KERN_ERR "mach_prepare_reboot end\n");
-	delay();
+	switch (mips_machtype) {
+	case	MACH_LEMOTE_3A_A1004:
+		notebook_a1004_reboot();
+		break;
+	case	MACH_LEMOTE_3A_A1101:
+		itx_a1101_reboot();
+		break;
+	default:
+		break;
+	}
+}
+
+static void notebook_a1004_shutdown(void)
+{
+	ec_write_noindex(CMD_RESET, BIT_PWROFF_ON);
+}
+
+static void itx_a1101_shutdown(void)
+{
+	watchdog_poweroff();
 }
 
 void mach_prepare_shutdown(void)
-{
-	ec_write_noindex(CMD_RESET, BIT_PWROFF_ON);
-	delay();
+{	
+	switch (mips_machtype) {
+	case	MACH_LEMOTE_3A_A1004:
+		notebook_a1004_shutdown();
+		break;
+	case	MACH_LEMOTE_3A_A1101:
+		itx_a1101_shutdown();
+		break;
+	default:
+		break;
+	}
 }

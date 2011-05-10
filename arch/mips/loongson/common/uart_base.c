@@ -27,7 +27,8 @@ EXPORT_SYMBOL(loongson_uart_base);
 void prom_init_loongson_uart_base(void)
 {
 	switch (mips_machtype) {
-	case MACH_LOONGSON3A:
+	case MACH_LEMOTE_3A_A1004:
+	case MACH_LEMOTE_3A_A1101:
 		loongson_uart_base = LOONGSON_UART_BASE;
 		break;
 	case MACH_LEMOTE_FL2E:
