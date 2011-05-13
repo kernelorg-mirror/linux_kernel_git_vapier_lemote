@@ -30,6 +30,7 @@
 #include "radeon.h"
 #include "atom.h"
 #include "vgarom_rs780.h"
+#include <asm/bootinfo.h>
 
 #include <linux/vga_switcheroo.h>
 #include <linux/slab.h>
@@ -447,8 +448,20 @@ bool radeon_get_bios(struct radeon_device *rdev)
 		r = radeon_read_disabled_bios(rdev);
 	}
 	if (r == false) {
-		rdev->bios = kmalloc(sizeof(vgarom), GFP_KERNEL);
-		memcpy(rdev->bios, vgarom, sizeof(vgarom));
+		switch (mips_machtype) {
+		case MACH_LEMOTE_3A_A1004:
+			rdev->bios = kmalloc(sizeof(a1004_vgarom), GFP_KERNEL);
+			memcpy(rdev->bios, a1004_vgarom, sizeof(a1004_vgarom));
+			break;
+		case MACH_LEMOTE_3A_A1101:
+			rdev->bios = kmalloc(sizeof(a1101_vgarom), GFP_KERNEL);
+			memcpy(rdev->bios, a1101_vgarom, sizeof(a1101_vgarom));
+			break;
+		default:
+			rdev->bios = kmalloc(sizeof(a1101_vgarom), GFP_KERNEL);
+			memcpy(rdev->bios, a1101_vgarom, sizeof(a1101_vgarom));
+			break;
+		}
 		r = true;
 	}
 

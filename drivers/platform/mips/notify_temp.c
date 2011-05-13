@@ -8,23 +8,89 @@
 #define TEMP_SENSOR_ADDR	0x4c
 //#define TEMP_DEBUG
 
-struct i2c_client *client = NULL;
+#ifdef CONFIG_64BIT
+#define TEMPRATURE_SENSOR_REG 0xffffffffbfe0019c
+#else
+#define TEMPRATURE_SENSOR_REG 0xbfe0019c
+#endif
 
+struct i2c_client *client = NULL;
 static struct workqueue_struct *notify_workqueue;
 static void notify_temp(struct work_struct *work);
 static DECLARE_DELAYED_WORK(notify_work, notify_temp);
+
 extern int ec_write_noindex(u8, u8);
+extern u8 pm_ioread(u8 reg);
+extern void pm_iowrite(u8 reg, u8 val);
+extern u8 pm2_ioread(u8 reg);
+extern void pm2_iowrite(u8 reg, u8 val);
+
+static int fan_controlled; // fan speed is not controlled by default.
+
+static void enable_fan_control(void)
+{
+        unsigned char temp8;
+
+        temp8 = pm_ioread(0x60);
+        pm_iowrite(0x60, temp8 | 0x40); // configure gpio3 as fan0out
+
+        temp8 = pm2_ioread(0x0);
+        temp8 &= ~3;
+        temp8 |= 0x1; // enable software control
+        pm2_iowrite(0x0, temp8);
+
+        temp8 = pm2_ioread(0x1);
+        temp8 &= ~3; // disable automode
+        temp8 |= 0x4; // active high
+        pm2_iowrite(0x1, temp8);
+
+        pm2_iowrite(0x2, 4); // set freq to 19.82KHz
+
+	fan_controlled = 1;
+}
+
+static void adjust_fan_speed(unsigned char fan_level)
+{
+        pm2_iowrite(0x3, fan_level);
+}
+
+static void fan_adjust(u16 cputemp, u8 nbtemp)
+{
+	if (cputemp > 128) {
+		printk(KERN_ERR "CPU IS HOT!!! %d\n", cputemp);
+	}
+
+	if (!fan_controlled)
+		enable_fan_control();	
+
+	adjust_fan_speed(0x80);
+
+}
 
 static void notify_temp(struct work_struct *work)
 {
-	u8 boardtemp;
+	u8 boardtemp, nbtemp;
+	u16 cputemp;
 
 	boardtemp = i2c_smbus_read_byte_data(client, 0);
+	nbtemp = i2c_smbus_read_byte_data(client, 1);
+	cputemp = (*(u16 *)(TEMPRATURE_SENSOR_REG) & 0xff00) >> 8;
 
 #ifdef TEMP_DEBUG
-	printk(KERN_ERR "notify_temp: get temp %d\n", boardtemp);
+	printk(KERN_ERR "notify_temp:\n	boardtemp %d nbtemp %d cputemp %d\n", 
+						boardtemp, nbtemp, cputemp);
 #endif
-        ec_write_noindex(0x4d, boardtemp);
+
+	switch(mips_machtype) {
+	case MACH_LEMOTE_3A_A1004:
+        	ec_write_noindex(0x4d, boardtemp);
+		break;
+	case MACH_LEMOTE_3A_A1101:
+		//fan_adjust(nbtemp, cputemp);
+		break;
+	default:
+		break;
+	}
 
         queue_delayed_work(notify_workqueue, &notify_work, HZ);
 }
@@ -34,9 +100,6 @@ static __init int notify_temp_init(void)
 	struct i2c_adapter *adapter = NULL;
 	struct i2c_board_info info;
 	int i = 0, found = 0;
-
-	if (mips_machtype != MACH_LEMOTE_3A_A1004)
-		return 0;
 
         memset(&info, 0, sizeof(struct i2c_board_info));
         adapter = i2c_get_adapter(i++);
@@ -54,7 +117,7 @@ static __init int notify_temp_init(void)
 		goto fail;
 
 #ifdef TEMP_DEBUG
-	printk(KERN_INFO "match adater %s\n", adapter->name);
+	printk(KERN_INFO "match adapter %s\n", adapter->name);
 #endif
 	info.addr = TEMP_SENSOR_ADDR;
 	info.platform_data = "temp sensor";
