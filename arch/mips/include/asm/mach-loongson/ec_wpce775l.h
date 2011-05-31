@@ -17,7 +17,7 @@
 #ifndef __EC_WPCE775L_H__
 #define __EC_WPCE775L_H__
 
-#define EC_VERSION		"1.03"
+#define EC_VERSION		"1.04"
 
 /* 
  * The following registers are determined by the EC index configureation.
@@ -55,19 +55,12 @@
 /*
  * ACPI OEM commands.
  */
-#define REG_BACKLIGHT_CTRL	0x49	/* LCD backlight control: on/off */
-enum
-{
-	BIT_BACKLIGHT_OFF = 0,
-	BIT_BACKLIGHT_ON
-};
-
 #define CMD_RESET			0x4E	/* Reset and poweroff the machine auto-clear: rd/wr */
 enum
 {
-	BIT_RESET_OFF = 0,
-	BIT_RESET_ON,
-	BIT_PWROFF_ON
+	RESET_OFF = 0,
+	RESET_ON,
+	PWROFF_ON
 };
 
 #define CMD_EC_VERSION		0x4F	/* EC Version OEM command: 36 Bytes */
@@ -75,73 +68,47 @@ enum
 /*
  * Used ACPI legacy command 80h to do active.
  */
-/* Read temperature & fan index for ACPI 80h command. */
+/* >>> Read/Write temperature & fan index for ACPI 80h/81h command. */
 #define INDEX_TEMPERATURE_VALUE		0x1B	/* Current CPU temperature value, Read and Write(81h command). */
 #define INDEX_FAN_MAXSPEED_LEVEL	0x5B	/* Fan speed maxinum levels supported. Defaut is 6. */
-#define INDEX_FAN_SPEED_LEVEL		0x5C	/* FAn speed level. [0,5])*/
+#define INDEX_FAN_SPEED_LEVEL		0x5C	/* FAn speed level. [0,5] or [0x06, 0x38]*/
 #define INDEX_FAN_CTRLMOD			0x5D	/* Fan control mode, 0 = by EC, 1 = by Host.*/
-#define BIT_FAN_CTRLMOD_HOST		0x01
-#define BIT_FAN_CTRLMOD_EC			0x00
+enum
+{
+	FAN_CTRL_BYEC = 0,
+	FAN_CTRL_BYHOST
+};
 #define INDEX_FAN_STSCTRL			0x5E	/* Fan status/control, 0 = stop, 1 = run. */
 enum
 {
-	BIT_FAN_STSCTRL_OFF = 0,
-	BIT_FAN_STSCTRL_ON
+	FAN_STSCTRL_OFF = 0,
+	FAN_STSCTRL_ON
 };
 #define INDEX_FAN_ERRSTS			0x5F	/* Fan error status, 0 = no error, 1 = has error. */
 enum
 {
-	BIT_FAN_ERRSTS_NO = 0,
-	BIT_FAN_ERRSTS_HAS
+	FAN_ERRSTS_NO = 0,
+	FAN_ERRSTS_HAS
 };
-#define INDEX_FAN_SPEED_HIGH		0x09	/* Fan speed high byte. */
 #define INDEX_FAN_SPEED_LOW			0x08	/* Fan speed low byte.*/
+#define INDEX_FAN_SPEED_HIGH		0x09	/* Fan speed high byte. */
+/* <<< End Temp & Fan */
 
-/* Read battery index for ACPI 80h command */
-#define FLAG_BAT_CELL_2S1P			0x02
-#define FLAG_BAT_CELL_2S20			0x04
-#define FLAG_BAT_VENDOR_DYON		0x01	/* DeYon Electronics Co., Shenzhen */
-#define FLAG_BAT_VENDOR_NONE		0x02
-
-/*
- * The reported battery voltage measured on the BAT pin.
- * Voltage is expressed in mV with an LSB resolution of 1 mV.
- * Reported voltage cannot exceed 5000 mV. The host
- * system has read-only access to this register pair.
- * Voltage is updated every 2.56 seconds.
- */
-
-#define INDEX_BATTERY_VOL_LOW		0x90	/* Battery Voltage Low byte. */
-#define INDEX_BATTERY_VOL_HIGH		0x91	/* Battery Voltage High byte. */
-#define INDEX_BATTERY_CAPACITY		0x92	/* Battery Capacity byte. */
-
-/* 
- * The reported battery die temperature.
- * The temperature is expressed in units of 0.25 seconds and is updated every 2.56 seconds.
- * The equation to calculate reported pack temperature is:
- * Temperature = 0.25 * (256 * TEMPH + TEMPL)
- * The host sytem has read-only access to this register pair.
- */
-
-#define INDEX_BATTERY_TEMP_LOW		0x93	/* Battery temperature low byte. */
-#define INDEX_BATTERY_TEMP_HIGH		0x94	/* Battery temperature high byte. */
-#define INDEX_BATTERY_FLAG			0x95	/* Battery flags byte. */
-#define BIT_BATTERY_CURRENT_PN      7       /* Battery current sign is positive or negative */
-#define BIT_BATTERY_CURRENT_PIN		0x07	/* Battery current sign is positive or negative.*/
-
-/*
- * The Average Current value is reported with a resolution of 3.57 uV per count.
- * Use the following equation to convert the value to mA,
- * where Rs is the sense resistor value in milliohms, here Rs is 0.02 ohm:
- * Average Current = (256 * AIH + AIL) * 3.57 / Rs
- * The current reported is an average over the last 5.12 seconds.
- * The host system has read-only access to this register pair.
- */
-
-#define INDEX_BATTERY_AI_LOW			0x96	/* Battery Current Low byte. */
-#define INDEX_BATTERY_AI_HIGH			0x97	/* Battery Current High byte. */
-
-#define	INDEX_DISPLAY_BRIGHTNESS		0x5A	/* 10 stages (0~A) LCD backlight brightness adjust */
+/* >>> Read/Write LCD backlight information/control index for ACPI 80h/81h command. */
+#define INDEX_BACKLIGHT_CTRLMODE	0x57	/* LCD backlight control mode: 0 = by EC, 1 = by HOST */
+enum
+{
+	BACKLIGHT_CTRL_BYEC = 0,
+	BACKLIGHT_CTRL_BYHOST
+};
+#define INDEX_BACKLIGHT_STSCTRL		0x58	/* LCD backlight status or control: 0 = turn off, 1 = turn on */
+enum
+{
+	BACKLIGHT_OFF = 0,
+	BACKLIGHT_ON
+};
+#define	INDEX_DISPLAY_MAXBRIGHTNESS_LEVEL	0x59	/* LCD backlight brightness max level */
+#define	INDEX_DISPLAY_BRIGHTNESS	0x5A	/* 10 stages (0~A) LCD backlight brightness adjust */
 enum
 {
 	FLAG_DISPLAY_BRIGHTNESS_LEVEL_0	= 0,	/* This level is backlight turn off. */
@@ -155,11 +122,95 @@ enum
 	FLAG_DISPLAY_BRIGHTNESS_LEVEL_8,
 	FLAG_DISPLAY_BRIGHTNESS_LEVEL_9,
 	FLAG_DISPLAY_BRIGHTNESS_LEVEL_10
-
 };
+/* <<< End Backlight */
+
+/* >>> Read battery index for ACPI 80h command */
+#define FLAG_BAT_CELL_3S1P			0x03
+
+/*
+ * The reported battery die temperature.
+ * The temperature is expressed in units of 0.25 seconds and is updated every 2.56 seconds.
+ * The equation to calculate reported pack temperature is:
+ * Temperature = 0.1 * (256 * TEMPH + TEMPL) Kelvin
+ * Temperature -= 273 Degrees Celsius
+ * The host sytem has read-only access to this register pair.
+ */
+#define INDEX_BATTERY_TEMP_LOW		0x20	/* Battery temperature low byte. */
+#define INDEX_BATTERY_TEMP_HIGH		0x21	/* Battery temperature high byte. */
+#define INDEX_BATTERY_VOL_LOW		0x22	/* Battery Voltage Low byte. */
+#define INDEX_BATTERY_VOL_HIGH		0x23	/* Battery Voltage High byte. */
+#define INDEX_BATTERY_CURRENT_LOW	0x24	/* Battery Current Low byte. */
+#define INDEX_BATTERY_CURRENT_HIGH	0x25	/* Battery Current High byte. */
+#define INDEX_BATTERY_AC_LOW		0x26	/* Battery AverageCurrent Low byte. */
+#define INDEX_BATTERY_AC_HIGH		0x27	/* Battery AverageCurrent High byte. */
+#define INDEX_BATTERY_CAPACITY		0x2A	/* Battery RemainingCapacity percent. */
+#define INDEX_BATTERY_STATUS_LOW	0x2C	/* Battery Status low byte. */
+enum
+{
+	BIT_BATTERY_STATUS_FD = 4,	/* Battery Fully Discharged Notify. 1 = Fully Discharged */
+	BIT_BATTERY_STATUS_FC,		/* Battery Fully Charged Notify. 1 = Fully Charged. */
+	BIT_BATTERY_STATUS_DSG,		/* Battery Discharging mode. 0 = in charging mode, 1 = in discharging mode, 
+	                               relaxation mode, or valid charge termination has occurred. */
+	BIT_BATTERY_STATUS_INIT		/* Battery Initialization. 1 = Initialization */
+};
+#define INDEX_BATTERY_STATUS_HIGH	0x2D	/* Battery Status high byte. */
+enum
+{
+	BIT_BATTERT_STATUS_RTA = 0,	/* Battery Remaining Time Alarm. <= 10min */
+	BIT_BATTERY_STATUS_RCA,		/* Battery Remaining Capacity Alarm. <= 430mAh */
+	BIT_BATTERY_STATUS_TDA = 3,		/* Battery Terminate Discharge Alarm. */
+	BIT_BATTERY_STATUS_OTA,		/* Battery Over Temperature Alarm. */
+	BIT_BATTERY_STATUS_TCA = 6,		/* Battery Terminate Charge Alarm. */
+	BIT_BATTERY_STATUS_OCA		/* Battery Over Charged Alarm. */
+};
+#define INDEX_BATTERY_RC_LOW		0x2E	/* Battery RemainingCapacity Low byte. */
+#define INDEX_BATTERY_RC_HIGH		0x2F	/* Battery RemainingCapacity High byte. */
+#define INDEX_BATTERY_ATTE_LOW		0x30	/* Battery AverageTimeToEmpty Low byte. */
+#define INDEX_BATTERY_ATTE_HIGH		0x31	/* Battery AverageTimeToEmpty High byte. */
+#define INDEX_BATTERY_ATTF_LOW		0x32	/* Battery AverageTimeToFull Low byte. */
+#define INDEX_BATTERY_ATTF_HIGH		0x33	/* Battery AverageTimeToFull High byte. */
+#define INDEX_BATTERY_FCC_LOW		0x34	/* Battery FullChargeCapacity Low byte. */
+#define INDEX_BATTERY_FCC_HIGH		0x35	/* Battery FullChargeCapacity High byte. */
+#define INDEX_BATTERY_CC_LOW		0x36	/* Battery ChargingCurrent Low byte. */
+#define INDEX_BATTERY_CC_HIGH		0x37	/* Battery ChargingCurrent High byte. */
+#define INDEX_BATTERY_CV_LOW		0x38	/* Battery ChargingVoltage Low byte. */
+#define INDEX_BATTERY_CV_HIGH		0x39	/* Battery ChargingVoltage High byte. */
+
+/* Battery static information. */
+#define INDEX_BATTERY_DC_LOW		0x60	/* Battery DesignCapacity Low byte. */
+#define INDEX_BATTERY_DC_HIGH		0x61	/* Battery DesignCapacity High byte. */
+#define INDEX_BATTERY_DV_LOW		0x62	/* Battery DesignVoltage Low byte. */
+#define INDEX_BATTERY_DV_HIGH		0x63	/* Battery DesignVoltage High byte. */
+#define INDEX_BATTERY_MFD_LOW		0x64	/* Battery ManufactureDate Low byte. */
+#define INDEX_BATTERY_MFD_HIGH		0x65	/* Battery ManufactureDate High byte. */
+#define INDEX_BATTERY_SN_LOW		0x66	/* Battery SerialNumber Low byte. */
+#define INDEX_BATTERY_SN_HIGH		0x67	/* Battery SerialNumber High byte. */
+#define INDEX_BATTERY_MFN_LENG		0x68	/* Battery ManufacturerName string length. */
+#define INDEX_BATTERY_MFN_START		0x69	/* Battery ManufacturerName string start byte. */
+#define INDEX_BATTERY_DEVNAME_LENG	0x73	/* Battery DeviceName string length. */
+#define INDEX_BATTERY_DEVNAME_START	0x74	/* Battery DeviceName string start byte. */
+#define INDEX_BATTERY_DEVCHEM_LENG	0x7B	/* Battery DeviceChemitry string length. */
+#define INDEX_BATTERY_DEVCHEM_START	0x7C	/* Battery DeviceChemitry string start byte. */
+
+
+#define BIT_BATTERY_CURRENT_PN      7       /* Battery current sign is positive or negative */
+#define BIT_BATTERY_CURRENT_PIN		0x07	/* Battery current sign is positive or negative.*/
+/* <<< End Battery */
 
 #define MASK(x)	(1 << x)
 
+#define INDEX_STOPCHG_STATUS	0xA1	/* Read currently stop charge status. */
+enum
+{
+	BIT_STOPCHG_FULLYCHG = 0,
+	BIT_STOPCHG_TIMEOUT,
+	BIT_STOPCHG_OVERTEMP,
+	BIT_STOPCHG_OVERVOLT,
+	BIT_STOPCHG_OVERCURRENT,
+	BIT_STOPCHG_TERMINATE,
+	BIT_STOPCHG_RCOVER95		/* When insert AC, if RC over 95, terminate charging. */
+};
 #define INDEX_POWER_STATUS		0xA2	/* Read current power status. */
 enum
 {
@@ -167,7 +218,8 @@ enum
 	BIT_POWER_BATL,			/* Battery in low status. */
 	BIT_POWER_BATFCHG,		/* Battery in fully charging status. */
 	BIT_POWER_BATCHG,		/* Battery in charging status. */
-	BIT_POWER_BATPRES = 6,		/* Battery present. */
+	BIT_POWER_TERMINATE,	/* Battery in terminate charging status. */
+	BIT_POWER_BATPRES,		/* Battery present. */
 	BIT_POWER_ACPRES		/* AC present. */
 };
 
@@ -176,10 +228,12 @@ enum
 {
 	BIT_DEVICE_TP = 0,	/* TouchPad status: 0 = close, 1 = open */
 	BIT_DEVICE_WLAN,	/* WLAN status: 0 = close, 1 = open */
+	BIT_DEVICE_3G,		/* 3G status: 0 = close, 1 = open */
 	BIT_DEVICE_CAM,		/* Camera status: 0 = close, 1 = open */
 	BIT_DEVICE_MUTE,	/* Mute status: 0 = close, 1 = open */
 	BIT_DEVICE_LID,		/* LID status: 0 = close, 1 = open */
-	BIT_DEVICE_BKLIGHT	/* BackLight status: 0 = close, 1 = open */
+	BIT_DEVICE_BKLIGHT,	/* BackLight status: 0 = close, 1 = open */
+	BIT_DEVICE_SIM		/* SIM Card status: 0 = pull out, 1 = insert */
 };
 
 #define	INDEX_SHUTDOWN_ID		0xA4	/* Read Shutdown ID */
@@ -189,17 +243,22 @@ enum
 	BIT_SHUTDNID_BATDEAD,	/* Battery Dead */
 	BIT_SHUTDNID_OVERHEAT,	/* Over Heat */
 	BIT_SHUTDNID_SYSCMD,	/* System command */
-	BIT_SHUTDNID_LPRESSPWN	/* Long press power button */
+	BIT_SHUTDNID_LPRESSPWN,	/* Long press power button */
+	BIT_SHUTDNID_PWRUNDER9V,/* Batery voltage low under 9V */
+	BIT_SHUTDNID_S3		/* Entry S3 state */
 };
 
 #define	INDEX_SYSTEM_CFG		0xA5		/* Read System config */
 #define BIT_SYSCFG_TPSWITCH		(1 << 0)	/* TouchPad switch */
 #define BIT_SYSCFG_WLANPRES		(1 << 1)	/* WLAN present */
+#define BIT_SYSCFG_NB3GPRES		(1 << 2)	/* 3G present */
 #define BIT_SYSCFG_CAMERAPRES	(1 << 3)	/* Camera Present */
 #define BIT_SYSCFG_VOLCTRLEC	(1 << 4)	/* Volume control by EC */
+#define BIT_SYSCFG_BLCTRLEC		(1 << 5)	/* Backlight control by EC */
 #define BIT_SYSCFG_AUTOBRIGHT	(1 << 7)	/* Auto brightness */
 
 #define	INDEX_VOLUME_LEVEL		0xA6		/* Read Volume Level command */
+#define	INDEX_VOLUME_MAXLEVEL	0xA7		/* Volume MaxLevel */
 #define	VOLUME_MAX_LEVEL		0x0A		/* Volume level max is 15 */
 enum
 {
@@ -217,40 +276,43 @@ enum
 };
 
 /* EC_SC input */
-#define EC_SMI_EVT		(1 << 6)	/* SMI event padding */
-#define EC_SCI_EVT		(1 << 5)	/* SCI event padding */
-#define EC_BURST		(1 << 4)	/* Controller is in burst mode */
-#define EC_CMD			(1 << 3)	/* Byte in data register is command */
+/* EC Status query, by direct read 66h port. */
+#define EC_SMI_EVT		(1 << 6)	/* 1 = SMI event padding */
+#define EC_SCI_EVT		(1 << 5)	/* 1 = SCI event padding */
+#define EC_BURST		(1 << 4)	/* 1 = Controller is in burst mode */
+#define EC_CMD			(1 << 3)	/* 1 = Byte in data register is command */
 
-#define EC_IBF			(1 << 1)	/* Input buffer full (data ready for ec) */
-#define EC_OBF			(1 << 0)	/* Output buffer full (data ready for host) */
+#define EC_IBF			(1 << 1)	/* 1 = Input buffer full (data ready for ec) */
+#define EC_OBF			(1 << 0)	/* 1 = Output buffer full (data ready for host) */
 
 /* SCI Event Number from EC */
 enum
 {
 	/* Huangw modified for ls3anb, 2011-03-04 */
-	SCI_EVENT_NUM_WLAN = 0x21,		/* Wlan is on or off, Fn+F1 */
-	SCI_EVENT_NUM_3G,				/* Fn+F9 for 3G switch */
-	SCI_EVENT_NUM_LID,				/* press the lid or not */
-	SCI_EVENT_NUM_DISPLAY_TOGGLE,	/* Fn+F8 for display switch */
-	SCI_EVENT_NUM_SLEEP,			/* Fn+ESC for entering sleep mode */
-	SCI_EVENT_NUM_BRIGHTNESS_UP,	/* LCD backlight brightness adjust, Fn+F3 */
-	SCI_EVENT_NUM_BRIGHTNESS_DN,	/* LCD backlight brightness adjust, Fn+F2 */
-	SCI_EVENT_NUM_CAMERA,			/* Camera is on or off, Fn+F10, no use */
-	SCI_EVENT_NUM_TP,				/* TP is on or off, Fn+F11, no use */
-	SCI_EVENT_NUM_AUDIO_MUTE,		/* Mute is on or off, Fn+F4 */
-	SCI_EVENT_NUM_BLACK_SCREEN,		/* Black screen is on or off, Fn+F7 */
-	SCI_EVENT_NUM_VOLUME_UP,		/* Volume adjust, Fn+F6 */
-	SCI_EVENT_NUM_VOLUME_DN,		/* Volume adjust, Fn+F5 */
-	SCI_EVENT_NUM_OVERTEMP,			/* Over-temperature happened */
-	SCI_EVENT_NUM_AC,				/* ac & battery relative issue */
-	SCI_EVENT_NUM_BAT,				/* ac & battery relative issue */
-	SCI_EVENT_NUM_BATL,				/* ac & battery relative issue */
-	SCI_EVENT_NUM_BATVL				/* ac & battery relative issue, 0x32 */
+	SCI_EVENT_NUM_WLAN = 0x21,		/* 0x21, Fn+F1, Wlan is on or off */
+	SCI_EVENT_NUM_3G,				/* 0x22, Fn+F9 for 3G switch */
+	SCI_EVENT_NUM_LID,				/* 0x23, press the lid or not */
+	SCI_EVENT_NUM_DISPLAY_TOGGLE,	/* 0x24, Fn+F8 for display switch */
+	SCI_EVENT_NUM_SLEEP,			/* 0x25, Fn+ESC for entering sleep mode */
+	SCI_EVENT_NUM_BRIGHTNESS_UP,	/* 0x26, Fn+F3, LCD backlight brightness up adjust */
+	SCI_EVENT_NUM_BRIGHTNESS_DN,	/* 0x27, Fn+F2, LCD backlight brightness down adjust */
+	SCI_EVENT_NUM_CAMERA,			/* 0x28, Fn+F10, Camera is on or off */
+	SCI_EVENT_NUM_TP,				/* 0x29, Fn+F11, TouchPad is on or off */
+	SCI_EVENT_NUM_AUDIO_MUTE,		/* 0x2A, Fn+F4, Mute is on or off */
+	SCI_EVENT_NUM_BLACK_SCREEN,		/* 0x2B, Fn+F7, Black screen is on or off */
+	SCI_EVENT_NUM_VOLUME_UP,		/* 0x2C, Fn+F6, Volume up adjust */
+	SCI_EVENT_NUM_VOLUME_DN,		/* 0x2D, Fn+F5, Volume down adjust */
+	SCI_EVENT_NUM_OVERTEMP,			/* 0x2E, Over-temperature happened */
+	SCI_EVENT_NUM_SIM,				/* 0x2F, SIM Card Detect */
+	SCI_EVENT_NUM_AC,				/* 0x30, AC in/out */
+	SCI_EVENT_NUM_BAT,				/* 0x31, BAT in/out */
+	SCI_EVENT_NUM_BATL,				/* 0x32, Battery Low capacity alarm, < 10% */
+	SCI_EVENT_NUM_BATVL,			/* 0x33, Battery VeryLow capacity alarm, < 5% */
+	SCI_EVENT_NUM_THROT				/* 0x34, CPU Throttling event alarm, CPU Temperature > 90 or < 85. */
 };
 
 #define SCI_EVENT_NUM_START		SCI_EVENT_NUM_WLAN
-#define SCI_EVENT_NUM_END		SCI_EVENT_NUM_BATVL
+#define SCI_EVENT_NUM_END		SCI_EVENT_NUM_THROT
 
 extern unsigned char app_access_ec_flag;
 

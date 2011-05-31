@@ -39,9 +39,9 @@ void set_watchdog_base(u32 base)
 }
 
 #ifdef CONFIG_32BIG
-u8 * watchdog_base = 0xbe010000;
+u32 * watchdog_base = 0xbe010000;
 #else
-u8 * watchdog_base = (u8 *)0x90000e0000010000;
+u32 * watchdog_base = (u32 *)0x90000e0000010000;
 #endif
 
 void enable_watchdog(void)
@@ -81,7 +81,7 @@ static void itx_a1101_reboot(void)
 
 static void notebook_a1004_reboot(void)
 {
-	ec_write_noindex(CMD_RESET, BIT_RESET_ON);
+	ec_write_noindex(CMD_RESET, RESET_ON);
 }
 
 void mach_prepare_reboot(void)
@@ -100,7 +100,7 @@ void mach_prepare_reboot(void)
 
 static void notebook_a1004_shutdown(void)
 {
-	ec_write_noindex(CMD_RESET, BIT_PWROFF_ON);
+	ec_write_noindex(CMD_RESET, PWROFF_ON);
 }
 
 static void itx_a1101_shutdown(void)
