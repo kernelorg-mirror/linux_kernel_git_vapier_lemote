@@ -17,7 +17,7 @@
 #ifndef __EC_WPCE775L_H__
 #define __EC_WPCE775L_H__
 
-#define EC_VERSION		"1.04"
+#define EC_VERSION		"1.05"
 
 /* 
  * The following registers are determined by the EC index configureation.
@@ -297,7 +297,7 @@ enum
 	SCI_EVENT_NUM_BRIGHTNESS_UP,	/* 0x26, Fn+F3, LCD backlight brightness up adjust */
 	SCI_EVENT_NUM_BRIGHTNESS_DN,	/* 0x27, Fn+F2, LCD backlight brightness down adjust */
 	SCI_EVENT_NUM_CAMERA,			/* 0x28, Fn+F10, Camera is on or off */
-	SCI_EVENT_NUM_TP,				/* 0x29, Fn+F11, TouchPad is on or off */
+	SCI_EVENT_NUM_TP_ON,			/* 0x29, Fn+F11, TouchPad is on */
 	SCI_EVENT_NUM_AUDIO_MUTE,		/* 0x2A, Fn+F4, Mute is on or off */
 	SCI_EVENT_NUM_BLACK_SCREEN,		/* 0x2B, Fn+F7, Black screen is on or off */
 	SCI_EVENT_NUM_VOLUME_UP,		/* 0x2C, Fn+F6, Volume up adjust */
@@ -308,11 +308,12 @@ enum
 	SCI_EVENT_NUM_BAT,				/* 0x31, BAT in/out */
 	SCI_EVENT_NUM_BATL,				/* 0x32, Battery Low capacity alarm, < 10% */
 	SCI_EVENT_NUM_BATVL,			/* 0x33, Battery VeryLow capacity alarm, < 5% */
-	SCI_EVENT_NUM_THROT				/* 0x34, CPU Throttling event alarm, CPU Temperature > 90 or < 85. */
+	SCI_EVENT_NUM_THROT,			/* 0x34, CPU Throttling event alarm, CPU Temperature > 90 or < 85. */
+	SCI_EVENT_NUM_TP_OFF = 0x37		/* 0x37, Fn+F11, TouchPad is off */
 };
 
 #define SCI_EVENT_NUM_START		SCI_EVENT_NUM_WLAN
-#define SCI_EVENT_NUM_END		SCI_EVENT_NUM_THROT
+#define SCI_EVENT_NUM_END		SCI_EVENT_NUM_TP_OFF
 
 extern unsigned char app_access_ec_flag;
 

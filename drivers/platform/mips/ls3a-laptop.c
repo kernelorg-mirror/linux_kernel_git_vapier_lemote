@@ -32,6 +32,10 @@
 
 #include <ec_wpce775l.h>
 
+/* Copy from Linux 2.6.38 */
+#define KEY_TOUCHPAD_ON     0x213
+#define KEY_TOUCHPAD_OFF    0x214
+
 /* Backlight */
 #define MAX_BRIGHTNESS	9
 
@@ -232,8 +236,6 @@ static int ls3anb_hotkey_init(void);
 static void ls3anb_hotkey_exit(void);
 extern int ec_query_get_event_num(void);
 
-/* Platform device object */
-static struct platform_device * ls3anb_pdev = NULL;
 /* Platform device ids table object */
 static struct platform_device_id platform_device_ids[] = 
 {
@@ -364,7 +366,8 @@ static const struct sci_event se[] =
 	[SCI_EVENT_NUM_DISPLAY_TOGGLE] =	{0, NULL},
 	[SCI_EVENT_NUM_3G] =				{0, NULL},
 	[SCI_EVENT_NUM_CAMERA] =			{0, NULL},
-	[SCI_EVENT_NUM_TP] =				{0, NULL},
+	[SCI_EVENT_NUM_TP_ON] =				{0, NULL},
+	[SCI_EVENT_NUM_TP_OFF] =			{0, NULL},
 	[SCI_EVENT_NUM_OVERTEMP] =			{0, ls3anb_over_temp_handler},
 	[SCI_EVENT_NUM_AC] =				{0, ls3anb_ac_handler},
 	[SCI_EVENT_NUM_BAT] =				{0, ls3anb_bat_handler},
@@ -388,6 +391,8 @@ static const struct key_entry ls3anb_keymap[] =
 	{KE_KEY, SCI_EVENT_NUM_DISPLAY_TOGGLE, { KEY_SWITCHVIDEOMODE } }, /* Fn + F8 */
 	{KE_KEY, SCI_EVENT_NUM_3G, { KEY_WLAN } }, /* Fn + F9 */
 	{KE_KEY, SCI_EVENT_NUM_CAMERA, { KEY_CAMERA } }, /* Fn + F10 */
+	{KE_KEY, SCI_EVENT_NUM_TP_ON, { KEY_TOUCHPAD_ON } }, /* Fn + F11 */
+	{KE_KEY, SCI_EVENT_NUM_TP_OFF, { KEY_TOUCHPAD_OFF } }, /* Fn + F11 */
 	{KE_END, 0 }
 };
 
@@ -539,7 +544,6 @@ static void __exit ls3anb_exit(void)
 	backlight_device_unregister(ls3anb_backlight_dev);
 
 	/* Platform device & driver */
-	platform_device_unregister(ls3anb_pdev);
 	platform_driver_unregister(&platform_driver);
 
 	printk(KERN_INFO "LS3ANB Driver : Unload Platform Specific Driver.\n");
