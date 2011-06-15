@@ -41,16 +41,23 @@ void set_watchdog_base(u32 base)
 #ifdef CONFIG_32BIG
 u32 * watchdog_base = 0xbe010000;
 #else
-u32 * watchdog_base = (u32 *)0x90000e0000010000;
+u32 * watchdog_base = (u32 *)0x90000e007f000000;
 #endif
 
 void enable_watchdog(void)
 {
 	struct pci_dev * pdev;
+	struct resource *r;
 
 	pdev = pci_get_device(PCI_VENDOR_ID_ATI, PCI_DEVICE_ID_ATI_SBX00_SMBUS, NULL);
 
 	pmio_write(0x69, 0); //enable watchdog
+
+        r = request_mem_region((u32)watchdog_base, 0x1000, "watchdog");
+        if (!r) {
+                printk(KERN_ERR "requeset watchdog region failed!\n");
+                return ;
+        }
 
 	set_watchdog_base((u32)watchdog_base); // not in standard mem region
 
@@ -74,9 +81,15 @@ void watchdog_poweroff(void)
 
 static void itx_a1101_reboot(void)
 {
-	// hard reset
-	outb(0xa, 0xcf9);
-	outb(0xe, 0xcf9);
+	u32 reg;
+	struct pci_dev * pdev;
+
+	pdev = pci_get_device(PCI_VENDOR_ID_ATI, PCI_DEVICE_ID_ATI_SBX00_SMBUS, NULL);
+
+	pci_read_config_dword(pdev, 0xa8, &reg); //eanble smbus watchdog decode
+	reg &= ~(1 << (5 + 8)); // enable gpio output
+	reg &= ~(1 << 5); // output low level
+	pci_write_config_dword(pdev, 0xa8, reg);
 }
 
 static void notebook_a1004_reboot(void)

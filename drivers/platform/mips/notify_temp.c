@@ -30,31 +30,53 @@ static int fan_controlled; // fan speed is not controlled by default.
 static void enable_fan_control(void)
 {
         unsigned char temp8;
+	
+	//fan 0
+	temp8 = pm_ioread(0x60);
+	pm_iowrite(0x60, temp8 | 0x40); // configure gpio3 as fan0out
 
-        temp8 = pm_ioread(0x60);
-        pm_iowrite(0x60, temp8 | 0x40); // configure gpio3 as fan0out
+	temp8 = pm2_ioread(0x0);
+	temp8 &= ~3;
+	temp8 |= 0x1; // enable software control
+	pm2_iowrite(0x0, temp8);
 
-        temp8 = pm2_ioread(0x0);
-        temp8 &= ~3;
-        temp8 |= 0x1; // enable software control
-        pm2_iowrite(0x0, temp8);
+	temp8 = pm2_ioread(0x1);
+	temp8 &= ~3; // disable automode
+	temp8 |= 0x4; // active high
+	pm2_iowrite(0x1, temp8);
 
-        temp8 = pm2_ioread(0x1);
-        temp8 &= ~3; // disable automode
-        temp8 |= 0x4; // active high
-        pm2_iowrite(0x1, temp8);
+	pm2_iowrite(0x2, 4); // set freq to 19.82KHz
 
-        pm2_iowrite(0x2, 4); // set freq to 19.82KHz
+	//fan 1
+	temp8 = pm_ioread(0x60);
+	pm_iowrite(0x60, temp8 | 0x4); // configure gpio48 as fan1out
+
+	temp8 = pm2_ioread(0x0);
+	temp8 &= ~0xc;
+	temp8 |= 0x4; // enable software control
+	pm2_iowrite(0x0, temp8);
+
+	temp8 = pm2_ioread(0xe);
+	temp8 &= ~3; // disable automode
+	temp8 |= 0x4; // active high
+	pm2_iowrite(0xe, temp8);
+
+	pm2_iowrite(0xf, 4); // set freq to 19.82KHz
 
 	fan_controlled = 1;
 }
 
-static void adjust_fan_speed(unsigned char fan_level)
+void adjust_fan0_speed(unsigned char fan_level)
 {
-        pm2_iowrite(0x3, fan_level);
+	pm2_iowrite(0x3, fan_level);
 }
 
-static void fan_adjust(u16 cputemp, u8 nbtemp)
+void adjust_fan1_speed(unsigned char fan_level)
+{
+	pm2_iowrite(0x10, fan_level);
+}
+
+void fan_adjust(u16 cputemp, u8 nbtemp)
 {
 	if (cputemp > 128) {
 		printk(KERN_ERR "CPU IS HOT!!! %d\n", cputemp);
@@ -63,8 +85,8 @@ static void fan_adjust(u16 cputemp, u8 nbtemp)
 	if (!fan_controlled)
 		enable_fan_control();	
 
-	adjust_fan_speed(0x80);
-
+	adjust_fan0_speed(0x80);
+	adjust_fan1_speed(0x80);
 }
 
 static void notify_temp(struct work_struct *work)
@@ -86,8 +108,8 @@ static void notify_temp(struct work_struct *work)
         	ec_write_noindex(0x4d, boardtemp);
 		break;
 	case MACH_LEMOTE_3A_A1101:
-		//fan_adjust(nbtemp, cputemp);
-		break;
+		fan_adjust(nbtemp, cputemp);
+		return; // now keep fan speed constant
 	default:
 		break;
 	}

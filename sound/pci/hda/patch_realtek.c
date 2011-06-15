@@ -17959,6 +17959,9 @@ static struct hda_verb alc662_init_verbs[] = {
 	{0x14, AC_VERB_SET_EAPD_BTLENABLE, 2},
 	{0x15, AC_VERB_SET_EAPD_BTLENABLE, 2},
 
+	{0x03, AC_VERB_SET_DIGI_CONVERT_1, 1},
+	{0x06, AC_VERB_SET_DIGI_CONVERT_1, 1},
+
 	{ }
 };
 
