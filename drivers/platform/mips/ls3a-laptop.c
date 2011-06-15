@@ -28,13 +28,14 @@
 #include <linux/input.h>
 #include <linux/input/sparse-keymap.h>
 #include <linux/jiffies.h>
+#include <linux/miscdevice.h>
 #include <asm/bootinfo.h>
 
 #include <ec_wpce775l.h>
 
 /* Copy from Linux 2.6.38 */
-#define KEY_TOUCHPAD_ON     0x213
-#define KEY_TOUCHPAD_OFF    0x214
+#define KEY_TOUCHPAD_TOGGLE	0x212
+#define KEY_MODEM	248
 
 /* Backlight */
 #define MAX_BRIGHTNESS	9
@@ -147,6 +148,18 @@ static void __exit ls3anb_exit(void);
 static int ls3anb_suspend(struct platform_device * pdev, pm_message_t state);
 /* Platform device resume handler */
 static int ls3anb_resume(struct platform_device * pdev);
+static ssize_t ls3anb_get_version(struct device_driver * driver, char * buf);
+
+/* Camera control misc device open handler */
+static int ls3anb_cam_misc_open(struct inode * inode, struct file * filp);
+/* Camera control misc device release handler */
+static int ls3anb_cam_misc_release(struct inode * inode, struct file * filp);
+/* Camera control misc device read handler */
+ssize_t ls3anb_cam_misc_read(struct file * filp,
+			char __user * buffer, size_t size, loff_t * offset);
+/* Camera control misc device write handler */
+static ssize_t ls3anb_cam_misc_write(struct file * filp,
+			const char __user * buffer, size_t size, loff_t * offset);
 
 /* Backlight device set brightness handler */
 static int ls3anb_set_brightness(struct backlight_device * pdev);
@@ -259,6 +272,23 @@ static struct platform_driver platform_driver =
 	.resume  = ls3anb_resume,
 #endif /* CONFIG_PM */
 };
+static DRIVER_ATTR(version, S_IRUGO, ls3anb_get_version, NULL);
+
+/* Camera control misc device object file operations */
+static const struct file_operations ls3anb_cam_misc_fops =
+{
+	.open = ls3anb_cam_misc_open,
+	.release = ls3anb_cam_misc_release,
+	.read = ls3anb_cam_misc_read,
+	.write = ls3anb_cam_misc_write
+};
+/* Camera control misc device object */
+static struct miscdevice ls3anb_cam_misc_dev =
+{
+	.minor = MISC_DYNAMIC_MINOR,
+	.name = "webcam",
+	.fops = &ls3anb_cam_misc_fops
+};
 
 /* Backlight device object */
 static struct backlight_device * ls3anb_backlight_dev = NULL;
@@ -366,8 +396,7 @@ static const struct sci_event se[] =
 	[SCI_EVENT_NUM_DISPLAY_TOGGLE] =	{0, NULL},
 	[SCI_EVENT_NUM_3G] =				{0, NULL},
 	[SCI_EVENT_NUM_CAMERA] =			{0, NULL},
-	[SCI_EVENT_NUM_TP_ON] =				{0, NULL},
-	[SCI_EVENT_NUM_TP_OFF] =			{0, NULL},
+	[SCI_EVENT_NUM_TP] =				{0, NULL},
 	[SCI_EVENT_NUM_OVERTEMP] =			{0, ls3anb_over_temp_handler},
 	[SCI_EVENT_NUM_AC] =				{0, ls3anb_ac_handler},
 	[SCI_EVENT_NUM_BAT] =				{0, ls3anb_bat_handler},
@@ -389,10 +418,9 @@ static const struct key_entry ls3anb_keymap[] =
 	{KE_KEY, SCI_EVENT_NUM_VOLUME_UP, { KEY_VOLUMEUP } }, /* Fn + F6 */
 	{KE_KEY, SCI_EVENT_NUM_BLACK_SCREEN, { KEY_DISPLAYTOGGLE } }, /* Fn + F7 */
 	{KE_KEY, SCI_EVENT_NUM_DISPLAY_TOGGLE, { KEY_SWITCHVIDEOMODE } }, /* Fn + F8 */
-	{KE_KEY, SCI_EVENT_NUM_3G, { KEY_WLAN } }, /* Fn + F9 */
+	{KE_KEY, SCI_EVENT_NUM_3G, { KEY_MODEM } }, /* Fn + F9 */
 	{KE_KEY, SCI_EVENT_NUM_CAMERA, { KEY_CAMERA } }, /* Fn + F10 */
-	{KE_KEY, SCI_EVENT_NUM_TP_ON, { KEY_TOUCHPAD_ON } }, /* Fn + F11 */
-	{KE_KEY, SCI_EVENT_NUM_TP_OFF, { KEY_TOUCHPAD_OFF } }, /* Fn + F11 */
+	{KE_KEY, SCI_EVENT_NUM_TP, { KEY_TOUCHPAD_TOGGLE } }, /* Fn + F11 */
 	{KE_END, 0 }
 };
 
@@ -414,9 +442,10 @@ static int __init ls3anb_init(void)
 		printk(KERN_ERR "LS3ANB Driver : Fail to register ls3anb laptop platform driver.\n");
 		return ret;
 	}
+	ret = driver_create_file(&platform_driver.driver, &driver_attr_version);
 	/* Register platform stuff END */
 	
-	/* >>>Register backlight START */
+	/* Register backlight START */
 	ls3anb_backlight_dev = backlight_device_register("lemote",
 				NULL, NULL, &ls3anb_backlight_ops, NULL);
 	if(IS_ERR(ls3anb_backlight_dev))
@@ -427,25 +456,9 @@ static int __init ls3anb_init(void)
 	ls3anb_backlight_dev->props.max_brightness = ec_read(INDEX_DISPLAY_MAXBRIGHTNESS_LEVEL);
 	ls3anb_backlight_dev->props.brightness = ec_read(INDEX_DISPLAY_BRIGHTNESS);
 	backlight_update_status(ls3anb_backlight_dev);
-	/* <<<Register backlight END */
+	/* Register backlight END */
 
-	/* >>>Register sensors START */
-	ls3anb_hwmon_dev = hwmon_device_register(NULL);
-	if(IS_ERR(ls3anb_hwmon_dev))
-	{
-		ret = -ENOMEM;
-		goto fail_hwmon_device_register;
-	}
-	ret = sysfs_create_group(&ls3anb_hwmon_dev->kobj,
-				&ls3anb_hwmon_attribute_group);
-	if(ret)
-	{
-		ret = -ENOMEM;
-		goto fail_sysfs_create_group_hwmon;
-	}
-	/* <<<Register sensors END */
-
-	/* >>>Register power supply START */
+	/* Register power supply START */
 	power_info = kzalloc(sizeof(struct ls3anb_power_info), GFP_KERNEL);
 	if(!power_info)
 	{
@@ -472,14 +485,21 @@ static int __init ls3anb_init(void)
 	}
 	/* Register power supply END */
 
-	/* Hotkey device START */
-	ret = ls3anb_hotkey_init();
+	/* Register sensors START */
+	ls3anb_hwmon_dev = hwmon_device_register(NULL);
+	if(IS_ERR(ls3anb_hwmon_dev))
+	{
+		ret = -ENOMEM;
+		goto fail_hwmon_device_register;
+	}
+	ret = sysfs_create_group(&ls3anb_hwmon_dev->kobj,
+				&ls3anb_hwmon_attribute_group);
 	if(ret)
 	{
-		printk(KERN_ERR "LS3ANB Driver : Fail to register hotkey device.\n");
-		goto fail_hotkey_init;
+		ret = -ENOMEM;
+		goto fail_sysfs_create_group_hwmon;
 	}
-	/* Hotkey device END */
+	/* Register sensors END */
 
 	/* SCI PCI Driver Init START  */
 	ret = sci_pci_driver_init();
@@ -490,12 +510,32 @@ static int __init ls3anb_init(void)
 	}
 	/* SCI PCI Driver Init END */
 
+	/* Hotkey device START */
+	ret = ls3anb_hotkey_init();
+	if(ret)
+	{
+		printk(KERN_ERR "LS3ANB Driver : Fail to register hotkey device.\n");
+		goto fail_hotkey_init;
+	}
+	/* Hotkey device END */
+
+	/* Camera control misc Device START */
+	ret = misc_register(&ls3anb_cam_misc_dev);
+	if(ret)
+	{
+		printk(KERN_ERR "LS3ANB Driver : Fail to register camera control misc device.\n");
+		goto fail_misc_register;
+	}
+	/* Camera control misc Device END */
+
 	/* Request control for backlight device START */
 	ec_write(INDEX_BACKLIGHT_CTRLMODE, BACKLIGHT_CTRL_BYHOST);
 	/* Request control for backlight device END */
 
 	return 0;
 
+fail_misc_register:
+	ls3anb_hotkey_exit();
 fail_hotkey_init:
 	sci_pci_driver_exit();
 fail_sci_pci_driver_init:
@@ -525,6 +565,9 @@ static void __exit ls3anb_exit(void)
 	/* Return control for backlight device START */
 	ec_write(INDEX_BACKLIGHT_CTRLMODE, BACKLIGHT_CTRL_BYEC);
 	/* Return control for backlight device END */
+
+	/* Camera control misc device */
+	misc_deregister(&ls3anb_cam_misc_dev);
 
 	/* Hotkey & SCI device */
 	ls3anb_hotkey_exit();
@@ -574,6 +617,54 @@ static int ls3anb_resume(struct platform_device * pdev)
 	return 0;
 }
 #endif /* CONFIG_PM */
+
+static ssize_t ls3anb_get_version(struct device_driver * driver, char * buf)
+{
+	return sprintf(buf, "%s\n", version);
+}
+ 
+/* Camera control misc device open handler */
+static int ls3anb_cam_misc_open(struct inode * inode, struct file * filp)
+{
+	return 0;
+}
+
+/* Camera control misc device release handler */
+static int ls3anb_cam_misc_release(struct inode * inode, struct file * filp)
+{
+	return 0;
+}
+
+/* Camera control misc device read handler */
+ssize_t ls3anb_cam_misc_read(struct file * filp,
+			char __user * buffer, size_t size, loff_t * offset)
+{
+	int ret = 0;
+
+	if(0 != *offset)
+	  return 0;
+
+	ret = ec_read(INDEX_CAM_STSCTRL);
+	ret = sprintf(buffer, "%d\n", ret);
+	*offset = ret;
+	
+	return ret;
+}
+
+/* Camera control misc device write handler */
+static ssize_t ls3anb_cam_misc_write(struct file * filp,
+			const char __user * buffer, size_t size, loff_t * offset)
+{
+	if(0 >= size)
+	  return -EINVAL;
+
+	if('0' == buffer[0])
+	  ec_write(INDEX_CAM_STSCTRL, CAM_STSCTRL_OFF);
+	else
+	  ec_write(INDEX_CAM_STSCTRL, CAM_STSCTRL_ON);
+
+	return size;
+}
 
 /* Backlight device set brightness handler */
 static int ls3anb_set_brightness(struct backlight_device * pdev)
