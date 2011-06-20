@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.36
-# Tue May 31 13:52:32 2011
+# Mon Jun 20 09:03:54 2011
 #
 CONFIG_MIPS=y
 
@@ -736,7 +736,8 @@ CONFIG_FIRMWARE_IN_KERNEL=y
 CONFIG_EXTRA_FIRMWARE="radeon/R600_rlc.bin"
 CONFIG_EXTRA_FIRMWARE_DIR="firmware"
 # CONFIG_SYS_HYPERVISOR is not set
-CONFIG_CONNECTOR=m
+CONFIG_CONNECTOR=y
+CONFIG_PROC_EVENTS=y
 CONFIG_MTD=m
 # CONFIG_MTD_DEBUG is not set
 # CONFIG_MTD_TESTS is not set
