@@ -410,7 +410,6 @@ static const struct key_entry ls3anb_keymap[] =
 {
 	{KE_SW,  SCI_EVENT_NUM_LID, { SW_LID } },
 	{KE_KEY, SCI_EVENT_NUM_SLEEP, { KEY_SLEEP } }, /* Fn + ESC */
-	{KE_KEY, SCI_EVENT_NUM_WLAN, { KEY_WLAN } }, /* Fn + F1 */
 	{KE_KEY, SCI_EVENT_NUM_BRIGHTNESS_DN, { KEY_BRIGHTNESSDOWN } }, /* Fn + F2 */
 	{KE_KEY, SCI_EVENT_NUM_BRIGHTNESS_UP, { KEY_BRIGHTNESSUP } }, /* Fn + F3 */
 	{KE_KEY, SCI_EVENT_NUM_AUDIO_MUTE, { KEY_MUTE } }, /* Fn + F4 */
