@@ -79,17 +79,88 @@ void watchdog_poweroff(void)
 	printk(KERN_ERR "Ohh, poweroff not work???? \n");
 }
 
-static void itx_a1101_reboot(void)
+/* 
+ * 3A ITX(A1101) reset method 
+ *
+ * Loongson3A have 16 GPIOs,
+ * GPIO1,GPIO3,GPIO4 & GPIO14 are used in driver watchdog chip(MAX6369)
+ *
+ * GPIO14 should keep high/low to start watchdog counter.
+ *
+ * GPIO1, GPIO4 & GPIO3 are link to watchdong pin SET2, SET1, SET0.
+ * SET2, SET1, SET0 determine watchdog timing characteristics, the timing table as follow:
+ *
+ * [SET2, SET1, SET0]     watchdog timeout period
+ *
+ *   [0, 0, 0]			  1 ms
+ *   [0, 0, 1]			 10 ms
+ *   [0, 1, 0]			 30 ms
+ *   [0, 1, 1]			Disable
+ *   [1, 0, 0]			100 ms
+ *   [1, 0, 1]			   1 s
+ *   [1, 1, 0]			  10 s
+ *   [1, 1, 1]			  60 s
+ */
+
+#define GPIO1	(1<<1)
+#define GPIO3	(1<<3)
+#define GPIO4	(1<<4)
+#define GPIO14	(1<<14)
+
+#ifdef CONFIG_64BIT
+#define LOONGSON3A_GPIO_OUTPUT_DATA	0xffffffffbfe0011c
+#define LOONGSON3A_GPIO_OUTPUT_ENABLE	0xffffffffbfe00120
+#else
+#define LOONGSON3A_GPIO_OUTPUT_DATA	0xbfe0011c
+#define LOONGSON3A_GPIO_OUTPUT_ENABLE	0xbfe00120
+#endif
+
+static void loongson3a_gpio_out_low(u32 gpio)
 {
 	u32 reg;
-	struct pci_dev * pdev;
 
-	pdev = pci_get_device(PCI_VENDOR_ID_ATI, PCI_DEVICE_ID_ATI_SBX00_SMBUS, NULL);
+	/* set output low level*/
+	reg = *(u32 *)LOONGSON3A_GPIO_OUTPUT_DATA;
+	reg &= ~(gpio);
+	*(u32 *)LOONGSON3A_GPIO_OUTPUT_DATA = reg;
 
-	pci_read_config_dword(pdev, 0xa8, &reg); //eanble smbus watchdog decode
-	reg &= ~(1 << (5 + 8)); // enable gpio output
-	reg &= ~(1 << 5); // output low level
-	pci_write_config_dword(pdev, 0xa8, reg);
+	/* enable output*/
+	reg = *(u32 *)LOONGSON3A_GPIO_OUTPUT_ENABLE;
+	reg &= ~(gpio);
+	*(u32 *)LOONGSON3A_GPIO_OUTPUT_ENABLE = reg;
+}
+
+static void loongson3a_gpio_out_high(u32 gpio)
+{
+	u32 reg;
+
+	/* set output high level*/
+	reg = *(u32 *)LOONGSON3A_GPIO_OUTPUT_DATA;
+	reg |= (gpio);
+	*(u32 *)LOONGSON3A_GPIO_OUTPUT_DATA = reg;
+
+	/* enable output*/
+	reg = *(u32 *)LOONGSON3A_GPIO_OUTPUT_ENABLE;
+	reg &= ~(gpio);
+	*(u32 *)LOONGSON3A_GPIO_OUTPUT_ENABLE = reg;
+}
+
+static void enable_cpu_watchdog(void)
+{
+	loongson3a_gpio_out_high(GPIO14);
+	
+	/* [SET2, SET1, SET0] ---  [0, 0, 0]  ---  1ms */
+	loongson3a_gpio_out_low(GPIO1);
+	loongson3a_gpio_out_low(GPIO4);
+	loongson3a_gpio_out_low(GPIO3);
+	
+	/* start watchdog timer */
+	loongson3a_gpio_out_low (GPIO14);
+}
+
+static void itx_a1101_reboot(void)
+{
+	enable_cpu_watchdog();
 }
 
 static void notebook_a1004_reboot(void)

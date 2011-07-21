@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.36-lm
-# Thu Jul  7 13:57:53 2011
+# Fri Jul 15 15:58:38 2011
 #
 CONFIG_MIPS=y
 
@@ -1734,7 +1734,10 @@ CONFIG_FRAMEBUFFER_CONSOLE_ROTATION=y
 # CONFIG_FONTS is not set
 CONFIG_FONT_8x8=y
 CONFIG_FONT_8x16=y
-# CONFIG_LOGO is not set
+CONFIG_LOGO=y
+CONFIG_LOGO_LINUX_MONO=y
+CONFIG_LOGO_LINUX_VGA16=y
+CONFIG_LOGO_LINUX_CLUT224=y
 CONFIG_SOUND=m
 # CONFIG_SOUND_OSS_CORE is not set
 CONFIG_SND=m
