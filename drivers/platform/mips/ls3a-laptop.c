@@ -500,15 +500,6 @@ static int __init ls3anb_init(void)
 	}
 	/* Register sensors END */
 
-	/* SCI PCI Driver Init START  */
-	ret = sci_pci_driver_init();
-	if(ret)
-	{
-		printk(KERN_ERR "LS3ANB Driver : Fail to register sci pci driver.\n");
-		goto fail_sci_pci_driver_init;
-	}
-	/* SCI PCI Driver Init END */
-
 	/* Hotkey device START */
 	ret = ls3anb_hotkey_init();
 	if(ret)
@@ -517,6 +508,15 @@ static int __init ls3anb_init(void)
 		goto fail_hotkey_init;
 	}
 	/* Hotkey device END */
+
+	/* SCI PCI Driver Init START  */
+	ret = sci_pci_driver_init();
+	if(ret)
+	{
+		printk(KERN_ERR "LS3ANB Driver : Fail to register sci pci driver.\n");
+		goto fail_sci_pci_driver_init;
+	}
+	/* SCI PCI Driver Init END */
 
 	/* Camera control misc Device START */
 	ret = misc_register(&ls3anb_cam_misc_dev);
@@ -534,19 +534,19 @@ static int __init ls3anb_init(void)
 	return 0;
 
 fail_misc_register:
-	ls3anb_hotkey_exit();
-fail_hotkey_init:
 	sci_pci_driver_exit();
 fail_sci_pci_driver_init:
+	ls3anb_hotkey_exit();
+fail_hotkey_init:
 	sysfs_remove_group(&ls3anb_hwmon_dev->kobj,
 				&ls3anb_hwmon_attribute_group);
 fail_sysfs_create_group_hwmon:
 	hwmon_device_unregister(ls3anb_hwmon_dev);
 fail_hwmon_device_register:
-	power_supply_unregister(&ls3anb_bat);
-fail_bat_power_supply_register:
 	power_supply_unregister(&ls3anb_ac);
 fail_ac_power_supply_register:
+	power_supply_unregister(&ls3anb_bat);
+fail_bat_power_supply_register:
 	kfree(power_info);
 fail_power_info_alloc:
 	backlight_device_unregister(ls3anb_backlight_dev);
@@ -569,12 +569,12 @@ static void __exit ls3anb_exit(void)
 	misc_deregister(&ls3anb_cam_misc_dev);
 
 	/* Hotkey & SCI device */
-	ls3anb_hotkey_exit();
 	sci_pci_driver_exit();
+	ls3anb_hotkey_exit();
 
 	/* Power supply */
-	power_supply_unregister(&ls3anb_bat);
 	power_supply_unregister(&ls3anb_ac);
+	power_supply_unregister(&ls3anb_bat);
 	kfree(power_info);
 
 	/* Sensors */
