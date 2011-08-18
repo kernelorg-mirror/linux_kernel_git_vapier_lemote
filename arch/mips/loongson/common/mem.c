@@ -14,9 +14,6 @@
 #include <mem.h>
 #include <pci.h>
 
-/* this address is fix by pmon */
-#define LOONGSON3A_512MB_START 0x20000000
-
 void __init prom_init_memory(void)
 {
 	add_memory_region(0x0, (memsize << 20), BOOT_MEM_RAM);

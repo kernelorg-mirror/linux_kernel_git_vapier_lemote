@@ -38,6 +38,13 @@
 
 static inline void unmask_mips_irq(unsigned int irq)
 {
+#ifdef CONFIG_CPU_LOONGSON3A
+	if(irq==58){
+		int cpu = smp_processor_id();
+		*(volatile unsigned int *)(0x900000003ff01428) = (0x1<<10);
+		*(volatile unsigned char *)(0x900000003ff0140a) = 0x10+(1<<(cpu%4));
+		}
+#endif
 	set_c0_status(0x100 << (irq - MIPS_CPU_IRQ_BASE));
 	irq_enable_hazard();
 }
