@@ -17,7 +17,7 @@
 #ifndef __EC_WPCE775L_H__
 #define __EC_WPCE775L_H__
 
-#define EC_VERSION		"1.06"
+#define EC_VERSION		"1.07"
 
 /* 
  * The following registers are determined by the EC index configureation.

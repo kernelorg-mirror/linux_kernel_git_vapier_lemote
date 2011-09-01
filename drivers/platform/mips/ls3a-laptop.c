@@ -232,6 +232,8 @@ static irqreturn_t ls3anb_sci_int_routine(int irq, void * dev_id);
 static void ls3anb_sci_event_handler(int event);
 /* SCI device over temperature event handler */
 static int ls3anb_over_temp_handler(int status);
+/* SCI device Throttling the CPU event handler */
+static int ls3anb_throttling_CPU_handler(int status);
 /* SCI device AC event handler */
 static int ls3anb_ac_handler(int status);
 /* SCI device Battery event handler */
@@ -395,6 +397,7 @@ static const struct sci_event se[] =
 	[SCI_EVENT_NUM_BLACK_SCREEN] =		{0, NULL},
 	[SCI_EVENT_NUM_DISPLAY_TOGGLE] =	{0, NULL},
 	[SCI_EVENT_NUM_3G] =				{0, NULL},
+	[SCI_EVENT_NUM_SIM] =				{0, NULL},
 	[SCI_EVENT_NUM_CAMERA] =			{0, NULL},
 	[SCI_EVENT_NUM_TP] =				{0, NULL},
 	[SCI_EVENT_NUM_OVERTEMP] =			{0, ls3anb_over_temp_handler},
@@ -402,6 +405,7 @@ static const struct sci_event se[] =
 	[SCI_EVENT_NUM_BAT] =				{0, ls3anb_bat_handler},
 	[SCI_EVENT_NUM_BATL] =				{0, ls3anb_bat_low_handler},
 	[SCI_EVENT_NUM_BATVL] =				{0, ls3anb_bat_very_low_handler},
+	[SCI_EVENT_NUM_THROT] =				{0, ls3anb_throttling_CPU_handler},
 };
 /* Hotkey device object */
 static struct input_dev * ls3anb_hotkey_dev = NULL;
@@ -1250,7 +1254,7 @@ static irqreturn_t ls3anb_sci_int_routine(int irq, void * dev_id)
 	}
 
 	event = ec_query_get_event_num();
-	//printk(KERN_DEBUG "LS3ANB Driver : Entry sci_int_routine(): event = 0x%x\n", event);
+	//printk(KERN_CRIT "LS3ANB Driver : Entry sci_int_routine(): event = 0x%x\n", event);
 	if((SCI_EVENT_NUM_START > event) || (SCI_EVENT_NUM_END < event))
 	{
         goto exit_event_action;
@@ -1306,6 +1310,13 @@ static void ls3anb_sci_event_handler(int event)
 
 /* SCI device over temperature event handler */
 static int ls3anb_over_temp_handler(int status)
+{
+	// do something
+	return 0;
+}
+
+/* SCI device Throttling the CPU event handler */
+static int ls3anb_throttling_CPU_handler(int status)
 {
 	// do something
 	return 0;

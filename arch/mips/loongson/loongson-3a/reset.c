@@ -38,7 +38,7 @@ void set_watchdog_base(u32 base)
 	pmio_write(0x6f, (base >> 24) & 0xff);
 }
 
-#ifdef CONFIG_32BIG
+#ifdef CONFIG_32BIT
 u32 * watchdog_base = 0xbe010000;
 #else
 u32 * watchdog_base = (u32 *)0x90000e007f000000;
