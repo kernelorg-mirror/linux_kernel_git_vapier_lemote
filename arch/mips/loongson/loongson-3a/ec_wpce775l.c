@@ -139,7 +139,6 @@ unsigned char ec_read_all(unsigned char command, unsigned char index)
 	}
 	value = recv_ec_data();
 out:
-	printk(KERN_CRIT "Ready exit spin_lock!\n");
  	spin_unlock_irqrestore(&index_access_lock, flags);
  
  	return value;

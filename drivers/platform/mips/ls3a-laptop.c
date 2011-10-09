@@ -97,6 +97,7 @@ struct ls3anb_power_info
 	/* Battery Technology */
 	unsigned int technology;
 	/* Battery cell count */
+	unsigned char cell_count_string[4];
 	unsigned char cell_count;
 
 	/* Battery dynamic charge/discharge voltage */
@@ -207,6 +208,8 @@ static void ls3anb_power_info_capacity_percent_update(void);
 static void ls3anb_power_info_remain_time_update(void);
 /* Update power_info->fullchg_time value */
 static void ls3anb_power_info_fullcharge_time_update(void);
+/* Clear battery static information. */
+static void ls3anb_power_info_battery_static_clear(void);
 /* Get battery static information. */
 static void ls3anb_power_info_battery_static_update(void);
 /* Update power_status value */
@@ -402,7 +405,7 @@ static const struct sci_event se[] =
 	[SCI_EVENT_NUM_TP] =				{0, NULL},
 	[SCI_EVENT_NUM_OVERTEMP] =			{0, ls3anb_over_temp_handler},
 	[SCI_EVENT_NUM_AC] =				{0, ls3anb_ac_handler},
-	[SCI_EVENT_NUM_BAT] =				{0, ls3anb_bat_handler},
+	[SCI_EVENT_NUM_BAT] =				{INDEX_POWER_STATUS, ls3anb_bat_handler},
 	[SCI_EVENT_NUM_BATL] =				{0, ls3anb_bat_low_handler},
 	[SCI_EVENT_NUM_BATVL] =				{0, ls3anb_bat_very_low_handler},
 	[SCI_EVENT_NUM_THROT] =				{0, ls3anb_throttling_CPU_handler},
@@ -470,21 +473,28 @@ static int __init ls3anb_init(void)
 		goto fail_power_info_alloc;
 	}
 
-	/* Get battery static information. */
-	ls3anb_power_info_battery_static_update();
-
 	ls3anb_power_info_power_status_update();
-	ret = power_supply_register(NULL, &ls3anb_ac);
-	if(ret)
+	if(power_info->bat_in)
+ 	{
+		/* Get battery static information. */
+		ls3anb_power_info_battery_static_update();
+	}
+	else
 	{
-		ret = -ENOMEM;
-		goto fail_ac_power_supply_register;
+		printk(KERN_ERR "LS3ANB Driver: The battery does not exist!!\n");
 	}
 	ret = power_supply_register(NULL, &ls3anb_bat);
 	if(ret)
 	{
 		ret = -ENOMEM;
 		goto fail_bat_power_supply_register;
+	}
+
+	ret = power_supply_register(NULL, &ls3anb_ac);
+	if(ret)
+	{
+		ret = -ENOMEM;
+		goto fail_ac_power_supply_register;
 	}
 	/* Register power supply END */
 
@@ -929,6 +939,20 @@ static void ls3anb_power_info_fullcharge_time_update(void)
 	power_info->fullchg_time = (ec_read(INDEX_BATTERY_ATTF_HIGH) << 8) | ec_read(INDEX_BATTERY_ATTF_LOW);
 }
 
+/* Clear battery static information. */
+static void ls3anb_power_info_battery_static_clear(void)
+{
+	strcpy(power_info->manufacturer_name, "Unknown");
+	strcpy(power_info->device_name, "Unknown");
+	power_info->technology = POWER_SUPPLY_TECHNOLOGY_UNKNOWN; 
+	strcpy(power_info->serial_number, "Unknown");
+	strcpy(power_info->manufacture_date, "Unknown");
+	power_info->cell_count = 0;
+	power_info->design_capacity = 0;
+	power_info->design_voltage = 0;
+	power_info->full_charged_capacity = 0;
+}
+
 /* Get battery static information. */
 static void ls3anb_power_info_battery_static_update(void)
 {
@@ -974,7 +998,10 @@ static void ls3anb_power_info_battery_static_update(void)
 
 	bat_serial_number = (ec_read(INDEX_BATTERY_SN_HIGH) << 8) | ec_read(INDEX_BATTERY_SN_LOW);
 	snprintf(power_info->serial_number, 8, "%x", bat_serial_number);
-	power_info->cell_count = ((ec_read(INDEX_BATTERY_CV_HIGH) << 8) | ec_read(INDEX_BATTERY_CV_LOW)) / 4200;
+
+	ls3anb_bat_get_string(INDEX_BATTERY_CELLCNT_START, power_info->cell_count_string);
+	power_info->cell_count = (!strncmp(power_info->cell_count_string, FLAG_BAT_CELL_3S1P, 4)) ? 3 : 0;
+
 	power_info->design_capacity = (ec_read(INDEX_BATTERY_DC_HIGH) << 8) | ec_read(INDEX_BATTERY_DC_LOW);
 	power_info->design_voltage = (ec_read(INDEX_BATTERY_DV_HIGH) << 8) | ec_read(INDEX_BATTERY_DV_LOW);
 	power_info->full_charged_capacity = (ec_read(INDEX_BATTERY_FCC_HIGH) << 8) | ec_read(INDEX_BATTERY_FCC_LOW);
@@ -1021,7 +1048,6 @@ static void ls3anb_power_info_power_status_update(void)
 		if(power_status & MASK(BIT_POWER_BATFCHG))
 		{
 			power_info->charge_status = POWER_SUPPLY_STATUS_FULL;
-			power_info->remain_capacity_percent = 100;
 		}
 		else if(power_status & MASK(BIT_POWER_BATCHG))
 		{
@@ -1030,7 +1056,6 @@ static void ls3anb_power_info_power_status_update(void)
 		else if(power_status & MASK(BIT_POWER_TERMINATE))
 		{
 			power_info->charge_status = POWER_SUPPLY_STATUS_NOT_CHARGING;
-			power_info->remain_capacity_percent = 100;
 		}
 		else
 		{
@@ -1044,7 +1069,15 @@ static void ls3anb_bat_get_string(unsigned char index, unsigned char *bat_string
 {
 	unsigned char length, i;
 
-	length = ec_read(index);
+	if(index == INDEX_BATTERY_CELLCNT_START)
+	{
+		length = BATTERY_CELLCNT_LENG;
+		index--;
+	}
+	else
+	{
+		length = ec_read(index);
+	}
 	for(i = 0; i < length; i++)
 	{
 		*bat_string++ = ec_read(++index);
@@ -1334,8 +1367,17 @@ static int ls3anb_ac_handler(int status)
 /* SCI device Battery event handler */
 static int ls3anb_bat_handler(int status)
 {
-	/* Get battery static information. */
-	ls3anb_power_info_battery_static_update();
+	/* Battery insert/pull-out to handle battery static information. */
+	if(status & MASK(BIT_POWER_BATPRES))
+	{
+		/* If battery is insert, get battery static information. */
+		ls3anb_power_info_battery_static_update();
+	}
+	else
+	{
+		/* Else if battery is pull-out, clear battery static information. */
+		ls3anb_power_info_battery_static_clear();
+	}
 	/* Report status changed */
 	power_supply_changed(&ls3anb_bat);
 

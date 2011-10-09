@@ -17,7 +17,7 @@
 #ifndef __EC_WPCE775L_H__
 #define __EC_WPCE775L_H__
 
-#define EC_VERSION		"1.07"
+#define EC_VERSION		"1.08"
 
 /* 
  * The following registers are determined by the EC index configureation.
@@ -126,8 +126,6 @@ enum
 /* <<< End Backlight */
 
 /* >>> Read battery index for ACPI 80h command */
-#define FLAG_BAT_CELL_3S1P			0x03
-
 /*
  * The reported battery die temperature.
  * The temperature is expressed in units of 0.25 seconds and is updated every 2.56 seconds.
@@ -159,9 +157,9 @@ enum
 {
 	BIT_BATTERT_STATUS_RTA = 0,	/* Battery Remaining Time Alarm. <= 10min */
 	BIT_BATTERY_STATUS_RCA,		/* Battery Remaining Capacity Alarm. <= 430mAh */
-	BIT_BATTERY_STATUS_TDA = 3,		/* Battery Terminate Discharge Alarm. */
+	BIT_BATTERY_STATUS_TDA = 3,	/* Battery Terminate Discharge Alarm. */
 	BIT_BATTERY_STATUS_OTA,		/* Battery Over Temperature Alarm. */
-	BIT_BATTERY_STATUS_TCA = 6,		/* Battery Terminate Charge Alarm. */
+	BIT_BATTERY_STATUS_TCA = 6,	/* Battery Terminate Charge Alarm. */
 	BIT_BATTERY_STATUS_OCA		/* Battery Over Charged Alarm. */
 };
 #define INDEX_BATTERY_RC_LOW		0x2E	/* Battery RemainingCapacity Low byte. */
@@ -176,6 +174,28 @@ enum
 #define INDEX_BATTERY_CC_HIGH		0x37	/* Battery ChargingCurrent High byte. */
 #define INDEX_BATTERY_CV_LOW		0x38	/* Battery ChargingVoltage Low byte. */
 #define INDEX_BATTERY_CV_HIGH		0x39	/* Battery ChargingVoltage High byte. */
+#define INDEX_BATTERY_CHGSTS_LOW	0x3A	/* Battery ChargingStatus Low byte. */
+enum
+{
+	BIT_BATTERY_CHGSTS_XCHGLV = 0,	/* 1 = Battery is depleted */
+	BIT_BATTERY_CHGSTS_OC,			/* 1 = Overcharge fault */
+	BIT_BATTERY_CHGSTS_OCHGI,		/* 1 = Overcharge current fault */
+	BIT_BATTERY_CHGSTS_OCHGV,		/* 1 = Overcharge voltage fault */
+	BIT_BATTERY_CHGSTS_FCMTO,		/* 1 = Fast-charge timeout fault */
+	BIT_BATTERY_CHGSTS_PCMTO,		/* 1 = Precharge timeout fault */
+	BIT_BATTERY_CHGSTS_CB			/* 1 = Cell balancing in progress */
+};
+#define INDEX_BATTERY_CHGSTS_HIGH	0x3B	/* Battery ChargingStatus High byte. */
+enum
+{
+	BIT_BATTERY_CHGSTS_HTCHG = 0,	/* 1 = Low temperature charging */
+	BIT_BATTERY_CHGSTS_ST2CHG,		/* 1 = Standard temperature charging 2 */
+	BIT_BATTERY_CHGSTS_ST1CHG,		/* 1 = Standard temperature charging 1 */
+	BIT_BATTERY_CHGSTS_LTCHG,		/* 1 = Low temperature charging */
+	BIT_BATTERY_CHGSTS_PCHG = 5,	/* 1 = Precharging conditions exist */
+	BIT_BATTERY_CHGSTS_CHGSUSP,		/* 1 = Charging suspended */
+	BIT_BATTERY_CHGSTS_XCHG			/* 1 = Charging disabled */
+};
 
 /* Battery static information. */
 #define INDEX_BATTERY_DC_LOW		0x60	/* Battery DesignCapacity Low byte. */
@@ -188,11 +208,16 @@ enum
 #define INDEX_BATTERY_SN_HIGH		0x67	/* Battery SerialNumber High byte. */
 #define INDEX_BATTERY_MFN_LENG		0x68	/* Battery ManufacturerName string length. */
 #define INDEX_BATTERY_MFN_START		0x69	/* Battery ManufacturerName string start byte. */
-#define INDEX_BATTERY_DEVNAME_LENG	0x73	/* Battery DeviceName string length. */
-#define INDEX_BATTERY_DEVNAME_START	0x74	/* Battery DeviceName string start byte. */
-#define INDEX_BATTERY_DEVCHEM_LENG	0x7B	/* Battery DeviceChemitry string length. */
-#define INDEX_BATTERY_DEVCHEM_START	0x7C	/* Battery DeviceChemitry string start byte. */
 
+#define INDEX_BATTERY_DEVNAME_LENG	0x74	/* Battery DeviceName string length. */
+#define INDEX_BATTERY_DEVNAME_START	0x75	/* Battery DeviceName string start byte. */
+#define INDEX_BATTERY_DEVCHEM_LENG	0x7C	/* Battery DeviceChemitry string length. */
+#define INDEX_BATTERY_DEVCHEM_START	0x7D	/* Battery DeviceChemitry string start byte. */
+#define INDEX_BATTERY_MFINFO_LENG	0x81	/* Battery ManufacturerInfo string length. */
+#define INDEX_BATTERY_MFINFO_START	0x82	/* Battery ManufacturerInfo string start byte. */
+#define INDEX_BATTERY_CELLCNT_START	0x95    /* Battery packaging fashion string start byte(=4). Unit: ASCII. */
+#define BATTERY_CELLCNT_LENG	  	4		/* Battery packaging fashion string size. */
+#define FLAG_BAT_CELL_3S1P 			"3S1P"
 
 #define BIT_BATTERY_CURRENT_PN      7       /* Battery current sign is positive or negative */
 #define BIT_BATTERY_CURRENT_PIN		0x07	/* Battery current sign is positive or negative.*/
@@ -208,8 +233,7 @@ enum
 	BIT_STOPCHG_OVERTEMP,
 	BIT_STOPCHG_OVERVOLT,
 	BIT_STOPCHG_OVERCURRENT,
-	BIT_STOPCHG_TERMINATE,
-	BIT_STOPCHG_RCOVER95		/* When insert AC, if RC over 95, terminate charging. */
+	BIT_STOPCHG_TERMINATE
 };
 #define INDEX_POWER_STATUS		0xA2	/* Read current power status. */
 enum
@@ -245,7 +269,7 @@ enum
 	BIT_SHUTDNID_SYSCMD,	/* System command */
 	BIT_SHUTDNID_LPRESSPWN,	/* Long press power button */
 	BIT_SHUTDNID_PWRUNDER9V,/* Batery voltage low under 9V */
-	BIT_SHUTDNID_S3		/* Entry S3 state */
+	BIT_SHUTDNID_S3			/* Entry S3 state */
 };
 
 #define	INDEX_SYSTEM_CFG		0xA5		/* Read System config */
@@ -259,7 +283,7 @@ enum
 
 #define	INDEX_VOLUME_LEVEL		0xA6		/* Read Volume Level command */
 #define	INDEX_VOLUME_MAXLEVEL	0xA7		/* Volume MaxLevel */
-#define	VOLUME_MAX_LEVEL		0x0A		/* Volume level max is 15 */
+#define	VOLUME_MAX_LEVEL		0x0A		/* Volume level max is 11 */
 enum
 {
 	FLAG_VOLUME_LEVEL_0 = 0,
@@ -316,7 +340,7 @@ enum
 	SCI_EVENT_NUM_BAT,				/* 0x31, BAT in/out */
 	SCI_EVENT_NUM_BATL,				/* 0x32, Battery Low capacity alarm, < 10% */
 	SCI_EVENT_NUM_BATVL,			/* 0x33, Battery VeryLow capacity alarm, < 5% */
-	SCI_EVENT_NUM_THROT				/* 0x34, CPU Throttling event alarm, CPU Temperature > 90 or < 85. */
+	SCI_EVENT_NUM_THROT				/* 0x34, CPU Throttling event alarm, CPU Temperature > 85 or < 80. */
 };
 
 #define SCI_EVENT_NUM_START		SCI_EVENT_NUM_WLAN
