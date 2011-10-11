@@ -269,4 +269,6 @@ void radeon_gart_fini(struct radeon_device *rdev)
 	kfree(rdev->gart.pages_addr);
 	rdev->gart.pages = NULL;
 	rdev->gart.pages_addr = NULL;
+
+	radeon_dummy_page_fini(rdev);
 }
