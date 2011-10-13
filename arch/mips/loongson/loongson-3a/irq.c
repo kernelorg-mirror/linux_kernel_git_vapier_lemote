@@ -264,11 +264,15 @@ void fixup_irqs(void)
 			} else {
 				do_set_affinity = 0;
 			}
+
+			if (irq == 58) {
+				INT_router_regs_lpc_int = 0x11;
+				IO_control_regs_Intenset = (0x1<<10);//Enable lpc interrupts
+			}
 			raw_spin_unlock_irqrestore(&desc->lock, flags);
 
 			if (do_set_affinity)
 				irq_set_affinity(irq, &new_affinity);
-
 		}
 	}
 	clear_c0_status(ST0_IM);
