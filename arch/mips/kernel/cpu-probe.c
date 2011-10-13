@@ -609,7 +609,7 @@ static inline void cpu_probe_legacy(struct cpuinfo_mips *c, unsigned int cpu)
 		c->tlbsize = 64;
 		break;
 	case PRID_IMP_LOONGSON2:
-		if ((c->processor_id & 0xf) == (PRID_IMP_LOONGSON3 & 0xf)) {
+		if ((c->processor_id & 0xff) >= PRID_REV_LOONGSON3A) {
 			c->cputype = CPU_LOONGSON3;
 			__cpu_name[cpu] = "ICT Loongson-3";
 		}
