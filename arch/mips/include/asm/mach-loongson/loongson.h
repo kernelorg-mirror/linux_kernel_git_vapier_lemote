@@ -246,6 +246,9 @@ static inline void do_perfcnt_IRQ(void)
 #define LOONGSON_PXARB_CFG		LOONGSON_REG(LOONGSON_REGBASE + 0x68)
 #define LOONGSON_PXARB_STATUS		LOONGSON_REG(LOONGSON_REGBASE + 0x6c)
 
+/* Chip Config */
+#define LOONGSON_CHIPCFG0		LOONGSON_REG(LOONGSON_REGBASE + 0x80)
+
 /* pcimap */
 
 #define LOONGSON_PCIMAP_PCIMAP_LO0	0x0000003f
@@ -262,9 +265,6 @@ static inline void do_perfcnt_IRQ(void)
 #include <linux/cpufreq.h>
 extern void loongson2_cpu_wait(void);
 extern struct cpufreq_frequency_table loongson2_clockmod_table[];
-
-/* Chip Config */
-#define LOONGSON_CHIPCFG0		LOONGSON_REG(LOONGSON_REGBASE + 0x80)
 #endif
 
 /*
@@ -343,5 +343,7 @@ extern unsigned long _loongson_addrwincfg_base;
 	LOONGSON_ADDRWIN_CFG(PCIDMA, DDR, win, src, dst, size)
 
 #endif	/* ! CONFIG_CPU_SUPPORTS_ADDRWINCFG */
+
+void loongson_suspend_lowlevel(void);
 
 #endif /* __ASM_MACH_LOONGSON_LOONGSON_H */

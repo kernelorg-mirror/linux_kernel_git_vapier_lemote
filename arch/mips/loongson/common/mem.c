@@ -42,7 +42,7 @@ void __init prom_init_memory(void)
 #ifdef CONFIG_CPU_LOONGSON3A
 	if (highmemsize > 0) {
 		add_memory_region(LOONGSON_HIGHMEM_START - (256 << 20), 256 << 20, BOOT_MEM_RESERVED);
-		add_memory_region(LOONGSON_HIGHMEM_START, (highmemsize - 8) << 20, BOOT_MEM_RAM);
+		add_memory_region(LOONGSON_HIGHMEM_START, highmemsize << 20, BOOT_MEM_RAM);
 	}
 #else
 	if (highmemsize > 256) {

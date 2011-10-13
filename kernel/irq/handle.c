@@ -372,7 +372,7 @@ irqreturn_t handle_IRQ_event(unsigned int irq, struct irqaction *action)
 
 	do {
 		if(!action) {
-			prom_printf("Too early interrupt from irq %d\n", irq);
+			printk("Too early interrupt from irq %d\n", irq);
 			break;
 		}
 

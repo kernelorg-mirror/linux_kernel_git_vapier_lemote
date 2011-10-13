@@ -232,7 +232,7 @@ static int sci_pci_init(void);
 /* SCI event routine handler */
 static irqreturn_t ls3anb_sci_int_routine(int irq, void * dev_id);
 /* SCI event handler */
-static void ls3anb_sci_event_handler(int event);
+void ls3anb_sci_event_handler(int event);
 /* SCI device over temperature event handler */
 static int ls3anb_over_temp_handler(int status);
 /* SCI device Throttling the CPU event handler */
@@ -609,14 +609,22 @@ static void __exit ls3anb_exit(void)
 /* Platform device suspend handler */
 static int ls3anb_suspend(struct platform_device * pdev, pm_message_t state)
 {
-	// do something
+	struct pci_dev *dev;
+
+	dev = pci_get_device(PCI_VENDOR_ID_ATI, PCI_DEVICE_ID_ATI_SBX00_SMBUS, NULL);
+	pci_disable_device(dev);
+
 	return 0;
 }
 
 /* Platform device resume handler */
 static int ls3anb_resume(struct platform_device * pdev)
 {
-	// do something
+	struct pci_dev *dev;
+
+	dev = pci_get_device(PCI_VENDOR_ID_ATI, PCI_DEVICE_ID_ATI_SBX00_SMBUS, NULL);
+	pci_enable_device(dev);
+
 	return 0;
 }
 #else
@@ -1309,7 +1317,7 @@ exit_event_action:
 }
  
 /* SCI device event handler */
-static void ls3anb_sci_event_handler(int event)
+void ls3anb_sci_event_handler(int event)
 {
 	int status = 0;
 	struct key_entry * ke = NULL;

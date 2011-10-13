@@ -33,6 +33,7 @@
 #include <asm/i8259.h>
 #include <asm/mipsregs.h>
 #include <asm/delay.h>
+#include <asm/cevt-r4k.h>
 #include <asm/mips-boards/bonito64.h>
 #include "irqregs.h"
 #include "htregs.h"
@@ -134,19 +135,13 @@ static struct irqaction cascade_irqaction = {
 	.name = "cascade",
 };
 
-void __init mach_init_irq(void)
+void irq_router_init(void)
 {
 	unsigned int t;
-	/*
-	* Clear all of the interrupts while we change the able around a bit.
-	* int-handler is not on bootstrap
-	*/
-	clear_c0_status(ST0_IM | ST0_BEV);
-	local_irq_disable();
 
 	/* Route the LPC interrupt to Core0 INT0 */
 	INT_router_regs_lpc_int = 0x11;
-	*(volatile unsigned int *)(0x900000003ff00000 + 0x1428) = (0x1<<10);//Enable lpc interrupts
+	IO_control_regs_Intenset = (0x1<<10);//Enable lpc interrupts
 
 	/* Route the HT interrupt to Core0 INT1 */
 	INT_router_regs_HT1_int0 = 0x21;
@@ -159,7 +154,7 @@ void __init mach_init_irq(void)
 	INT_router_regs_HT1_int7 = 0x21;
 	/* Enable the all HT interrupt */
 	//HT1
-	HT_irq_enable_reg0 = 0xffffff7f;
+	HT_irq_enable_reg0 = 0xffffffff;
 	HT_irq_enable_reg1 = 0x00000000;
 	HT_irq_enable_reg2 = 0x00000000;
 	HT_irq_enable_reg3 = 0x00000000;
@@ -168,12 +163,11 @@ void __init mach_init_irq(void)
 	HT_irq_enable_reg6 = 0x00000000;
 	HT_irq_enable_reg7 = 0x00000000;
 	/* Enable the IO interrupt controller */ 
-	t = IO_control_regs_Intenset; 
-	prom_printf("the old IO intset is %x\n", t);
+	t = IO_control_regs_Inten; 
+	printk("the old IO inten is %x\n", t);
 	IO_control_regs_Intenset = t | (0xffff << 16);
-	IO_control_regs_Intenset = t | (0xffff << 16) | (0x1 << 10);
-	t = IO_control_regs_Intenset;
-	prom_printf("the new IO intset is %x\n", t);
+	t = IO_control_regs_Inten;
+	printk("the new IO inten is %x\n", t);
 
 #ifndef CONFIG_CPU_UART
 	/* Enable the LPC interrupt */
@@ -182,6 +176,18 @@ void __init mach_init_irq(void)
 	/* the 18-bit interrpt enable bit */ 
 	*(volatile unsigned int*)(0xffffffffbfe00200 + 0x04) = 0x0;
 #endif
+}
+
+void __init mach_init_irq(void)
+{
+	/*
+	* Clear all of the interrupts while we change the able around a bit.
+	* int-handler is not on bootstrap
+	*/
+	clear_c0_status(ST0_IM | ST0_BEV);
+	local_irq_disable();
+
+	irq_router_init();
 	/* most bonito irq should be level triggered */
 	/* 
 	* Mask out all interrupt by writing "1" to all bit position in 
@@ -206,5 +212,65 @@ void __init mach_init_irq(void)
 	set_c0_status(STATUSF_IP2);
 #endif
 	set_c0_status(STATUSF_IP6);
-	prom_printf("init_IRQ done\n");
+	printk("init_IRQ done\n");
 }
+
+void fixup_irqs(void)
+{
+	int irq;
+	struct irq_desc *desc;
+	cpumask_t new_affinity;
+	unsigned long flags;
+	int do_set_affinity;
+	int cpu;
+
+	cpu = smp_processor_id();
+
+	for (irq = 0; irq < NR_IRQS; irq++) {
+		desc = irq_to_desc(irq);
+
+		if (desc->chip == &no_irq_chip)
+			continue;
+
+		/* Timer IRQ */
+		if (irq == c0_compare_irqaction.irq) {
+			clear_c0_status(STATUSF_IP7);
+		}
+		else {
+			raw_spin_lock_irqsave(&desc->lock, flags);
+			/*
+			 * If this irq has an action, it is in use and
+			 * must be migrated if it has affinity to this
+			 * cpu.
+			 */
+			if (desc->action && cpumask_test_cpu(cpu, desc->affinity)) {
+				if (cpumask_weight(desc->affinity) > 1) {
+					/*
+					 * It has multi CPU affinity,
+					 * just remove this CPU from
+					 * the affinity set.
+					 */
+					cpumask_copy(&new_affinity, desc->affinity);
+					cpumask_clear_cpu(cpu, &new_affinity);
+				} else {
+					/*
+					 * Otherwise, put it on lowest
+					 * numbered online CPU.
+					 */
+					cpumask_clear(&new_affinity);
+					cpumask_set_cpu(cpumask_first(cpu_online_mask), &new_affinity);
+				}
+				do_set_affinity = 1;
+			} else {
+				do_set_affinity = 0;
+			}
+			raw_spin_unlock_irqrestore(&desc->lock, flags);
+
+			if (do_set_affinity)
+				irq_set_affinity(irq, &new_affinity);
+
+		}
+	}
+	clear_c0_status(ST0_IM);
+}
+
