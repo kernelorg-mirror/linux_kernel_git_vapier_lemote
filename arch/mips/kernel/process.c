@@ -51,6 +51,21 @@ void __noreturn cpu_idle(void)
 {
 	int cpu;
 
+#ifdef CONFIG_CPU_LOONGSON3
+	__asm__ (" .set mips64\n"
+		" jal  1f \n"
+		" nop     \n"
+		"1: lui $8,0xa000\n"
+		" or $31,$31,$8\n"
+		" daddiu $31,$31,0x14\n"
+		" jr $31 \n"
+		" nop \n"
+		" 2: \n"
+		:
+		:
+		:"$8","$31"
+	);
+#endif
 	/* CPU is going idle. */
 	cpu = smp_processor_id();
 

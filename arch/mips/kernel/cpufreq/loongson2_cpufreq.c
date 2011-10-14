@@ -21,6 +21,9 @@
 
 #include <loongson.h>
 
+int cpufreq_enabled;
+EXPORT_SYMBOL(cpufreq_enabled);
+
 static uint nowait;
 
 static struct clk *cpuclk;
@@ -63,6 +66,9 @@ static int loongson2_cpufreq_target(struct cpufreq_policy *policy,
 
 	if (!cpu_online(cpu))
 		return -ENODEV;
+
+	if (!cpufreq_enabled)
+			return 0;
 
 	cpus_allowed = current->cpus_allowed;
 	set_cpus_allowed_ptr(current, cpumask_of(cpu));

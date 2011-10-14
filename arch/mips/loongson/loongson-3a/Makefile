@@ -12,4 +12,6 @@ obj-$(CONFIG_NUMA)	+= numa.o
 obj-$(CONFIG_SUSPEND) += pm.o sleep.o
 
 obj-$(CONFIG_LOONGSON3_CPUAUTOPLUG) += loongson3_cpuautoplug.o
+
+obj-$(CONFIG_RS780_HPET) += hpet.o
 #EXTRA_AFLAGS := $(CFLAGS)

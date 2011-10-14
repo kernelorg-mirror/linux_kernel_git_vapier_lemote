@@ -138,6 +138,18 @@ config CS5536_MFGPT
 
 	  If unsure, say Yes.
 
+config RS780_HPET
+	bool "RS780 HPET Timer"
+	depends on LOONGSON3A_RS780E
+	select MIPS_EXTERNAL_TIMER
+	help
+	  This option enables the hpet timer of AMD RS780E.
+
+	  If you want to enable the Loongson3 CPUFreq Driver, Please enable
+	  this option at first, otherwise, You will get wrong system time.
+
+	  If unsure, say Yes.
+
 config LOONGSON_SUSPEND
 	bool
 	default y

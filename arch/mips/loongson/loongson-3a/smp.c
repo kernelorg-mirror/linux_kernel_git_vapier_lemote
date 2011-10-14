@@ -20,7 +20,9 @@
 #include <linux/cpu.h>
 #include <linux/sched.h>
 #include <linux/smp.h>
+#include <linux/cpufreq.h>
 #include <asm/processor.h>
+#include <asm/clock.h>
 #include <asm/tlbflush.h>
 #include <loongson.h>
 
@@ -29,6 +31,7 @@
 DEFINE_PER_CPU(int, cpu_state);
 DEFINE_PER_CPU(uint32_t, core0_c0count);
  
+extern int cpufreq_enabled;
 extern uint64_t cmos_read64(unsigned long addr);
 extern void cmos_write64(uint64_t data, unsigned long addr);
  
@@ -331,7 +334,24 @@ void loongson3_boot_secondary(int cpu, struct task_struct *idle)
 {
 	int retval;
 
-	LOONGSON_CHIPCFG0 |= 1 << (12 + cpu);
+#ifdef CONFIG_LOONGSON2_CPUFREQ
+	if(system_state != SYSTEM_BOOTING){
+		struct cpufreq_freqs freqs;
+		struct clk *cpuclk = clk_get(NULL, "cpu_clk");
+
+		freqs.cpu   = 0;
+		freqs.old   = cpuclk->rate;
+		freqs.new   = cpu_clock_freq / 1000;
+		freqs.flags = 0;
+
+		cpufreq_enabled = 0;
+		cpufreq_notify_transition(&freqs, CPUFREQ_PRECHANGE);
+		cpuclk->rate = cpu_clock_freq / 1000;
+		LOONGSON_CHIPCFG0 |= 0x7;	/* Set to highest frequency */
+		cpufreq_notify_transition(&freqs, CPUFREQ_POSTCHANGE);
+	}
+#endif
+
 	printk("\n BOOT CPU#%d...\n", cpu);
 	retval = loongson3_cpu_start(cpu_logical_map(cpu), &smp_bootstrap,     
 			       __KSTK_TOS(idle),                                   
@@ -369,6 +389,12 @@ static int loongson3_cpu_disable(void)
 	flush_cache_all();
 	local_flush_tlb_all();
 	spin_unlock(&smp_reserve_lock);
+
+#ifdef CONFIG_LOONGSON2_CPUFREQ
+	if(num_online_cpus() == 1)
+		cpufreq_enabled = 1;
+#endif
+
 	return 0;
 }
 
@@ -521,6 +547,10 @@ static int __cpuinit loongson3_cpu_callback(struct notifier_block *nfb,
 	case CPU_POST_DEAD_FROZEN:
 		printk("Disable clock for CPU%d\n", cpu);
 		LOONGSON_CHIPCFG0 &= ~(1 << (12 + cpu));
+		break;
+	case CPU_UP_PREPARE:
+	case CPU_UP_PREPARE_FROZEN:
+		LOONGSON_CHIPCFG0 |= 1 << (12 + cpu);
 		break;
 	}
 

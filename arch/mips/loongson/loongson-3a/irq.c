@@ -34,6 +34,7 @@
 #include <asm/mipsregs.h>
 #include <asm/delay.h>
 #include <asm/cevt-r4k.h>
+#include <asm/hpet.h>
 #include <asm/mips-boards/bonito64.h>
 #include "irqregs.h"
 #include "htregs.h"
@@ -100,6 +101,8 @@ asmlinkage void mach_irq_dispatch(unsigned int pending)
 		HT_irq_vector_reg7 = HT_irq_vector_reg7;
 		*/
 
+		if (irq & 0x1)
+			do_IRQ(0);
 		if ((irq & 0x8000)){
 			do_IRQ(15);
 		}
@@ -122,7 +125,7 @@ asmlinkage void mach_irq_dispatch(unsigned int pending)
 			do_IRQ(3);
 		if (irq & 0x2)
 			do_IRQ(1);
-		if (irq & (~(0x8000 | 0x4000 | 0x1000 | 0x100 | 0x80 | 0x40 | 0x20 | 0x10 | 0x8 | 0x2)))
+		if (irq & (~(0x8000 | 0x4000 | 0x1000 | 0x100 | 0x80 | 0x40 | 0x20 | 0x10 | 0x8 | 0x2 | 0x1)))
 			prom_printf("more interrupt from HT is %x\n", irq);
     	} else { //(pending &(~(CAUSEF_IP7 |CAUSEF_IP6|CAUSEF_IP3|CAUSEF_IP2)))
 		prom_printf("spurious interrupt\n");
@@ -233,6 +236,9 @@ void fixup_irqs(void)
 			continue;
 
 		/* Timer IRQ */
+		if (irq == HPET_T0_IRQ)
+			continue;
+
 		if (irq == c0_compare_irqaction.irq) {
 			clear_c0_status(STATUSF_IP7);
 		}
