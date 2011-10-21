@@ -40,140 +40,165 @@
  *  675 Mass Ave, Cambridge, MA 02139, USA.
  *
  */
-#include <linux/init.h>
+
 #include <linux/pci.h>
-#include <asm/mips-boards/bonito64.h>
 
-extern void prom_printf(char *fmt, ...);
+/*
+ * SB700 PIC has 10 interrupt input pins, not increasing by number,
+ * no 6,7,8 exist.
+ */
+enum pic_int {
+	PIC_INTA  = 0,
+	PIC_INTB  = 1,
+	PIC_INTC  = 2,
+	PIC_INTD  = 3,
+	PIC_SCI   = 4,
+	PIC_SMBUS = 5,
+	PIC_INTE  = 9,
+	PIC_INTF  = 10,
+	PIC_INTG  = 11,
+	PIC_INTH  = 12
+};
 
-static int nic_count = 0;
-static struct pci_dev *first_nic;
+/*
+ * SB700 PIC has 16 interrupt output pins
+ */
+enum pic_irq {
+	PIC_IRQ0 = 0,
+	PIC_IRQ1,
+	PIC_IRQ2,
+	PIC_IRQ3,
+	PIC_IRQ4,
+	PIC_IRQ5,
+	PIC_IRQ6,
+	PIC_IRQ7,
+	PIC_IRQ8,
+	PIC_IRQ9,
+	PIC_IRQ10,
+	PIC_IRQ11,
+	PIC_IRQ12,
+	PIC_IRQ13,
+	PIC_IRQ14,
+	PIC_IRQ15
+};
+
+struct pic_routing {
+	enum pic_int from;
+	enum pic_irq to;
+};
+
+struct pic_routing pic_routing_array[] = {
+	{PIC_INTA, PIC_IRQ3},	/* 0 */ 
+	{PIC_INTB, PIC_IRQ3},	/* 1 */ 
+	{PIC_INTC, PIC_IRQ6},	/* 2 */ 
+	{PIC_INTD, PIC_IRQ5},	/* 3 */ 
+	{PIC_SCI,  PIC_IRQ7},	/* 4 */ 
+	{-1,	0},		/* 5 SMBUS not used*/ 
+	{-1,	0},		/* 6 */ 
+	{-1,	0},		/* 7 */ 
+	{-1,	0},		/* 8 */ 
+	{PIC_INTE, PIC_IRQ5},	/* 9 */ 
+	{PIC_INTF, PIC_IRQ5},	/* 10 */
+	{PIC_INTG, PIC_IRQ5},	/* 11 */
+	{PIC_INTH, PIC_IRQ4}	/* 12 */
+};
+
+enum dev_list {
+	/* RS780 devices list*/
+	INTERNAL_GFX = 0,
+	GPPSB0,
+	GPPSB1,
+	GPPSB2,
+	X16_SLOT,
+	/* SB7xx devices list*/
+	HDA,
+	IDE,
+	SATA,
+	USB1_OHCI,	// device 12h
+	USB1_EHCI,	// device 12h
+	USB2_OHCI,	// device 13h
+	USB2_EHCI,	// device 13h
+	USB3_OHCI,	// device 14h
+	DEV_LIST_END
+};
+
+enum reg_int {
+	REG_INTA = 0,
+	REG_INTB = 1,
+	REG_INTC = 2,
+	REG_INTD = 3,
+	REG_INTE = 4,
+	REG_INTF = 5,
+	REG_INTG = 6,
+	REG_INTH = 7
+};
+
+struct dev_interrupt_descriptor {
+	enum pic_int pic_int_number;
+	enum reg_int reg_int_number;
+};
+
+struct dev_interrupt_descriptor dev_interrupt_array[DEV_LIST_END] = {
+
+	/* INTERNAL_GFX */	{ PIC_INTC, REG_INTC}, // fixed
+	/* GPPSB0    */		{ PIC_INTA, REG_INTA}, // fixed
+	/* GPPSB1    */		{ PIC_INTB, REG_INTB}, // fixed
+	/* GPPSB2    */		{ PIC_INTC, REG_INTC}, // fixed
+	/* X16_SLOT  */		{ PIC_INTC, REG_INTC}, // fixed
+	/* HDA       */		{ PIC_INTE, REG_INTE},
+	/* IDE       */		{ PIC_INTA, REG_INTA}, // fixed
+	/* SATA      */		{ PIC_INTH, REG_INTH},
+	/* USB1_OHCI */		{ PIC_INTC, REG_INTC},
+	/* USB1_EHCI */		{ PIC_INTC, REG_INTC},
+	/* USB2_OHCI */		{ PIC_INTC, REG_INTC},
+	/* USB2_EHCI */		{ PIC_INTC, REG_INTC},
+	/* USB3_OHCI */		{ PIC_INTC, REG_INTC}
+};
+
+static int get_device_irq(enum dev_list dev)
+{
+	int i = 0, irq = 0;
+
+	while (i < ARRAY_SIZE(pic_routing_array)) {
+		if (pic_routing_array[i].from == dev_interrupt_array[dev].pic_int_number) {
+			irq = pic_routing_array[i].to;
+			break;
+		}
+
+		i++;
+	}
+
+	return irq;
+}
+
+static void print_fixup_info(struct pci_dev * pdev)
+{
+	printk(KERN_INFO "Fixup: bus%d dev_%xh %x:%x irq=%d\n",
+			pdev->bus->number, PCI_SLOT(pdev->devfn),
+		  	pdev->vendor, pdev->device, pdev->irq);
+}
 
 int __init pcibios_map_irq(struct pci_dev *dev, u8 slot, u8 pin)
 {
-#if 0
-	if ((dev->bus->number == 7) && (PCI_SLOT(dev->devfn) == 0)) {
-		if (dev->vendor == 0x10ec && dev->device == 0x8168) {
-			dev->irq = 5;
-			(void) pci_write_config_byte(dev, PCI_INTERRUPT_LINE, dev->irq);
-			printk("Fixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n",
-					dev->bus->number, PCI_SLOT(dev->devfn), dev->vendor, dev->device, dev->irq);
-			return dev->irq;
-		}
-	} else if ((dev->bus->number == 2) && (PCI_SLOT(dev->devfn) == 0)) {
-		dev->irq = 6;
-		(void) pci_write_config_byte(dev, PCI_INTERRUPT_LINE, dev->irq);
-		printk("Fixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n",
-				dev->bus->number, PCI_SLOT(dev->devfn), dev->vendor, dev->device, dev->irq);
-
-		return dev->irq;
-	} else if ((dev->bus->number == 3) && (PCI_SLOT(dev->devfn) == 0)) {
-		dev->irq = 5;
-		(void) pci_write_config_byte(dev, PCI_INTERRUPT_LINE, dev->irq);
-		printk("Fixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n",
-				dev->bus->number, PCI_SLOT(dev->devfn), dev->vendor, dev->device, dev->irq);
-
-		return dev->irq;
-	} else if ((dev->bus->number == 4) && (PCI_SLOT(dev->devfn) == 0)) {
-		dev->irq = 3;
-		(void) pci_write_config_byte(dev, PCI_INTERRUPT_LINE, dev->irq);
-		printk("Fixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n",
-				dev->bus->number, PCI_SLOT(dev->devfn), dev->vendor, dev->device, dev->irq);
-
-		return dev->irq;
-	} else if ((dev->bus->number == 5) && (PCI_SLOT(dev->devfn) == 0)) {
-		dev->irq = 3;
-		(void) pci_write_config_byte(dev, PCI_INTERRUPT_LINE, dev->irq);
-		printk("Fixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n",
-				dev->bus->number, PCI_SLOT(dev->devfn), dev->vendor, dev->device, dev->irq);
-
-		return dev->irq;
-	} else if ((dev->bus->number == 10) && (PCI_SLOT(dev->devfn) == 4)) {
-		dev->irq = 5;
-		(void) pci_write_config_byte(dev, PCI_INTERRUPT_LINE, dev->irq);
-		printk("Fixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n",
-				dev->bus->number, PCI_SLOT(dev->devfn), dev->vendor, dev->device, dev->irq);
-
-		return dev->irq;
-	} else if ((dev->bus->number == 10) && (PCI_SLOT(dev->devfn) == 5)) {
-		dev->irq = 5;
-		(void) pci_write_config_byte(dev, PCI_INTERRUPT_LINE, dev->irq);
-		printk("Fixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n",
-				dev->bus->number, PCI_SLOT(dev->devfn), dev->vendor, dev->device, dev->irq);
-
-		return dev->irq;
-	} else
+	switch (dev->bus->number) {
+	case 0:	
+	case 1:			// Integrated devices in RS780 & SB7xx
 		return 0;
-#else
-  	unsigned int val;
-
-        if (dev->vendor == 0x168c && dev->device == 0x002b) { /* wifi device */
-                ((struct pci_dev*)dev)->irq = 6;
-                (void) pci_write_config_byte(dev, PCI_INTERRUPT_LINE, dev->irq);
- 
-                return dev->irq;
-        }
-	if (dev->vendor == 0x10ec && dev->device == 0x8168) { /* Realtek 8168 */
-		((struct pci_dev*)dev)->irq = 3;
-		(void) pci_write_config_byte(dev, PCI_INTERRUPT_LINE, dev->irq);
-
-		printk("Fixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n", 
-			dev->bus->number, PCI_SLOT(dev->devfn), 
-			dev->vendor, dev->device, dev->irq);
-
-	        return dev->irq;
-	}
-	/* IRQ fixup for on-board peripherals */
-	if ((dev->bus->number >= 3) && (PCI_SLOT(dev->devfn)) >= 3) {//PCI slot
-		val = 5;
-		(void) pci_write_config_byte(dev, PCI_INTERRUPT_LINE, dev->irq);
-		printk("Fixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n", 
-			dev->bus->number, PCI_SLOT(dev->devfn), 
-			dev->vendor, dev->device, dev->irq);
-
-		return val;
-	}
-	else if((dev->vendor == 0x8086) && (dev->device == 0x10d3)) {
-		nic_count++;
-		if(nic_count == 1){
-			val = 3;
-			first_nic = dev;
-			(void) pci_write_config_byte(dev, PCI_INTERRUPT_LINE, dev->irq);
-			printk("Fixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n", 
-				dev->bus->number, PCI_SLOT(dev->devfn), 
-				dev->vendor, dev->device, dev->irq);
-		}
-		else if(nic_count == 2){
-			val = 3;
-			first_nic->irq = 6;
-			(void) pci_write_config_byte(first_nic, PCI_INTERRUPT_LINE, dev->irq);
-			printk("Fixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n", 
-				dev->bus->number, PCI_SLOT(dev->devfn), 
-				dev->vendor, dev->device, dev->irq);
-			printk("Refixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n", 
-				first_nic->bus->number, PCI_SLOT(first_nic->devfn), 
-				first_nic->vendor, first_nic->device, first_nic->irq);
-		}
-		else{
-			printk("Sorry! There are too many Intel82574 net card!\n");
-			printk("Please make contact with Mr. XiaoCai!\n");
-		}
-
-		return val;
-	}
-	else if (dev->bus->number == 2) {
-		val = 6;
-		(void) pci_write_config_byte(dev, PCI_INTERRUPT_LINE, dev->irq);
-		printk("Fixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n", 
-			dev->bus->number, PCI_SLOT(dev->devfn), 
-			dev->vendor, dev->device, dev->irq);
-
-		return val;
+	case 2:
+		dev->irq = get_device_irq(GPPSB0);
+		pci_write_config_byte(dev, PCI_INTERRUPT_LINE, dev->irq);
+		break;
+	case 4:
+		dev->irq = get_device_irq(GPPSB2);
+		pci_write_config_byte(dev, PCI_INTERRUPT_LINE, dev->irq);
+		break;
+	default: // unexcepted device
+		dev->irq = 0; 
+		printk(KERN_ERR "++++++++++++ UnExcepted Deivce! ++++++++++\n");
 	}
 
-		return 0;
-
-#endif
+	print_fixup_info(dev);
+	return dev->irq;
 }
 
 /* Do platform specific device initialization at pci_enable_device() time */
@@ -182,77 +207,103 @@ int pcibios_plat_dev_init(struct pci_dev *dev)
 	return 0;
 }
 
+/* 
+ * SB7xx PIC can map any INTx to IRQn by programming as following:
+ *
+ * INTx --> 0xC00
+ * IRQn --> 0xC01
+ */
+static inline void int2irq_map(struct pic_routing routing)
+{
+	outb(routing.from, 0xC00);
+	outb(routing.to, 0xC01);
+}
+
+static void pic_routing_config(void)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(pic_routing_array); i++) {
+		if (pic_routing_array[i].from != -1)
+			int2irq_map(pic_routing_array[i]);
+	}
+}
+
+static void setting_device_irq(struct pci_dev *pdev, enum dev_list dev)
+{
+	pdev->irq = get_device_irq(dev);
+	pci_write_config_byte(pdev, PCI_INTERRUPT_LINE, pdev->irq);
+
+	print_fixup_info(pdev);
+}
+
+static void __init hda_initialize(struct pci_dev *pdev)
+{
+	u8 reg8;
+
+	/* Map the HDA interrupt to INTE */
+	pci_read_config_byte(pdev, 0x63, &reg8);
+	reg8 &= 0xf8;
+	reg8 |= dev_interrupt_array[HDA].reg_int_number;
+	pci_write_config_byte(pdev, 0x63, reg8);
+
+	/* Set GPIO42, GPIO43, GPIO44, GPIO46 as HD function */
+	pci_write_config_word(pdev, 0xf8, 0x0);
+	pci_write_config_word(pdev, 0xfc, 0x2<<0);
+}
+
+static void __init sata_initialize(struct pci_dev *pdev)
+{
+	u8 reg8;
+
+	/* sata interrupt map smbus reg:0Xaf map sataintmap to PCI_INTH#*/
+	pci_read_config_byte(pdev, 0xaf, &reg8);
+	reg8 &= ~(0x7 << 2);
+	reg8 |= (dev_interrupt_array[SATA].reg_int_number << 2);
+	pci_write_config_byte(pdev, 0xaf, reg8);
+
+	/* Set SATA and PATA Controller to combined mode
+	 * Port0-Port3 is SATA mode, Port4-Port5 is IDE mode
+	 */
+	pci_read_config_byte(pdev, 0xad, &reg8);
+	reg8 |= 0x1<<3;
+	reg8 &= ~(0x1<<4);
+	pci_write_config_byte(pdev, 0xad, reg8);
+}
+
+static void __init usb_initialize(struct pci_dev *pdev)
+{
+	u8 reg8;
+	u16 reg16;
+
+	// set USB1 & USB2 interrupt
+	reg16 = (dev_interrupt_array[USB1_OHCI].reg_int_number << 0) |
+		(dev_interrupt_array[USB1_EHCI].reg_int_number << 3) |
+		(dev_interrupt_array[USB2_OHCI].reg_int_number << 8) |
+		(dev_interrupt_array[USB2_EHCI].reg_int_number << 11);
+	pci_write_config_word(pdev, 0xbe, reg16);
+	
+	// set USB3 interrupt
+	pci_read_config_byte(pdev, 0x63, &reg8);
+	reg8 &= ~(0x7 << 4);
+	reg8 |= (dev_interrupt_array[USB3_OHCI].reg_int_number << 4);
+	pci_write_config_byte(pdev, 0x63, reg8);
+}
+
 /*
  * smbus is the system control center in sb700
  */
 static void __init godson3a_smbus_fixup(struct pci_dev *pdev)
 {
-	unsigned short t16;
-	unsigned char t8;
+	usb_initialize(pdev);
 
-	prom_printf("\n-----------------godson3a_smbus_fixup---------------\n");
+	sata_initialize(pdev);
 
-	/*1. usb interrupt map smbus reg:0XBE  map usbint1map usbint3map(ohci use) to PCI_INTC#
-	  map usbint2map usbint4map(ehci use) to PCI_INTC# */
-	(void) pci_write_config_word(pdev, 0xbe, ((2<<0)|(2 << 3)|(2 << 8)|(2 << 11)) );
-	pci_read_config_word(pdev, 0xbe, &t16);
-	prom_printf(" set smbus reg (0xbe) :%x (usb intr map)\n", t16);
+	hda_initialize(pdev);
 
-	/*2. sata interrupt map smbus reg:0Xaf map sataintmap to PCI_INTH#*/
-	(void) pci_write_config_byte(pdev, 0xaf,  0x7<<2 );
-	pci_read_config_byte(pdev, 0xaf, &t8);
-	prom_printf(" set smbus reg (0xaf) :%x (sata intr map)\n", t8);
-
-	/* Set SATA and PATA Controller to combined mode
-	 * Port0-Port3 is SATA mode, Port4-Port5 is IDE mode
-	 */
-	(void) pci_read_config_byte(pdev, 0xad,  &t8);
-	t8 |= 0x1<<3;
-	t8 &= ~(0x1<<4);
-	(void) pci_write_config_byte(pdev, 0xad,  t8);
-
-	/* Map the HDA interrupt to INTE */
-	pci_read_config_byte(pdev, 0x63, &t8);
-	t8 &= 0xf8;
-	pci_write_config_byte(pdev, 0x63, t8|0x4);
-
-	/* Set GPIO42, GPIO43, GPIO44, GPIO46 as HD function */
-	pci_write_config_word(pdev, 0xf8, 0x0);
-	pci_write_config_word(pdev, 0xfc, 0x2<<0);
-
-	/* INTA-->IRQ3: PCIeX1(right) */
-	outb(0x0, 0xC00);
-	outb(0x3, 0xC01);
-	/* INTB-->IRQ3: PCIeX1(left) */
-	outb(0x1, 0xC00);
-	outb(0x3, 0xC01);
-	/* INTF-->IRQ5: PCI(left) */
-	outb(0xA, 0xC00);
-	outb(0x5, 0xC01);
-	/* INTG-->IRQ5: PCI(right) */
-	outb(0xB, 0xC00);
-	outb(0x5, 0xC01);
-
-	/* INTD-->IRQ5: RTL8111DL */
-	/* INTD-->IRQ5: PCIeX8 dev3*/
-	outb(0x3, 0xC00);
-	outb(0x5, 0xC01);
-
-	/* INTH-->IRQ4: SATA */
-	outb(0xC, 0xC00);
-	outb(0x4, 0xC01);
-	/* INTE-->IRQ5: HDA */
-	outb(0x9, 0xC00);
-	outb(0x5, 0xC01);
-	/* INTC-->IRQ6: USB */
-	/* INTC-->IRQ6: PCIeX8 dev2*/
-	outb(0x2, 0xC00);
-	outb(0x6, 0xC01);
-
-	/* SCI-->IRQ7*/
-	outb(0x4, 0xC00);
-	outb(0x7, 0xC01);
+	pic_routing_config();
 	
+	// level or edge interrupt
 	outw(inw(0x4D0)|(1<<7)|(1<<6)|(1<<5)|(1<<4)|(1<<3), 0x4D0);
 }
 
@@ -262,74 +313,51 @@ static void __init godson3a_smbus_fixup(struct pci_dev *pdev)
 static void __init godson3a_sata_fixup(struct pci_dev *pdev)
 {
 	unsigned char t8;
-	unsigned int t32;
-	prom_printf("\n-----------------godson3a_sata_fixup---------------\n");
 
 	/*1. enable the subcalss code register for setting sata controller mode*/
 	pci_read_config_byte(pdev, 0x40, &t8);
-	(void) pci_write_config_byte(pdev, 0x40, (t8 | 0x01) );
+	pci_write_config_byte(pdev, 0x40, (t8 | 0x01));
 
 	/*2. set sata controller act as AHCI mode
 	 *	 sata controller support IDE mode, AHCI mode, Raid mode*/
-	(void) pci_write_config_byte(pdev, 0x09, 0x01);
-	(void) pci_write_config_byte(pdev, 0x0a, 0x06);
+	pci_write_config_byte(pdev, 0x09, 0x01);
+	pci_write_config_byte(pdev, 0x0a, 0x06);
 
 	/*3. disable the subcalss code register*/
 	pci_read_config_byte(pdev, 0x40, &t8);
-	(void) pci_write_config_byte(pdev, 0x40, t8 & (~0x01));
+	pci_write_config_byte(pdev, 0x40, t8 & (~0x01));
 
-	prom_printf("-----------------tset sata------------------\n");
-	pci_read_config_dword(pdev, 0x40, &t32);
-	prom_printf("sata pci_config 0x40 (%x)\n", t32);
-	pci_read_config_dword(pdev, 0x0, &t32);
-	prom_printf("sata pci_config 0x00 (%x)\n", t32);
-
-	pdev->irq = 4;
-	pci_write_config_byte(pdev,PCI_INTERRUPT_LINE,pdev->irq);
-
-	printk("Fixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n", pdev->bus->number, PCI_SLOT(pdev->devfn),      pdev->vendor, pdev->device, pdev->irq);
+	setting_device_irq(pdev, SATA);
 }
 
 static void __init godson3a_ide_fixup(struct pci_dev *pdev)
 {
-	prom_printf("\n-----------------godson3a_ide_fixup---------------\n");
-	/*set IDE ultra DMA enable as master and slalve device*/
-	(void) pci_write_config_byte(pdev, 0x54, 0xf);
+        /*set IDE ultra DMA enable as master and slalve device*/
+	pci_write_config_byte(pdev, 0x54, 0xf);
+
 	/*set ultral DAM mode 0~6  we use 6 as high speed !*/
-	(void) pci_write_config_word(pdev, 0x56, (0x6 << 0)|(0x6 << 4)|(0x6 << 8)|(0x6 << 12));
-
+	pci_write_config_word(pdev, 0x56, (0x6 << 0)|(0x6 << 4)|(0x6 << 8)|(0x6 << 12));
 }
 
-static void __init godson3a_ohci0_fixup(struct pci_dev *pdev)
+static void __init godson3a_ohci_fixup(struct pci_dev *pdev)
 {
-	pdev->irq = 6;
-	pci_write_config_byte(pdev,PCI_INTERRUPT_LINE,pdev->irq);
-
-	printk("Fixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n", pdev->bus->number, PCI_SLOT(pdev->devfn),      pdev->vendor, pdev->device, pdev->irq);
-}
-
-static void __init godson3a_ohci1_fixup(struct pci_dev *pdev)
-{
-	pdev->irq = 6;
-	pci_write_config_byte(pdev,PCI_INTERRUPT_LINE,pdev->irq);
-
-	printk("Fixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n", pdev->bus->number, PCI_SLOT(pdev->devfn),      pdev->vendor, pdev->device, pdev->irq);
+	if (PCI_SLOT(pdev->devfn) == 0x12)
+		setting_device_irq(pdev, USB1_OHCI);
+	else
+		setting_device_irq(pdev, USB2_OHCI);
 }
 
 static void __init godson3a_ohci2_fixup(struct pci_dev *pdev)
 {
-	pdev->irq = 6;
-	pci_write_config_byte(pdev,PCI_INTERRUPT_LINE,pdev->irq);
-
-	printk("Fixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n", pdev->bus->number, PCI_SLOT(pdev->devfn),      pdev->vendor, pdev->device, pdev->irq);
+	setting_device_irq(pdev, USB3_OHCI);
 }
 
 static void __init godson3a_ehci_fixup(struct pci_dev *pdev)
 {
-	pdev->irq = 6;
-	pci_write_config_byte(pdev,PCI_INTERRUPT_LINE,pdev->irq);
-
-	printk("Fixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n", pdev->bus->number, PCI_SLOT(pdev->devfn),      pdev->vendor, pdev->device, pdev->irq);
+	if (PCI_SLOT(pdev->devfn) == 0x12)
+		setting_device_irq(pdev, USB1_EHCI);
+	else
+		setting_device_irq(pdev, USB2_EHCI);
 }
 
 static void __init godson3a_lpc_fixup(struct pci_dev *pdev)
@@ -352,31 +380,23 @@ static void __init godson3a_lpc_fixup(struct pci_dev *pdev)
 	pci_read_config_byte(pdev, 0x48, &t);
 }
 
-static void __init godson3a_hda_fixup(struct pci_dev *pdev){
-
-	pdev->irq = 5;
-	pci_write_config_byte(pdev,PCI_INTERRUPT_LINE,pdev->irq);
-
-	printk("Fixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n", pdev->bus->number, PCI_SLOT(pdev->devfn),      pdev->vendor, pdev->device, pdev->irq);
+static void __init godson3a_hda_fixup(struct pci_dev *pdev)
+{
+	setting_device_irq(pdev, HDA);
 }
 
 static void __init godson3a_graphic_fixup(struct pci_dev *pdev)
 {
-	pdev->irq = 6;
-	pci_write_config_byte(pdev,PCI_INTERRUPT_LINE,pdev->irq);
-
-	printk("Fixup: bus(%d) dev(%d) vendor(0x%x) device(0x%x): irq=%d\n", pdev->bus->number, PCI_SLOT(pdev->devfn),      pdev->vendor, pdev->device, pdev->irq);
+	setting_device_irq(pdev, INTERNAL_GFX);
 }
 
 DECLARE_PCI_FIXUP_EARLY(0x1002, 0x4385, godson3a_smbus_fixup);
 DECLARE_PCI_FIXUP_FINAL(0x1002, 0x4390, godson3a_sata_fixup);
 DECLARE_PCI_FIXUP_FINAL(0x1002, 0x439c, godson3a_ide_fixup);
-DECLARE_PCI_FIXUP_FINAL(0x1002, 0x4397, godson3a_ohci0_fixup);
-DECLARE_PCI_FIXUP_FINAL(0x1002, 0x4398, godson3a_ohci1_fixup);
+DECLARE_PCI_FIXUP_FINAL(0x1002, 0x4397, godson3a_ohci_fixup);
+DECLARE_PCI_FIXUP_FINAL(0x1002, 0x4398, godson3a_ohci_fixup);
 DECLARE_PCI_FIXUP_FINAL(0x1002, 0x4399, godson3a_ohci2_fixup);
 DECLARE_PCI_FIXUP_FINAL(0x1002, 0x4396, godson3a_ehci_fixup);
 DECLARE_PCI_FIXUP_FINAL(0x1002, 0x439d, godson3a_lpc_fixup);
 DECLARE_PCI_FIXUP_FINAL(0x1002, 0x4383, godson3a_hda_fixup);
-//DECLARE_PCI_FIXUP_FINAL(0x1022, 0x9602, godson3a_graphic_fixup);
 DECLARE_PCI_FIXUP_FINAL(0x1002, 0x9615, godson3a_graphic_fixup);
-
