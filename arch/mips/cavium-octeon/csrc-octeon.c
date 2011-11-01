@@ -77,8 +77,7 @@ unsigned long long notrace sched_clock(void)
 void __init plat_time_init(void)
 {
 	clocksource_mips.rating = 300;
-	clocksource_set_clock(&clocksource_mips, mips_hpt_frequency);
-	clocksource_register(&clocksource_mips);
+ 	clocksource_register_hz(&clocksource_mips, mips_hpt_frequency);
 }
 
 static u64 octeon_udelay_factor;
