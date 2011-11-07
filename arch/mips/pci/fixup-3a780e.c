@@ -237,7 +237,7 @@ static void setting_device_irq(struct pci_dev *pdev, enum dev_list dev)
 	print_fixup_info(pdev);
 }
 
-static void __init hda_initialize(struct pci_dev *pdev)
+static void __devinit hda_initialize(struct pci_dev *pdev)
 {
 	u8 reg8;
 
@@ -252,7 +252,7 @@ static void __init hda_initialize(struct pci_dev *pdev)
 	pci_write_config_word(pdev, 0xfc, 0x2<<0);
 }
 
-static void __init sata_initialize(struct pci_dev *pdev)
+static void __devinit sata_initialize(struct pci_dev *pdev)
 {
 	u8 reg8;
 
@@ -271,7 +271,7 @@ static void __init sata_initialize(struct pci_dev *pdev)
 	pci_write_config_byte(pdev, 0xad, reg8);
 }
 
-static void __init usb_initialize(struct pci_dev *pdev)
+static void __devinit usb_initialize(struct pci_dev *pdev)
 {
 	u8 reg8;
 	u16 reg16;
@@ -293,7 +293,7 @@ static void __init usb_initialize(struct pci_dev *pdev)
 /*
  * smbus is the system control center in sb700
  */
-static void __init godson3a_smbus_fixup(struct pci_dev *pdev)
+static void __devinit godson3a_smbus_fixup(struct pci_dev *pdev)
 {
 	usb_initialize(pdev);
 
@@ -310,7 +310,7 @@ static void __init godson3a_smbus_fixup(struct pci_dev *pdev)
 /* fixup sb700 sata controller configure.
  *  in file "drivers/pci/quirks.c" function quirk_amd_ide_mode do the same job
  */
-static void __init godson3a_sata_fixup(struct pci_dev *pdev)
+static void __devinit godson3a_sata_fixup(struct pci_dev *pdev)
 {
 	unsigned char t8;
 
@@ -330,7 +330,7 @@ static void __init godson3a_sata_fixup(struct pci_dev *pdev)
 	setting_device_irq(pdev, SATA);
 }
 
-static void __init godson3a_ide_fixup(struct pci_dev *pdev)
+static void __devinit godson3a_ide_fixup(struct pci_dev *pdev)
 {
         /*set IDE ultra DMA enable as master and slalve device*/
 	pci_write_config_byte(pdev, 0x54, 0xf);
@@ -339,7 +339,7 @@ static void __init godson3a_ide_fixup(struct pci_dev *pdev)
 	pci_write_config_word(pdev, 0x56, (0x6 << 0)|(0x6 << 4)|(0x6 << 8)|(0x6 << 12));
 }
 
-static void __init godson3a_ohci_fixup(struct pci_dev *pdev)
+static void __devinit godson3a_ohci1_fixup(struct pci_dev *pdev)
 {
 	if (PCI_SLOT(pdev->devfn) == 0x12)
 		setting_device_irq(pdev, USB1_OHCI);
@@ -347,12 +347,12 @@ static void __init godson3a_ohci_fixup(struct pci_dev *pdev)
 		setting_device_irq(pdev, USB2_OHCI);
 }
 
-static void __init godson3a_ohci2_fixup(struct pci_dev *pdev)
+static void __devinit godson3a_ohci2_fixup(struct pci_dev *pdev)
 {
 	setting_device_irq(pdev, USB3_OHCI);
 }
 
-static void __init godson3a_ehci_fixup(struct pci_dev *pdev)
+static void __devinit godson3a_ehci_fixup(struct pci_dev *pdev)
 {
 	if (PCI_SLOT(pdev->devfn) == 0x12)
 		setting_device_irq(pdev, USB1_EHCI);
@@ -360,7 +360,7 @@ static void __init godson3a_ehci_fixup(struct pci_dev *pdev)
 		setting_device_irq(pdev, USB2_EHCI);
 }
 
-static void __init godson3a_lpc_fixup(struct pci_dev *pdev)
+static void __devinit godson3a_lpc_fixup(struct pci_dev *pdev)
 {
 	unsigned char t;
 
@@ -380,12 +380,12 @@ static void __init godson3a_lpc_fixup(struct pci_dev *pdev)
 	pci_read_config_byte(pdev, 0x48, &t);
 }
 
-static void __init godson3a_hda_fixup(struct pci_dev *pdev)
+static void __devinit godson3a_hda_fixup(struct pci_dev *pdev)
 {
 	setting_device_irq(pdev, HDA);
 }
 
-static void __init godson3a_graphic_fixup(struct pci_dev *pdev)
+static void __devinit godson3a_graphic_fixup(struct pci_dev *pdev)
 {
 	setting_device_irq(pdev, INTERNAL_GFX);
 }
@@ -393,10 +393,21 @@ static void __init godson3a_graphic_fixup(struct pci_dev *pdev)
 DECLARE_PCI_FIXUP_EARLY(0x1002, 0x4385, godson3a_smbus_fixup);
 DECLARE_PCI_FIXUP_FINAL(0x1002, 0x4390, godson3a_sata_fixup);
 DECLARE_PCI_FIXUP_FINAL(0x1002, 0x439c, godson3a_ide_fixup);
-DECLARE_PCI_FIXUP_FINAL(0x1002, 0x4397, godson3a_ohci_fixup);
-DECLARE_PCI_FIXUP_FINAL(0x1002, 0x4398, godson3a_ohci_fixup);
+DECLARE_PCI_FIXUP_FINAL(0x1002, 0x4397, godson3a_ohci1_fixup);
+DECLARE_PCI_FIXUP_FINAL(0x1002, 0x4398, godson3a_ohci1_fixup);
 DECLARE_PCI_FIXUP_FINAL(0x1002, 0x4399, godson3a_ohci2_fixup);
 DECLARE_PCI_FIXUP_FINAL(0x1002, 0x4396, godson3a_ehci_fixup);
 DECLARE_PCI_FIXUP_FINAL(0x1002, 0x439d, godson3a_lpc_fixup);
 DECLARE_PCI_FIXUP_FINAL(0x1002, 0x4383, godson3a_hda_fixup);
 DECLARE_PCI_FIXUP_FINAL(0x1002, 0x9615, godson3a_graphic_fixup);
+
+DECLARE_PCI_FIXUP_RESUME_EARLY(0x1002, 0x4385, godson3a_smbus_fixup);
+DECLARE_PCI_FIXUP_RESUME(0x1002, 0x4390, godson3a_sata_fixup);
+DECLARE_PCI_FIXUP_RESUME(0x1002, 0x439c, godson3a_ide_fixup);
+DECLARE_PCI_FIXUP_RESUME(0x1002, 0x4397, godson3a_ohci1_fixup);
+DECLARE_PCI_FIXUP_RESUME(0x1002, 0x4398, godson3a_ohci1_fixup);
+DECLARE_PCI_FIXUP_RESUME(0x1002, 0x4399, godson3a_ohci2_fixup);
+DECLARE_PCI_FIXUP_RESUME(0x1002, 0x4396, godson3a_ehci_fixup);
+DECLARE_PCI_FIXUP_RESUME(0x1002, 0x439d, godson3a_lpc_fixup);
+DECLARE_PCI_FIXUP_RESUME(0x1002, 0x4383, godson3a_hda_fixup);
+DECLARE_PCI_FIXUP_RESUME(0x1002, 0x9615, godson3a_graphic_fixup);
