@@ -491,6 +491,22 @@ void clocksource_touch_watchdog(void)
 }
 
 /**
+ * clocksource_max_adjustment- Returns max adjustment amount
+ * @cs:         Pointer to clocksource
+ *
+ */
+static u32 clocksource_max_adjustment(struct clocksource *cs)
+{
+	u64 ret;
+	/*
+	 * We won't try to correct for more then 11% adjustments (110,000 ppm),
+	 */
+	ret = (u64)cs->mult * 11;
+	do_div(ret,100);
+	return (u32)ret;
+}
+
+/**
  * clocksource_max_deferment - Returns max time the clocksource can be deferred
  * @cs:         Pointer to clocksource
  *
@@ -502,25 +518,28 @@ static u64 clocksource_max_deferment(struct clocksource *cs)
 	/*
 	 * Calculate the maximum number of cycles that we can pass to the
 	 * cyc2ns function without overflowing a 64-bit signed result. The
-	 * maximum number of cycles is equal to ULLONG_MAX/cs->mult which
-	 * is equivalent to the below.
-	 * max_cycles < (2^63)/cs->mult
-	 * max_cycles < 2^(log2((2^63)/cs->mult))
-	 * max_cycles < 2^(log2(2^63) - log2(cs->mult))
-	 * max_cycles < 2^(63 - log2(cs->mult))
-	 * max_cycles < 1 << (63 - log2(cs->mult))
+	 * maximum number of cycles is equal to ULLONG_MAX/(cs->mult+cs->maxadj)
+	 * which is equivalent to the below.
+	 * max_cycles < (2^63)/(cs->mult + cs->maxadj)
+	 * max_cycles < 2^(log2((2^63)/(cs->mult + cs->maxadj)))
+	 * max_cycles < 2^(log2(2^63) - log2(cs->mult + cs->maxadj))
+	 * max_cycles < 2^(63 - log2(cs->mult + cs->maxadj))
+	 * max_cycles < 1 << (63 - log2(cs->mult + cs->maxadj))
 	 * Please note that we add 1 to the result of the log2 to account for
 	 * any rounding errors, ensure the above inequality is satisfied and
 	 * no overflow will occur.
 	 */
-	max_cycles = 1ULL << (63 - (ilog2(cs->mult) + 1));
+	max_cycles = 1ULL << (63 - (ilog2(cs->mult + cs->maxadj) + 1));
 
 	/*
 	 * The actual maximum number of cycles we can defer the clocksource is
 	 * determined by the minimum of max_cycles and cs->mask.
+	 * Note: Here we subtract the maxadj to make sure we don't sleep for
+	 * too long if there's a large negative adjustment.
 	 */
 	max_cycles = min_t(u64, max_cycles, (u64) cs->mask);
-	max_nsecs = clocksource_cyc2ns(max_cycles, cs->mult, cs->shift);
+	max_nsecs = clocksource_cyc2ns(max_cycles, cs->mult - cs->maxadj,
+				       cs->shift);
 
 	/*
 	 * To ensure that the clocksource does not wrap whilst we are idle,
@@ -636,7 +655,6 @@ static void clocksource_enqueue(struct clocksource *cs)
  * This is a subsystem constant, and actual hardware limitations
  * may override it (ie: clocksources that wrap every 3 seconds).
  */
-#define MAX_UPDATE_LENGTH 5 /* Seconds */
 
 /**
  * __clocksource_updatefreq_scale - Used update clocksource with new freq
@@ -651,15 +669,42 @@ static void clocksource_enqueue(struct clocksource *cs)
  */
 void __clocksource_updatefreq_scale(struct clocksource *cs, u32 scale, u32 freq)
 {
+	u64 sec;
+
 	/*
-	 * Ideally we want to use  some of the limits used in
-	 * clocksource_max_deferment, to provide a more informed
-	 * MAX_UPDATE_LENGTH. But for now this just gets the
-	 * register interface working properly.
+	 * Calc the maximum number of seconds which we can run before
+	 * wrapping around. For clocksources which have a mask > 32bit
+	 * we need to limit the max sleep time to have a good
+	 * conversion precision. 10 minutes is still a reasonable
+	 * amount. That results in a shift value of 24 for a
+	 * clocksource with mask >= 40bit and f >= 4GHz. That maps to
+	 * ~ 0.06ppm granularity for NTP. We apply the same 12.5%
+	 * margin as we do in clocksource_max_deferment()
 	 */
+	sec = (cs->mask - (cs->mask >> 5));
+	do_div(sec, freq);
+	do_div(sec, scale);
+	if (!sec)
+		sec = 1;
+	else if (sec > 600 && cs->mask > UINT_MAX)
+		sec = 600;
+
 	clocks_calc_mult_shift(&cs->mult, &cs->shift, freq,
-				      NSEC_PER_SEC/scale,
-				      MAX_UPDATE_LENGTH*scale);
+			       NSEC_PER_SEC / scale, sec * scale);
+
+	/*
+	 * for clocksources that have large mults, to avoid overflow.
+	 * Since mult may be adjusted by ntp, add an safety extra margin
+	 *
+	 */
+	cs->maxadj = clocksource_max_adjustment(cs);
+	while ((cs->mult + cs->maxadj < cs->mult)
+		|| (cs->mult - cs->maxadj > cs->mult)) {
+		cs->mult >>= 1;
+		cs->shift--;
+		cs->maxadj = clocksource_max_adjustment(cs);
+	}
+
 	cs->max_idle_ns = clocksource_max_deferment(cs);
 }
 EXPORT_SYMBOL_GPL(__clocksource_updatefreq_scale);
@@ -700,6 +745,12 @@ EXPORT_SYMBOL_GPL(__clocksource_register_scale);
  */
 int clocksource_register(struct clocksource *cs)
 {
+	/* calculate max adjustment for given mult/shift */
+	cs->maxadj = clocksource_max_adjustment(cs);
+	WARN_ONCE(cs->mult + cs->maxadj < cs->mult,
+		  "Clocksource %s might overflow on 11%% adjustment\n",
+		  cs->name);
+
 	/* calculate max idle time permitted for this clocksource */
 	cs->max_idle_ns = clocksource_max_deferment(cs);
 
