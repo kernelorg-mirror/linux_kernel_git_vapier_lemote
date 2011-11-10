@@ -101,8 +101,10 @@ asmlinkage void mach_irq_dispatch(unsigned int pending)
 		HT_irq_vector_reg7 = HT_irq_vector_reg7;
 		*/
 
+#ifdef CONFIG_RS780_HPET
 		if (irq & 0x1)
 			do_IRQ(0);
+#endif
 		if ((irq & 0x8000)){
 			do_IRQ(15);
 		}
@@ -235,9 +237,11 @@ void fixup_irqs(void)
 		if (desc->chip == &no_irq_chip)
 			continue;
 
+#ifdef CONFIG_RS780_HPET
 		/* Timer IRQ */
 		if (irq == HPET_T0_IRQ)
 			continue;
+#endif
 
 		if (irq == c0_compare_irqaction.irq) {
 			clear_c0_status(STATUSF_IP7);
