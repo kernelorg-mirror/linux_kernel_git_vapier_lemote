@@ -442,6 +442,29 @@ done:
 }
 EXPORT_SYMBOL(drm_crtc_helper_set_mode);
 
+static int
+drm_crtc_helper_disable(struct drm_crtc *crtc)
+{
+	struct drm_device *dev = crtc->dev;
+	struct drm_connector *connector;
+	struct drm_encoder *encoder;
+
+	/* Decouple all encoders and their attached connectors from this crtc */
+	list_for_each_entry(encoder, &dev->mode_config.encoder_list, head) {
+		if (encoder->crtc != crtc)
+			continue;
+
+		list_for_each_entry(connector, &dev->mode_config.connector_list, head) {
+			if (connector->encoder != encoder)
+				continue;
+
+			connector->encoder = NULL;
+		}
+	}
+
+	drm_helper_disable_unused_functions(dev);
+	return 0;
+}
 
 /**
  * drm_crtc_helper_set_config - set a new config from userspace
@@ -494,6 +517,7 @@ int drm_crtc_helper_set_config(struct drm_mode_set *set)
 		DRM_DEBUG_KMS("[CRTC:%d] [NOFB] #connectors=%d (x y) (%i %i)\n",
 				set->crtc->base.id, (int)set->num_connectors,
 				set->x, set->y);
+		return drm_crtc_helper_disable(set->crtc);
 	}
 
 	dev = set->crtc->dev;
