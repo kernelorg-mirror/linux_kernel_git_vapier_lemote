@@ -23,7 +23,7 @@
 /*
  * CPU Autoplug enabled ?
  */
-static int autoplug_enabled __read_mostly  = 1;
+int autoplug_enabled = 1;
 
 #ifndef MODULE
 /*
@@ -229,9 +229,9 @@ static int __init cpuautoplug_init(void)
 	pr_info("cpuautoplug: Loongson-3A CPU autoplug driver.\n");
 
 	ap_info.dec_reqs = 0; 
-	ap_info.sampling_rate = 625;  /* 622 ms */
+	ap_info.sampling_rate = 700;  /* 700 ms */
 #ifndef MODULE
-	delay = msecs_to_jiffies(ap_info.sampling_rate * 20);
+	delay = msecs_to_jiffies(ap_info.sampling_rate * 21);
 #else
 	delay = msecs_to_jiffies(ap_info.sampling_rate * 8);
 #endif

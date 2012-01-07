@@ -191,7 +191,7 @@ static void loongson3_send_ipi_mask(const struct cpumask *mask, unsigned int act
 		loongson3_send_ipi_single(i, action);
 }
 
-#define MAX_LOOPS 1500
+#define MAX_LOOPS 1440
 
 /*
  * SMP init and finish on secondary CPUs

@@ -619,6 +619,7 @@ int hibernate(void)
 	sys_sync();
 	printk("done.\n");
 
+	system_state = SYSTEM_SUSPEND_DISK;
 	error = prepare_processes();
 	if (error)
 		goto Finish;
@@ -650,6 +651,7 @@ int hibernate(void)
  Thaw:
 	thaw_processes();
  Finish:
+	system_state = SYSTEM_RUNNING;
 	free_basic_memory_bitmaps();
 	usermodehelper_enable();
  Exit:
@@ -776,6 +778,7 @@ static int software_resume(void)
 	swsusp_free();
 	thaw_processes();
  Done:
+	system_state = SYSTEM_RUNNING;
 	free_basic_memory_bitmaps();
 	usermodehelper_enable();
  Finish:
