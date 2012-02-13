@@ -1035,19 +1035,7 @@ static int rv770_startup(struct radeon_device *rdev)
 		rdev->asic->copy = NULL;
 		dev_warn(rdev->dev, "failed blitter (%d) falling back to memcpy\n", r);
 	}
-	/* pin copy shader into vram */
-	if (rdev->r600_blit.shader_obj) {
-		r = radeon_bo_reserve(rdev->r600_blit.shader_obj, false);
-		if (unlikely(r != 0))
-			return r;
-		r = radeon_bo_pin(rdev->r600_blit.shader_obj, RADEON_GEM_DOMAIN_VRAM,
-				&rdev->r600_blit.shader_gpu_addr);
-		radeon_bo_unreserve(rdev->r600_blit.shader_obj);
-		if (r) {
-			DRM_ERROR("failed to pin blit object %d\n", r);
-			return r;
-		}
-	}
+
 	/* allocate wb buffer */
 	r = radeon_wb_init(rdev);
 	if (r)

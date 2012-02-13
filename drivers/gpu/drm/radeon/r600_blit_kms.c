@@ -483,9 +483,10 @@ int r600_blit_init(struct radeon_device *rdev)
 	u32 packet2s[16];
 	int num_packet2s = 0;
 
-	/* don't reinitialize blit */
+	/* pin copy shader into vram if already initialized */
 	if (rdev->r600_blit.shader_obj)
-		return 0;
+		goto done;
+
 	mutex_init(&rdev->r600_blit.mutex);
 	rdev->r600_blit.state_offset = 0;
 
@@ -546,6 +547,18 @@ int r600_blit_init(struct radeon_device *rdev)
 	radeon_bo_kunmap(rdev->r600_blit.shader_obj);
 	radeon_bo_unreserve(rdev->r600_blit.shader_obj);
 	rdev->mc.active_vram_size = rdev->mc.real_vram_size;
+
+done:
+	r = radeon_bo_reserve(rdev->r600_blit.shader_obj, false);
+	if (unlikely(r != 0))
+		return r;
+	r = radeon_bo_pin(rdev->r600_blit.shader_obj, RADEON_GEM_DOMAIN_VRAM,
+			  &rdev->r600_blit.shader_gpu_addr);
+	radeon_bo_unreserve(rdev->r600_blit.shader_obj);
+	if (r) {
+		dev_err(rdev->dev, "(%d) pin blit object failed\n", r);
+		return r;
+	}
 	return 0;
 }
 
