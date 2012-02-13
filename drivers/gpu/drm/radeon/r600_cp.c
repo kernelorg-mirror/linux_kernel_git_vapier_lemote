@@ -1788,8 +1788,8 @@ static void r600_cp_init_ring_buffer(struct drm_device *dev,
 	/* Set ring buffer size */
 #ifdef __BIG_ENDIAN
 	RADEON_WRITE(R600_CP_RB_CNTL,
-		     RADEON_BUF_SWAP_32BIT |
-		     RADEON_RB_NO_UPDATE |
+		     R600_BUF_SWAP_32BIT |
+		     R600_RB_NO_UPDATE |
 		     (dev_priv->ring.rptr_update_l2qw << 8) |
 		     dev_priv->ring.size_l2qw);
 #else
@@ -1806,15 +1806,15 @@ static void r600_cp_init_ring_buffer(struct drm_device *dev,
 
 #ifdef __BIG_ENDIAN
 	RADEON_WRITE(R600_CP_RB_CNTL,
-		     RADEON_BUF_SWAP_32BIT |
-		     RADEON_RB_NO_UPDATE |
-		     RADEON_RB_RPTR_WR_ENA |
+		     R600_BUF_SWAP_32BIT |
+		     R600_RB_NO_UPDATE |
+		     R600_RB_RPTR_WR_ENA |
 		     (dev_priv->ring.rptr_update_l2qw << 8) |
 		     dev_priv->ring.size_l2qw);
 #else
 	RADEON_WRITE(R600_CP_RB_CNTL,
-		     RADEON_RB_NO_UPDATE |
-		     RADEON_RB_RPTR_WR_ENA |
+		     R600_RB_NO_UPDATE |
+		     R600_RB_RPTR_WR_ENA |
 		     (dev_priv->ring.rptr_update_l2qw << 8) |
 		     dev_priv->ring.size_l2qw);
 #endif
