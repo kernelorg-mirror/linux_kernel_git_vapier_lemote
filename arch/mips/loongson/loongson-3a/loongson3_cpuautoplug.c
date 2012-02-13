@@ -24,6 +24,7 @@
  * CPU Autoplug enabled ?
  */
 int autoplug_enabled = 1;
+int autoplug_adjusting = 0;
 
 #ifndef MODULE
 /*
@@ -169,6 +170,8 @@ static void do_autoplug_timer(struct work_struct *work)
 	if(!autoplug_enabled || system_state != SYSTEM_RUNNING)
 		goto out;
 
+	autoplug_adjusting = 1;
+
 	cur_idle_time = get_idle_time(&cur_wall_time);
 
 	wall_time = (unsigned int) cputime64_sub(cur_wall_time, ap_info.prev_wall);
@@ -195,6 +198,8 @@ static void do_autoplug_timer(struct work_struct *work)
 		ap_info.dec_reqs = 0;
 		increase_cores(nr_cpus);
 	}
+
+	autoplug_adjusting = 0;
 out:
 	queue_delayed_work_on(0, kautoplugd_wq, &ap_info.work, delay);
 }

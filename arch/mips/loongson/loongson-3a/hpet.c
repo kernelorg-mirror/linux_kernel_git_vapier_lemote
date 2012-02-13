@@ -18,12 +18,12 @@ DEFINE_PER_CPU(struct clock_event_device, hpet_clockevent_device);
 
 static unsigned int smbus_read(int offset)
 {
-	return *(unsigned int *)(SMBUS_CFG_BASE + offset);
+	return *(volatile unsigned int *)(SMBUS_CFG_BASE + offset);
 }
 
 static void smbus_write(int offset, int data)
 {
-	*(unsigned int *)(SMBUS_CFG_BASE + offset) = data;
+	*(volatile unsigned int *)(SMBUS_CFG_BASE + offset) = data;
 }
 
 static void smbus_enable(int offset, int bit)
@@ -36,12 +36,12 @@ static void smbus_enable(int offset, int bit)
 
 static int hpet_read(int offset)
 {
-	return *(unsigned int *)(HPET_MMIO_ADDR + offset);
+	return *(volatile unsigned int *)(HPET_MMIO_ADDR + offset);
 }
 
 static void hpet_write(int offset, int data)
 {
-	*(unsigned int *)(HPET_MMIO_ADDR + offset) = data;
+	*(volatile unsigned int *)(HPET_MMIO_ADDR + offset) = data;
 }
 
 static void hpet_start_counter(void)
@@ -255,7 +255,7 @@ static struct clocksource csrc_hpet = {
 int __init init_hpet_clocksource(void)
 {
 	csrc_hpet.mult = clocksource_hz2mult(HPET_FREQ, csrc_hpet.shift);
-	return clocksource_register(&csrc_hpet);
+	return clocksource_register_hz(&csrc_hpet, HPET_FREQ);
 }
 
 arch_initcall(init_hpet_clocksource);
