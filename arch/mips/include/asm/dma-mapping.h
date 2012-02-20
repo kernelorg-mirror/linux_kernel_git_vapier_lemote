@@ -48,8 +48,8 @@ static inline bool dma_capable(struct device *dev, dma_addr_t addr, size_t size)
 	if (!dev->dma_mask)
 		return 0;
 
-	//return addr + size <= *dev->dma_mask;
-	return addr + size <= 0x00000000ffffffff;
+	return addr + size <= *dev->dma_mask &&
+	       addr + size <= 0x00000000ffffffff;
 }
 
 static inline void dma_mark_clean(void *addr, size_t size) {}
