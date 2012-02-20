@@ -363,8 +363,12 @@ dma_addr_t mips_unity_phys_to_dma(struct device *dev, phys_addr_t paddr)
 	printk("\n+++%s %s\n", __FILE__, __func__);
 	dump_stack();
 #endif
+
+#if 0
 	return (paddr < 0x10000000) ?
 			(paddr | 0x0000000080000000) : paddr; 
+#endif
+	return paddr;
 }
 
 phys_addr_t mips_unity_dma_to_phys(struct device *dev, dma_addr_t daddr)
@@ -373,8 +377,11 @@ phys_addr_t mips_unity_dma_to_phys(struct device *dev, dma_addr_t daddr)
 	printk("\n+++%s %s\n", __FILE__, __func__);
 	dump_stack();
 #endif
+
+#if 0
 	return (daddr < 0x90000000 && daddr >= 0x80000000) ?
 			(daddr & 0x0fffffff) : daddr;
+#endif
 	return daddr;
 }
 
