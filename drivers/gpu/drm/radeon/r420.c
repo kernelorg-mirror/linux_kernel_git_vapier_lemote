@@ -274,6 +274,8 @@ static int r420_startup(struct radeon_device *rdev)
 
 int r420_resume(struct radeon_device *rdev)
 {
+	int r;
+
 	/* Make sur GART are not working */
 	if (rdev->flags & RADEON_IS_PCIE)
 		rv370_pcie_gart_disable(rdev);
@@ -297,7 +299,13 @@ int r420_resume(struct radeon_device *rdev)
 	r420_clock_resume(rdev);
 	/* Initialize surface registers */
 	radeon_surface_init(rdev);
-	return r420_startup(rdev);
+
+	rdev->accel_working = true;
+	r = r420_startup(rdev);
+	if (r) {
+		rdev->accel_working = false;
+	}
+	return r;
 }
 
 int r420_suspend(struct radeon_device *rdev)

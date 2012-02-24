@@ -828,6 +828,8 @@ static int rs600_startup(struct radeon_device *rdev)
 
 int rs600_resume(struct radeon_device *rdev)
 {
+	int r;
+
 	/* Make sur GART are not working */
 	rs600_gart_disable(rdev);
 	/* Resume clock before doing reset */
@@ -844,7 +846,13 @@ int rs600_resume(struct radeon_device *rdev)
 	rv515_clock_startup(rdev);
 	/* Initialize surface registers */
 	radeon_surface_init(rdev);
-	return rs600_startup(rdev);
+
+	rdev->accel_working = true;
+	r = rs600_startup(rdev);
+	if (r) {
+		rdev->accel_working = false;
+	}
+	return r;
 }
 
 int rs600_suspend(struct radeon_device *rdev)

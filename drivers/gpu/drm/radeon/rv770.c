@@ -1028,9 +1028,11 @@ int rv770_resume(struct radeon_device *rdev)
 	/* post card */
 	atom_asic_init(rdev->mode_info.atom_context);
 
+	rdev->accel_working = true;
 	r = rv770_startup(rdev);
 	if (r) {
 		DRM_ERROR("r600 startup failed on resume\n");
+		rdev->accel_working = false;
 		return r;
 	}
 
