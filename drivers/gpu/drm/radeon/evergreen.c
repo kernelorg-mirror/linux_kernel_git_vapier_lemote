@@ -618,7 +618,7 @@ static void evergreen_mc_program(struct radeon_device *rdev)
 		WREG32(MC_VM_SYSTEM_APERTURE_HIGH_ADDR,
 			rdev->mc.vram_end >> 12);
 	}
-	WREG32(MC_VM_SYSTEM_APERTURE_DEFAULT_ADDR, 0);
+	WREG32(MC_VM_SYSTEM_APERTURE_DEFAULT_ADDR, rdev->vram_scratch.gpu_addr >> 12);
 	tmp = ((rdev->mc.vram_end >> 24) & 0xFFFF) << 16;
 	tmp |= ((rdev->mc.vram_start >> 24) & 0xFFFF);
 	WREG32(MC_VM_FB_LOCATION, tmp);
@@ -2060,6 +2060,10 @@ static int evergreen_startup(struct radeon_device *rdev)
 		}
 	}
 
+	r = r600_vram_scratch_init(rdev);
+	if (r)
+		return r;
+
 	evergreen_mc_program(rdev);
 	if (rdev->flags & RADEON_IS_AGP) {
 		evergreen_agp_enable(rdev);
@@ -2296,6 +2300,7 @@ void evergreen_fini(struct radeon_device *rdev)
 	radeon_wb_fini(rdev);
 	radeon_irq_kms_fini(rdev);
 	evergreen_pcie_gart_fini(rdev);
+	r600_vram_scratch_fini(rdev);
 	radeon_gem_fini(rdev);
 	radeon_fence_driver_fini(rdev);
 	radeon_agp_fini(rdev);

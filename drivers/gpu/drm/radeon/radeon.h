@@ -1023,10 +1023,11 @@ int radeon_gem_set_tiling_ioctl(struct drm_device *dev, void *data,
 int radeon_gem_get_tiling_ioctl(struct drm_device *dev, void *data,
 				struct drm_file *filp);
 
-/* VRAM scratch page for HDP bug */
-struct r700_vram_scratch {
+/* VRAM scratch page for HDP bug, default vram page */
+struct r600_vram_scratch {
 	struct radeon_bo		*robj;
 	volatile uint32_t		*ptr;
+	u64				gpu_addr;
 };
 
 
@@ -1136,7 +1137,7 @@ struct radeon_device {
 	const struct firmware *pfp_fw;	/* r6/700 PFP firmware */
 	const struct firmware *rlc_fw;	/* r6/700 RLC firmware */
 	struct r600_blit r600_blit;
-	struct r700_vram_scratch vram_scratch;
+	struct r600_vram_scratch vram_scratch;
 	int msi_enabled; /* msi enabled */
 	struct r600_ih ih; /* r6/700 interrupt ring */
 	struct workqueue_struct *wq;
@@ -1505,6 +1506,8 @@ extern void r600_audio_schedule_polling(struct radeon_device *rdev);
 extern void r600_audio_enable_polling(struct drm_encoder *encoder);
 extern void r600_audio_disable_polling(struct drm_encoder *encoder);
 extern void r600_audio_fini(struct radeon_device *rdev);
+int r600_vram_scratch_init(struct radeon_device *rdev);
+void r600_vram_scratch_fini(struct radeon_device *rdev);
 extern void r600_hdmi_init(struct drm_encoder *encoder);
 extern void r600_hdmi_enable(struct drm_encoder *encoder);
 extern void r600_hdmi_disable(struct drm_encoder *encoder);
