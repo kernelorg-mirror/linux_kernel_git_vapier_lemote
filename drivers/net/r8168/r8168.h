@@ -5,7 +5,7 @@
 # RTL8168C/8111C, RTL8168CP/8111CP, RTL8168D/8111D, and RTL8168DP/8111DP, and
 # RTK8168E/8111E Gigabit Ethernet controllers with PCI-Express interface.
 #
-# Copyright(c) 2010 Realtek Semiconductor Corp. All rights reserved.
+# Copyright(c) 2011 Realtek Semiconductor Corp. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
@@ -64,13 +64,11 @@
 #define gso_segs	tso_segs
 #endif
 
-#ifdef HAVE_NET_DEVICE_OPS
-	#define RTL_NET_DEVICE_OPS(ops)	dev->netdev_ops=&ops
-#else
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,29)
 	#ifdef CONFIG_NET_POLL_CONTROLLER
 		#define RTL_NET_POLL_CONTROLLER dev->poll_controller=rtl8168_netpoll
 	#else
-		#define RTL_NET_POLL_CONTROLLER 
+		#define RTL_NET_POLL_CONTROLLER
 	#endif
 
 	#ifdef CONFIG_R8168_VLAN
@@ -90,12 +88,16 @@
 					dev->do_ioctl=rtl8168_do_ioctl; \
 					RTL_NET_POLL_CONTROLLER; \
 					RTL_SET_VLAN;
-#endif //HAVE_NET_DEVICE_OPS
+#else
+	#define RTL_NET_DEVICE_OPS(ops)	dev->netdev_ops=&ops
+#endif
 
 //Due to the hardware design of RTL8111B, the low 32 bit address of receive
 //buffer must be 8-byte alignment.
-#undef NET_IP_ALIGN
-#define NET_IP_ALIGN 8
+#ifndef NET_IP_ALIGN
+#define NET_IP_ALIGN		2
+#endif
+#define RTK_RX_ALIGN		8
 
 #ifdef CONFIG_R8168_NAPI
 #define NAPI_SUFFIX	"-NAPI"
@@ -103,12 +105,12 @@
 #define NAPI_SUFFIX	""
 #endif
 
-#define RTL8168_VERSION "8.018.00" NAPI_SUFFIX
+#define RTL8168_VERSION "8.028.00" NAPI_SUFFIX
 #define MODULENAME "r8168"
 #define PFX MODULENAME ": "
 
 #define GPL_CLAIM "\
-r8168  Copyright (C) 2010  Realtek NIC software team <nicfae@realtek.com> \n \
+r8168  Copyright (C) 2011  Realtek NIC software team <nicfae@realtek.com> \n \
 This program comes with ABSOLUTELY NO WARRANTY; for details, please see <http://www.gnu.org/licenses/>. \n \
 This is free software, and you are welcome to redistribute it under certain conditions; see <http://www.gnu.org/licenses/>. \n"
 
@@ -288,6 +290,7 @@ static inline void *netdev_priv(struct net_device *dev)
 	#define RTL_NAPI_RETURN_VALUE				work_done >= work_to_do
 	#define RTL_NAPI_ENABLE(dev, napi)			netif_poll_enable(dev)
 	#define RTL_NAPI_DISABLE(dev, napi)			netif_poll_disable(dev)
+	#define DMA_BIT_MASK(value)				((1ULL << value) - 1)
 #else
 	typedef struct napi_struct *napi_ptr;
 	typedef int napi_budget;
@@ -991,7 +994,7 @@ enum RTL8168_register_content {
 	OCPDR_Read = 0x00000000,
 	OCPDR_Reg_Mask = 0xFF,
 	OCPDR_Data_Mask = 0xFFFF,
-	OCPDR_GPHY_Reg_shift = 12,
+	OCPDR_GPHY_Reg_shift = 16,
 	OCPAR_Flag = 0x80000000,
 	OCPAR_GPHY_Write = 0x8000F060,
 	OCPAR_GPHY_Read = 0x0000F060,
@@ -1022,7 +1025,7 @@ enum _DescStatusBit {
 	/*------ offset 0 of tx descriptor ------*/
 	LargeSend	= (1 << 27), /* TCP Large Send Offload (TSO) */
 	MSSShift	= 16,        /* MSS value position */
-	MSSMask		= 0xfff,     /* MSS value + LargeSend bit: 12 bits */
+	MSSMask		= 0x7ffU,    /* MSS value + LargeSend bit: 12 bits */
 	TxIPCS		= (1 << 18), /* Calculate IP checksum */
 	TxUDPCS		= (1 << 17), /* Calculate UDP/IP checksum */
 	TxTCPCS		= (1 << 16), /* Calculate TCP/IP checksum */
@@ -1186,7 +1189,6 @@ struct rtl8168_private {
 	u16 intr_mask;
 	int phy_auto_nego_reg;
 	int phy_1000_ctrl_reg;
-	u8 mac_addr[NODE_ADDRESS_SIZE];
 	u8 org_mac_addr[NODE_ADDRESS_SIZE];
 #ifdef CONFIG_R8168_VLAN
 	struct vlan_group *vlgrp;
@@ -1235,13 +1237,35 @@ enum mcfg {
 	CFG_METHOD_13,
 	CFG_METHOD_14,
 	CFG_METHOD_15,
+	CFG_METHOD_16,
+	CFG_METHOD_17,
+	CFG_METHOD_18,
+	CFG_METHOD_19,
+	CFG_METHOD_20,
 	CFG_METHOD_MAX,
-	CFG_METHOD_UNKNOWN = 0xFFFFFFFFUL
+	CFG_METHOD_DEFAULT = 0xFF
 };
-
-extern u32 rtl8168_eri_read(void __iomem *ioaddr, int addr, int len, int type);
-extern int rtl8168_eri_write(void __iomem *ioaddr, int addr, int len, u32 value, int type);
 
 #define OOB_CMD_RESET		0x00
 #define OOB_CMD_DRIVER_START	0x05
 #define OOB_CMD_DRIVER_STOP	0x06
+#define OOB_CMD_SET_IPMAC	0x41
+
+extern void mdio_write(struct rtl8168_private *tp, u32 RegAddr, u32 value);
+extern void rtl8168_ephy_write(void __iomem *ioaddr, int RegAddr, int value);
+extern void OCP_write(struct rtl8168_private *tp, u8 mask, u16 Reg, u32 data);
+extern void OOB_notify(struct rtl8168_private *tp, u8 cmd);
+extern void rtl8168_init_ring_indexes(struct rtl8168_private *tp);
+extern int rtl8168_eri_write(void __iomem *ioaddr, int addr, int len, u32 value, int type);
+extern u32 mdio_read(struct rtl8168_private *tp, u32 RegAddr);
+extern u32 OCP_read(struct rtl8168_private *tp, u8 mask, u16 Reg);
+extern u32 rtl8168_eri_read(void __iomem *ioaddr, int addr, int len, int type);
+extern u16 rtl8168_ephy_read(void __iomem *ioaddr, int RegAddr);
+
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,34)
+#define netdev_mc_count(dev) ((dev)->mc_count)
+#define netdev_mc_empty(dev) (netdev_mc_count(dev) == 0)
+#define netdev_for_each_mc_addr(mclist, dev) \
+	for (mclist = dev->mc_list; mclist; mclist = mclist->next)
+#endif

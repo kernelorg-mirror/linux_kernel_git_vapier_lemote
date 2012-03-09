@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
-# Linux kernel version: 2.6.36-4.lemote
-# Wed Feb  8 16:15:12 2012
+# Linux kernel version: 2.6.36-5.lemote
+# Mon Mar 12 15:26:30 2012
 #
 CONFIG_MIPS=y
 
@@ -1079,8 +1079,8 @@ CONFIG_NETDEV_1000=y
 # CONFIG_NS83820 is not set
 # CONFIG_HAMACHI is not set
 # CONFIG_YELLOWFIN is not set
-CONFIG_R8169=y
-# CONFIG_R8168 is not set
+# CONFIG_R8169 is not set
+CONFIG_R8168=y
 # CONFIG_SIS190 is not set
 # CONFIG_SKGE is not set
 # CONFIG_SKY2 is not set

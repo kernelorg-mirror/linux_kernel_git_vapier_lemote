@@ -4,7 +4,7 @@
 # r8101 is the Linux device driver released for RealTek RTL8101E, RTL8102E,
 # and RTL8103E Fast Ethernet controllers with PCI-Express interface.
 #
-# Copyright(c) 2009 Realtek Semiconductor Corp. All rights reserved.
+# Copyright(c) 2011 Realtek Semiconductor Corp. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
@@ -53,7 +53,10 @@
 void rtl_eeprom_type(struct rtl8168_private *tp)
 {
 	void __iomem *ioaddr=tp->mmio_addr;
-	u16	magic;
+	u16	magic = 0;
+	
+	if (tp->mcfg == CFG_METHOD_DEFAULT)
+		goto out_no_eeprom;
 
 	if(RTL_R8(0xD2)&0x04)
 	{
@@ -72,6 +75,8 @@ void rtl_eeprom_type(struct rtl8168_private *tp)
 	}
 
 	magic = rtl_eeprom_read_sc(tp, 0);
+
+out_no_eeprom:
         if ((magic != 0x8129) && (magic != 0x8128))
         {
         	tp->eeprom_type = EEPROM_TYPE_NONE;
@@ -123,14 +128,17 @@ u16 rtl_eeprom_read_sc(struct rtl8168_private *tp, u16 reg)
 	u8 x;
 	u16 data;
 
+	if(tp->eeprom_type == EEPROM_TYPE_NONE)
+	{
+		return -1;
+	}
+
 	if (tp->eeprom_type==EEPROM_TYPE_93C46)
 		addr_sz = 6;
 	else if (tp->eeprom_type==EEPROM_TYPE_93C56)
 		addr_sz = 8;
 
-	x = RTL_R8(Cfg9346);
-	x &= ~(Cfg9346_EEDI | Cfg9346_EEDO | Cfg9346_EESK);
-	x |= Cfg9346_EEM1 | Cfg9346_EECS;
+	x = Cfg9346_EEM1 | Cfg9346_EECS;
 	RTL_W8(Cfg9346, x);
 
 	rtl_shift_out_bits(RTL_EEPROM_READ_OPCODE, 3, ioaddr);
@@ -139,6 +147,8 @@ u16 rtl_eeprom_read_sc(struct rtl8168_private *tp, u16 reg)
 	data = rtl_shift_in_bits(ioaddr);
 
 	rtl_eeprom_cleanup(ioaddr);
+
+	RTL_W8(Cfg9346, 0);
 
 	return data;
 }
@@ -154,6 +164,11 @@ void rtl_eeprom_write_sc(struct rtl8168_private *tp, u16 reg, u16 data)
 	int addr_sz = 6;
 	int w_dummy_addr = 4;
 
+	if(tp->eeprom_type == EEPROM_TYPE_NONE)
+	{
+		return ;
+	}
+
 	if (tp->eeprom_type==EEPROM_TYPE_93C46)
 	{
 		addr_sz = 6;
@@ -165,9 +180,7 @@ void rtl_eeprom_write_sc(struct rtl8168_private *tp, u16 reg, u16 data)
 		w_dummy_addr = 6;
 	}
 
-	x = RTL_R8(Cfg9346);
-	x &= ~(Cfg9346_EEDI | Cfg9346_EEDO | Cfg9346_EESK);
-	x |= Cfg9346_EEM1 | Cfg9346_EECS;
+	x = Cfg9346_EEM1 | Cfg9346_EECS;
 	RTL_W8(Cfg9346, x);
 
 	rtl_shift_out_bits(RTL_EEPROM_EWEN_OPCODE, 5, ioaddr);
@@ -193,11 +206,11 @@ void rtl_eeprom_write_sc(struct rtl8168_private *tp, u16 reg, u16 data)
 	rtl_shift_out_bits(reg, w_dummy_addr, ioaddr);
 
 	rtl_eeprom_cleanup(ioaddr);
+	RTL_W8(Cfg9346, 0);
 }
 
 void rtl_raise_clock(u8 *x, void __iomem *ioaddr)
 {
-
 	*x = *x | Cfg9346_EESK;
 	RTL_W8(Cfg9346, *x);
 	udelay(RTL_CLOCK_RATE);
