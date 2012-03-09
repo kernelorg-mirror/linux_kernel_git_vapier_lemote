@@ -58,6 +58,20 @@ enum
 	APM_BAT_STATUS_NOT_PRESENT,
 	APM_BAT_STATUS_UNKNOWN =	0xff
 };
+
+enum //bat_reg_flag
+{
+	BAT_REG_TEMP_FLAG = 1,
+	BAT_REG_VOLTAGE_FLAG,
+	BAT_REG_CURRENT_FLAG,
+	BAT_REG_AC_FLAG,
+	BAT_REG_RC_FLAG,
+	BAT_REG_FCC_FLAG,
+	BAT_REG_ATTE_FLAG,
+	BAT_REG_ATTF_FLAG,
+	BAT_REG_RSOC_FLAG,
+	BAT_REG_CYCLCNT_FLAG
+};
 /* Power info cached timeout */
 #define POWER_INFO_CACHED_TIMEOUT	100	/* jiffies */
 
@@ -77,9 +91,6 @@ struct ls3anb_power_info
 	unsigned int bat_in;
 	unsigned int health;
 
-	/* Se use capacity for caculating the life and time */
-	//unsigned int current_capacity;
-
 	/* Battery designed capacity */
 	unsigned int design_capacity;
 	/* Battery designed voltage */
@@ -97,7 +108,6 @@ struct ls3anb_power_info
 	/* Battery Technology */
 	unsigned int technology;
 	/* Battery cell count */
-	unsigned char cell_count_string[4];
 	unsigned char cell_count;
 
 	/* Battery dynamic charge/discharge voltage */
@@ -118,6 +128,8 @@ struct ls3anb_power_info
 	unsigned int fullchg_time;
 	/* Battery Status */
 	unsigned int charge_status;
+	/* Battery current cycle count (CycleCount) */
+	unsigned int cycle_count;
 };
 
 /* SCI device structure */
@@ -139,7 +151,6 @@ struct sci_event
 	int index;
 	sci_handler handler;
 };
-
 
 /* Platform driver init handler */
 static int __init ls3anb_init(void);
@@ -192,22 +203,8 @@ static ssize_t ls3anb_get_hwmon_name(struct device * dev,
 			struct device_attribute * attr, char * buf);
 
 /* >>>Power management operation */
-/* Update power_info->voltage value */
-static void ls3anb_power_info_voltage_update(void);
-/* Update power_info->current_now value */
-static void ls3anb_power_info_current_now_update(void);
-/* Update power_info->current_avg value */
-static void ls3anb_power_info_current_avg_update(void);
-/* Update power_info->temperature value */
-static void ls3anb_power_info_temperature_update(void);
-/* Update power_info->remain_capacity value */
-static void ls3anb_power_info_capacity_now_update(void);
-/* Update power_info->curr_cap value */
-static void ls3anb_power_info_capacity_percent_update(void);
-/* Update power_info->remain_time value */
-static void ls3anb_power_info_remain_time_update(void);
-/* Update power_info->fullchg_time value */
-static void ls3anb_power_info_fullcharge_time_update(void);
+/* Update battery information handle function. */
+static void ls3anb_power_battery_info_update(unsigned char bat_reg_flag);
 /* Clear battery static information. */
 static void ls3anb_power_info_battery_static_clear(void);
 /* Get battery static information. */
@@ -342,6 +339,7 @@ static enum power_supply_property ls3anb_bat_props[] =
 	POWER_SUPPLY_PROP_HEALTH,
 	POWER_SUPPLY_PROP_PRESENT,
 	POWER_SUPPLY_PROP_TECHNOLOGY,
+	POWER_SUPPLY_PROP_CYCLE_COUNT,
 	POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN,
 	POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN,
 	POWER_SUPPLY_PROP_CURRENT_NOW,
@@ -812,139 +810,66 @@ static ssize_t ls3anb_get_hwmon_name(struct device * dev,
 	return sprintf(buf, "ls3a-laptop\n");
 }
 
-/* Update power_info->voltage value */
-static void ls3anb_power_info_voltage_update(void)
+
+
+/* Update battery information handle function. */
+static void ls3anb_power_battery_info_update(unsigned char bat_reg_flag)
 {
-	short voltage_now = 0;
-	static unsigned long last_jiffies = 0;
+	short bat_info_value = 0;
 
-	if(POWER_INFO_CACHED_TIMEOUT > (jiffies - last_jiffies))
-	{
-		return;
+	switch(bat_reg_flag){
+		/* Update power_info->temperature value */
+		case BAT_REG_TEMP_FLAG:
+			ls3anb_power_info_power_status_update();
+			bat_info_value = (ec_read(INDEX_BATTERY_TEMP_HIGH) << 8) | ec_read(INDEX_BATTERY_TEMP_LOW);
+			power_info->temperature = (power_info->bat_in) ? (bat_info_value / 10 - 273) : 0;
+			break;
+		/* Update power_info->voltage value */
+		case BAT_REG_VOLTAGE_FLAG:
+			ls3anb_power_info_power_status_update();
+			bat_info_value = (ec_read(INDEX_BATTERY_VOL_HIGH) << 8) | ec_read(INDEX_BATTERY_VOL_LOW);
+			power_info->voltage_now = (power_info->bat_in) ? bat_info_value : 0;
+			break;
+		/* Update power_info->current_now value */
+		case BAT_REG_CURRENT_FLAG:
+			ls3anb_power_info_power_status_update();
+			bat_info_value = (ec_read(INDEX_BATTERY_CURRENT_HIGH) << 8) | ec_read(INDEX_BATTERY_CURRENT_LOW);
+			power_info->current_now = (power_info->bat_in) ? bat_info_value : 0;
+			break;
+		/* Update power_info->current_avg value */
+		case BAT_REG_AC_FLAG:
+			ls3anb_power_info_power_status_update();
+			bat_info_value = (ec_read(INDEX_BATTERY_AC_HIGH) << 8) | ec_read(INDEX_BATTERY_AC_LOW);
+			power_info->current_average = (power_info->bat_in) ? bat_info_value : 0;
+			break;
+		/* Update power_info->remain_capacity value */
+		case BAT_REG_RC_FLAG:
+			power_info->remain_capacity = (ec_read(INDEX_BATTERY_RC_HIGH) << 8) | ec_read(INDEX_BATTERY_RC_LOW);
+			break;
+		/* Update power_info->full_charged_capacity value */
+		case BAT_REG_FCC_FLAG:
+			power_info->full_charged_capacity = (ec_read(INDEX_BATTERY_FCC_HIGH) << 8) | ec_read(INDEX_BATTERY_FCC_LOW);
+			break;
+		/* Update power_info->remain_time value */
+		case BAT_REG_ATTE_FLAG:
+			power_info->remain_time = (ec_read(INDEX_BATTERY_ATTE_HIGH) << 8) | ec_read(INDEX_BATTERY_ATTE_LOW);
+			break;
+		/* Update power_info->fullchg_time value */
+		case BAT_REG_ATTF_FLAG:
+			power_info->fullchg_time = (ec_read(INDEX_BATTERY_ATTF_HIGH) << 8) | ec_read(INDEX_BATTERY_ATTF_LOW);
+			break;
+		/* Update power_info->curr_cap value */
+		case BAT_REG_RSOC_FLAG:
+			power_info->remain_capacity_percent = ec_read(INDEX_BATTERY_CAPACITY);
+			break;
+		/* Update power_info->cycle_count value */
+		case BAT_REG_CYCLCNT_FLAG:
+			power_info->cycle_count = (ec_read(INDEX_BATTERY_CYCLECNT_HIGH) << 8) | ec_read(INDEX_BATTERY_CYCLECNT_LOW);
+			break;
+
+		default:
+			break;
 	}
-	last_jiffies = jiffies;
-
-	ls3anb_power_info_power_status_update();
-	
-	voltage_now = (ec_read(INDEX_BATTERY_VOL_HIGH) << 8) | ec_read(INDEX_BATTERY_VOL_LOW);
-
-	power_info->voltage_now = (power_info->bat_in) ? voltage_now : 0;
-}
-
-/* Update power_info->current_now value */
-static void ls3anb_power_info_current_now_update(void)
-{
-	short current_now = 0;
-	static unsigned long last_jiffies = 0;
-
-	if(POWER_INFO_CACHED_TIMEOUT > (jiffies - last_jiffies))
-	{
-		return;
-	}
-	last_jiffies = jiffies;
-
-	ls3anb_power_info_power_status_update();
-	
-	current_now = (ec_read(INDEX_BATTERY_CURRENT_HIGH) << 8) | ec_read(INDEX_BATTERY_CURRENT_LOW);
-
-	power_info->current_now = (power_info->bat_in) ? current_now : 0;
-}
-
-
-/* Update power_info->current_avg value */
-static void ls3anb_power_info_current_avg_update(void)
-{
-	short current_avg = 0;
-	static unsigned long last_jiffies = 0;
-
-	if(POWER_INFO_CACHED_TIMEOUT > (jiffies - last_jiffies))
-	{
-		return;
-	}
-	last_jiffies = jiffies;
-
-	ls3anb_power_info_power_status_update();
-	
-	current_avg = (ec_read(INDEX_BATTERY_AC_HIGH) << 8) | ec_read(INDEX_BATTERY_AC_LOW);
-
-	power_info->current_average = (power_info->bat_in) ? current_avg : 0;
-}
-
-/* Update power_info->temperature value */
-static void ls3anb_power_info_temperature_update(void)
-{
-	short temperature = 0;
-	static unsigned long last_jiffies = 0;
-
-	if(POWER_INFO_CACHED_TIMEOUT > (jiffies - last_jiffies))
-	{
-		return;
-	}
-	last_jiffies = jiffies;
-
-	ls3anb_power_info_power_status_update();
-
-	temperature = (ec_read(INDEX_BATTERY_TEMP_HIGH) << 8) | ec_read(INDEX_BATTERY_TEMP_LOW);
-
-	power_info->temperature = (power_info->bat_in) ?
-				(temperature / 10 - 273) : 0;
-}
-
-/* Update power_info->remain_capacity value */
-static void ls3anb_power_info_capacity_now_update(void)
-{
-	static unsigned long last_jiffies = 0;
-
-	if(POWER_INFO_CACHED_TIMEOUT > (jiffies - last_jiffies))
-	{
-		return;
-	}
-	last_jiffies = jiffies;
-
-	power_info->remain_capacity = (ec_read(INDEX_BATTERY_RC_HIGH) << 8) | ec_read(INDEX_BATTERY_RC_LOW);
-}
-
-
-/* Update power_info->curr_cap value */
-static void ls3anb_power_info_capacity_percent_update(void)
-{
-	static unsigned long last_jiffies = 0;
-
-	if(POWER_INFO_CACHED_TIMEOUT > (jiffies - last_jiffies))
-	{
-		return;
-	}
-	last_jiffies = jiffies;
-
-	power_info->remain_capacity_percent = ec_read(INDEX_BATTERY_CAPACITY);
-}
-
-/* Update power_info->remain_time value */
-static void ls3anb_power_info_remain_time_update(void)
-{
-	static unsigned long last_jiffies = 0;
-
-	if(POWER_INFO_CACHED_TIMEOUT > (jiffies - last_jiffies))
-	{
-		return;
-	}
-	last_jiffies = jiffies;
-
-	power_info->remain_time = (ec_read(INDEX_BATTERY_ATTE_HIGH) << 8) | ec_read(INDEX_BATTERY_ATTE_LOW);
-}
-
-/* Update power_info->fullchg_time value */
-static void ls3anb_power_info_fullcharge_time_update(void)
-{
-	static unsigned long last_jiffies = 0;
-
-	if(POWER_INFO_CACHED_TIMEOUT > (jiffies - last_jiffies))
-	{
-		return;
-	}
-	last_jiffies = jiffies;
-
-	power_info->fullchg_time = (ec_read(INDEX_BATTERY_ATTF_HIGH) << 8) | ec_read(INDEX_BATTERY_ATTF_LOW);
 }
 
 /* Clear battery static information. */
@@ -958,7 +883,6 @@ static void ls3anb_power_info_battery_static_clear(void)
 	power_info->cell_count = 0;
 	power_info->design_capacity = 0;
 	power_info->design_voltage = 0;
-	power_info->full_charged_capacity = 0;
 }
 
 /* Get battery static information. */
@@ -1007,8 +931,7 @@ static void ls3anb_power_info_battery_static_update(void)
 	bat_serial_number = (ec_read(INDEX_BATTERY_SN_HIGH) << 8) | ec_read(INDEX_BATTERY_SN_LOW);
 	snprintf(power_info->serial_number, 8, "%x", bat_serial_number);
 
-	ls3anb_bat_get_string(INDEX_BATTERY_CELLCNT_START, power_info->cell_count_string);
-	power_info->cell_count = (!strncmp(power_info->cell_count_string, FLAG_BAT_CELL_3S1P, 4)) ? 3 : 0;
+	power_info->cell_count = ((ec_read(INDEX_BATTERY_CV_HIGH) << 8) | ec_read(INDEX_BATTERY_CV_LOW)) / 4200;
 
 	power_info->design_capacity = (ec_read(INDEX_BATTERY_DC_HIGH) << 8) | ec_read(INDEX_BATTERY_DC_LOW);
 	power_info->design_voltage = (ec_read(INDEX_BATTERY_DV_HIGH) << 8) | ec_read(INDEX_BATTERY_DV_LOW);
@@ -1025,13 +948,6 @@ static void ls3anb_power_info_battery_static_update(void)
 static void ls3anb_power_info_power_status_update(void)
 {
 	unsigned int power_status = 0;
-	static unsigned long last_jiffies = 0;
-
-	if(POWER_INFO_CACHED_TIMEOUT > (jiffies - last_jiffies))
-	{
-		return;
-	}
-	last_jiffies = jiffies;
 
 	power_status = ec_read(INDEX_POWER_STATUS);
 
@@ -1106,9 +1022,6 @@ static int ls3anb_bat_get_property(struct power_supply * pws,
 		case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
 			val->intval = power_info->design_capacity * 1000; /* mAh -> uAh */
 			break;
-		case POWER_SUPPLY_PROP_CHARGE_FULL:
-			val->intval = power_info->full_charged_capacity * 1000;/* mAh -> uAh */
-			break;
 		case POWER_SUPPLY_PROP_MODEL_NAME:
 			val->strval = power_info->device_name;
 			break;
@@ -1122,7 +1035,7 @@ static int ls3anb_bat_get_property(struct power_supply * pws,
 			val->intval = power_info->technology;
 			break;
 
-			/* Get battery dynamic information. */
+		/* Get battery dynamic information. */
 		case POWER_SUPPLY_PROP_STATUS:
 			ls3anb_power_info_power_status_update();
 			val->intval = power_info->charge_status;
@@ -1136,31 +1049,31 @@ static int ls3anb_bat_get_property(struct power_supply * pws,
 			val->intval = power_info->health;
 			break;
 		case POWER_SUPPLY_PROP_CURRENT_NOW:
-			ls3anb_power_info_current_now_update();
+			ls3anb_power_battery_info_update(BAT_REG_CURRENT_FLAG);
 			val->intval = power_info->current_now * 1000; /* mA -> uA */
 			break;
 		case POWER_SUPPLY_PROP_CURRENT_AVG:
-			ls3anb_power_info_current_avg_update();
+			ls3anb_power_battery_info_update(BAT_REG_AC_FLAG);
 			val->intval = power_info->current_average * 1000; /* mA -> uA */
 			break;
 		case POWER_SUPPLY_PROP_VOLTAGE_NOW:
-			ls3anb_power_info_voltage_update();
+			ls3anb_power_battery_info_update(BAT_REG_VOLTAGE_FLAG);
 			val->intval =  power_info->voltage_now * 1000; /* mV -> uV */
 			break;
 		case POWER_SUPPLY_PROP_CHARGE_NOW:
-			ls3anb_power_info_capacity_now_update();
+			ls3anb_power_battery_info_update(BAT_REG_RC_FLAG);
 			val->intval = power_info->remain_capacity * 1000; /* mAh -> uAh */
 			break;
 		case POWER_SUPPLY_PROP_CAPACITY:
-			ls3anb_power_info_capacity_percent_update();
+			ls3anb_power_battery_info_update(BAT_REG_RSOC_FLAG);
 			val->intval = power_info->remain_capacity_percent;	/* Percentage */
 			break;	
 		case POWER_SUPPLY_PROP_TEMP:
-			ls3anb_power_info_temperature_update();
+			ls3anb_power_battery_info_update(BAT_REG_TEMP_FLAG);
 			val->intval = power_info->temperature;	 /* Celcius */
 			break;
 		case POWER_SUPPLY_PROP_TIME_TO_EMPTY_AVG: 
-			ls3anb_power_info_remain_time_update();
+			ls3anb_power_battery_info_update(BAT_REG_ATTE_FLAG);
 			if(power_info->remain_time == 0xFFFF)
 			{
 				power_info->remain_time = 0;
@@ -1168,12 +1081,20 @@ static int ls3anb_bat_get_property(struct power_supply * pws,
 			val->intval = power_info->remain_time * 60;  /* seconds */
 			break;
 		case POWER_SUPPLY_PROP_TIME_TO_FULL_AVG: 
-			ls3anb_power_info_fullcharge_time_update();
+			ls3anb_power_battery_info_update(BAT_REG_ATTF_FLAG);
 			if(power_info->fullchg_time == 0xFFFF)
 			{
 				power_info->fullchg_time = 0;
 			}
 			val->intval = power_info->fullchg_time * 60;  /* seconds */
+			break;
+		case POWER_SUPPLY_PROP_CHARGE_FULL:
+			ls3anb_power_battery_info_update(BAT_REG_FCC_FLAG);
+			val->intval = power_info->full_charged_capacity * 1000;/* mAh -> uAh */
+			break;
+		case POWER_SUPPLY_PROP_CYCLE_COUNT:
+			ls3anb_power_battery_info_update(BAT_REG_CYCLCNT_FLAG);
+			val->intval = power_info->cycle_count;
 			break;
 		default:
 			return -EINVAL;

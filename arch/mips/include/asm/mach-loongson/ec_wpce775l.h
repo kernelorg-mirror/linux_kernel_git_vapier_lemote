@@ -17,7 +17,7 @@
 #ifndef __EC_WPCE775L_H__
 #define __EC_WPCE775L_H__
 
-#define EC_VERSION		"1.08"
+#define EC_VERSION		"1.09"
 
 /* 
  * The following registers are determined by the EC index configureation.
@@ -35,7 +35,7 @@
  */
 #define EC_REG_DELAY		30000
 #define EC_CMD_TIMEOUT		0x1000
-#define EC_SEND_TIMEOUT		0x7fff
+#define EC_SEND_TIMEOUT		0xffff
 #define EC_RECV_TIMEOUT		0xffff
 
 /*
@@ -125,7 +125,7 @@ enum
 };
 /* <<< End Backlight */
 
-/* >>> Read battery index for ACPI 80h command */
+/* >>> Read battery(BQ3060) index for ACPI 80h command */
 /*
  * The reported battery die temperature.
  * The temperature is expressed in units of 0.25 seconds and is updated every 2.56 seconds.
@@ -196,6 +196,8 @@ enum
 	BIT_BATTERY_CHGSTS_CHGSUSP,		/* 1 = Charging suspended */
 	BIT_BATTERY_CHGSTS_XCHG			/* 1 = Charging disabled */
 };
+#define INDEX_BATTERY_CYCLECNT_LOW	0x3C	/* Battery CycleCount Low byte. */
+#define INDEX_BATTERY_CYCLECNT_HIGH	0x3D	/* Battery CycleCount High byte. */
 
 /* Battery static information. */
 #define INDEX_BATTERY_DC_LOW		0x60	/* Battery DesignCapacity Low byte. */
