@@ -7,55 +7,39 @@
 #include <linux/fs.h>
 #include <linux/fcntl.h>
 #include <linux/mm.h>
-
 #include <asm/bootinfo.h>
-
 #include <loongson.h>
 #include <mem.h>
 #include <pci.h>
+#include <boot_param.h>
+
+extern unsigned long long memstart, highmemstart;
 
 void __init prom_init_memory(void)
 {
-	add_memory_region(0x0, (memsize << 20), BOOT_MEM_RAM);
+	phys_t	size1, size2;
 
-	add_memory_region(memsize << 20, LOONGSON_PCI_MEM_START - (memsize <<
-				20), BOOT_MEM_RESERVED);
+	if (memstart != 0)
+		add_memory_region(0, memstart, BOOT_MEM_RESERVED); // reserve the front nMB memory for BIOS runtime services
 
-#ifdef CONFIG_CPU_SUPPORTS_ADDRWINCFG
-	{
-		int bit;
-
-		bit = fls(memsize + highmemsize);
-		if (bit != ffs(memsize + highmemsize))
-			bit += 20;
-		else
-			bit = bit + 20 - 1;
-
-		/* set cpu window3 to map CPU to DDR: 2G -> 2G */
-		LOONGSON_ADDRWIN_CPUTODDR(ADDRWIN_WIN3, 0x80000000ul,
-					  0x80000000ul, (1 << bit));
-		mmiowb();
-	}
-#endif /* !CONFIG_CPU_SUPPORTS_ADDRWINCFG */
+	add_memory_region(memstart, memsize << 20, BOOT_MEM_RAM);
 
 #ifdef CONFIG_64BIT
-#ifdef CONFIG_CPU_LOONGSON3
-	if (highmemsize > 0) {
-		add_memory_region(LOONGSON_HIGHMEM_START - (256 << 20), 256 << 20, BOOT_MEM_RESERVED);
-		add_memory_region(LOONGSON_HIGHMEM_START, highmemsize << 20, BOOT_MEM_RAM);
-	}
-#else
-	if (highmemsize > 256) {
-		add_memory_region(memsize << 20, (highmemsize + 256) << 20, BOOT_MEM_RESERVED);
-		add_memory_region((highmemsize + 512) << 20, (highmemsize - 8) << 20, BOOT_MEM_RAM);
-	} else if (highmemsize > 0) {
-		add_memory_region(LOONGSON_HIGHMEM_START,
-				  highmemsize << 20, BOOT_MEM_RAM);
+        //Reserver bottom 8M above 4G for rs780 chip
+	//check whether mem map overlap with [4G-8M, 4G)
+	if ((highmemstart <= 0x100000000) && 
+		((highmemstart + (highmemsize << 20)) > 0xff800000)) {
+		size1 = 4088 - (highmemstart >> 20); // size < 4G-8M
+		size2 = highmemsize - 8 - size1;     // size > 4G
 
-		add_memory_region(LOONGSON_PCI_MEM_END + 1, LOONGSON_HIGHMEM_START -
-			  	LOONGSON_PCI_MEM_END - 1, BOOT_MEM_RESERVED);
+		add_memory_region(highmemstart, size1 << 20, BOOT_MEM_RAM);
+                add_memory_region(0xff800000, 0x800000, BOOT_MEM_RESERVED);
+
+		if (size2)
+			add_memory_region(0x100000000, size2 << 20, BOOT_MEM_RAM);
+	} else {
+		add_memory_region(highmemstart, highmemsize << 20, BOOT_MEM_RAM);
 	}
-#endif
 #endif /* !CONFIG_64BIT */
 }
 

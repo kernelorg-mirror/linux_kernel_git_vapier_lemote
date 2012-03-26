@@ -57,10 +57,8 @@
 #define         UART16550_STOP_2BIT             0x4
 
 /* ----------------------------------------------------- */
-
-#define	USE_LOONGSON3A_UART
-#ifdef	USE_LOONGSON3A_UART
-
+#define	USE_LOONGSON3_UART
+#ifdef	USE_LOONGSON3_UART
 /* === CONFIG === */
 #ifdef CONFIG_CPU_UART
 #define         BASE                    (0xffffffffbfe001e0)
@@ -162,11 +160,10 @@ int putDebugChar(u8 byte)
 
 extern void prom_putchar(char c);
 
-static char ppbuf[2048];
-
 void prom_printf(char *fmt, ...)
 {
 	va_list args;
+	char ppbuf[1024];
 	char *bptr;
 
 	va_start(args, fmt);

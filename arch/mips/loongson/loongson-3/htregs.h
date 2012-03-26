@@ -1,7 +1,11 @@
 #ifndef __HTREGS__H__
 #define __HTREGS__H__
 
-#define HT_control_regs_base 0x90000EFDFB000000
+#include <boot_param.h>
+
+
+#define HT_control_regs_base  ht_control_base
+
 
 #define HT_irq_vector_reg0	*(volatile unsigned int *)(HT_control_regs_base + 0x80)	
 #define HT_irq_vector_reg1	*(volatile unsigned int *)(HT_control_regs_base + 0x84)	

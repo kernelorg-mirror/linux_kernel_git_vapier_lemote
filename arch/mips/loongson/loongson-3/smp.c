@@ -175,6 +175,16 @@ void loongson3_timer_interrupt(struct pt_regs * regs)
 }
 
 /*
+ *  * These are routines for dealing with the sb1250 smp capabilities
+ *   * independent of board/firmware
+ *    */
+int loongson3_send_irq_by_ipi(int cpu,int irqs)
+{
+        loongson3_ipi_write64((u64)(irqs<<4) , (void *)ipi_mailbox_buf[cpu]);
+        return 0;
+}
+
+/*
  * Simple enough; everything is set up, so just poke the appropriate mailbox
  * register, and we should be set
  */
@@ -231,7 +241,7 @@ void loongson3_init_secondary(void)
 void loongson3_smp_finish(void)
 {
 	local_irq_enable();
-	loongson3_ipi_write64(0, ipi_mailbox_buf[smp_processor_id()]+0x0);
+	loongson3_ipi_write64(0, (void *)ipi_mailbox_buf[smp_processor_id()]+0x0);
 	printk("\n %s, CPU#%d CP0_ST=%x\n", __FUNCTION__, smp_processor_id(), read_c0_status());
 }
 

@@ -26,7 +26,6 @@ static struct platform_device itx_a1101_pdev = {
 static int __init loongson3a_platform_init(void)
 {
 	struct platform_device *pdev = NULL;
-	int ret;
 
 	switch (mips_machtype) {
 	case MACH_LEMOTE_3A_A1004:

@@ -8,14 +8,12 @@
  *  option) any later version.
  */
 #include <linux/pci.h>
-
 #include <pci.h>
 #include <loongson.h>
+#include <boot_param.h>
 
 static struct resource loongson_pci_mem_resource = {
 	.name   = "pci memory space",
-	.start  = LOONGSON_PCI_MEM_START,
-	.end    = LOONGSON_PCI_MEM_END,
 	.flags  = IORESOURCE_MEM,
 };
 
@@ -39,6 +37,8 @@ extern int sb700_acpi_init(void);
 static int __init pcibios_init(void)
 {
 	loongson_pci_controller.io_map_base = mips_io_port_base;
+	loongson_pci_mem_resource.start = pci_mem_start_addr;
+	loongson_pci_mem_resource.end = pci_mem_end_addr;
 
 	register_pci_controller(&loongson_pci_controller);
 

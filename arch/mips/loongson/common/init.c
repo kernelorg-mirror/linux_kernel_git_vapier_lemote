@@ -9,11 +9,11 @@
  */
 
 #include <linux/bootmem.h>
-
 #include <loongson.h>
 #include <asm/smp-ops.h>
+#include <boot_param.h>
 
-#define HT_control_regs_base	0x90000EFDFB000000
+#define HT_control_regs_base	ht_control_base
 #define HT_uncache_enable_reg0	*(volatile unsigned int *)(HT_control_regs_base + 0xF0)
 #define HT_uncache_base_reg0	*(volatile unsigned int *)(HT_control_regs_base + 0xF4)
 #define HT_uncache_enable_reg1	*(volatile unsigned int *)(HT_control_regs_base + 0xF8)
@@ -26,9 +26,6 @@ unsigned long __maybe_unused _loongson_addrwincfg_base;
 
 void __init prom_init(void)
 {
-	/* init base address of io space */
-	set_io_port_base((unsigned long)
-		ioremap(LOONGSON_PCIIO_BASE, LOONGSON_PCIIO_SIZE));
 
 #ifdef CONFIG_CPU_SUPPORTS_ADDRWINCFG
 	_loongson_addrwincfg_base = (unsigned long)
@@ -37,6 +34,11 @@ void __init prom_init(void)
 
 	prom_init_cmdline();
 	prom_init_env();
+
+	/* init base address of io space */
+	set_io_port_base((unsigned long)
+		ioremap(LOONGSON_PCIIO_BASE, LOONGSON_PCIIO_SIZE));
+
 #ifdef CONFIG_NUMA
 	prom_init_numa_memory();
 #else
@@ -59,26 +61,6 @@ void __init prom_init(void)
 	HT_uncache_enable_reg0	= 0x0;
 	HT_uncache_enable_reg1	= 0x0;
 	prom_printf("SET HT_DMA CACHED\n");
-#endif
-
-#if 0
-{
-	char * p = 0x900000003ff02000;
-	char * end = 0x900000003ff020b8;
-	for(;p<end; p+=8){
-		prom_printf("======== [%p]=%p ========\n", p, *(unsigned long long volatile *)p);
-	}
-	char * p = 0x900000003ff00000;
-	char * end = 0x900000003ff000b8;
-	for(;p<end; p+=8){
-		prom_printf("======== [%p]=%p ========\n", p, *(unsigned long long volatile *)p);
-	}
-	char * p = 0x900000003ff00100;
-	char * end = 0x900000003ff001b8;
-	for(;p<end; p+=8){
-		prom_printf("======== [%p]=%p ========\n", p, *(unsigned long long volatile *)p);
-	}
-}
 #endif
 }
 

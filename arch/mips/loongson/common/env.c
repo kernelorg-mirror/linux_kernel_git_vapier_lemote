@@ -18,14 +18,33 @@
  * option) any later version.
  */
 #include <linux/module.h>
-
 #include <asm/bootinfo.h>
-
 #include <loongson.h>
+#include <boot_param.h>
 
-unsigned long cpu_clock_freq;
+#define BOOT_PARAM
+
+#undef CONFIG_NR_CPUS
+#define CONFIG_NR_CPUS nr_cpu_loongson
+struct boot_params *bp;
+struct loongson_params *lp; 
+
+struct efi_memory_map_loongson *emap;
+struct efi_cpuinfo_loongson *ecpu;
+struct system_loongson *esys;
+struct irq_source_routing_table *eirq_source;
+
+u64 pci_mem_start_addr,pci_mem_end_addr;
+u64 memstart, highmemstart;
+u32 memsize, highmemsize;
+u64 ht_control_base;
+u64 loongson_pciio_base;
+
+unsigned int nr_cpu_loongson;
+enum loongson_cpu_type cputype;
+
+u32 cpu_clock_freq;
 EXPORT_SYMBOL(cpu_clock_freq);
-unsigned long memsize, highmemsize;
 
 #define parse_even_earlier(res, option, p)				\
 do {									\
@@ -37,11 +56,11 @@ do {									\
 void __init prom_init_env(void)
 {
 	/* pmon passes arguments in 32bit pointers */
-	int *_prom_envp;
+	int i;
+#ifndef BOOT_PARAM
 	unsigned long bus_clock;
 	unsigned int processor_id;
 	long l;
-
 	/* firmware arguments are initialized in head.S */
 	_prom_envp = (int *)fw_arg2;
 
@@ -75,7 +94,52 @@ void __init prom_init_env(void)
 			break;
 		}
 	}
+	
+	pr_info("busclock=%ld, cpuclock=%ld, memsize=%ld, highmemsize=%ld, sharevram=%d, vramsize=%d\n",
+		bus_clock, cpu_clock_freq, memsize, highmemsize, sharevram, vramsize);
+#else
+	u32 mem_type;
+	u32 node_id;
 
-	pr_info("busclock=%ld, cpuclock=%ld, memsize=%ld, highmemsize=%ld\n",
-		bus_clock, cpu_clock_freq, memsize, highmemsize);
+	bp = (struct boot_params *)fw_arg2;
+	lp = &(bp->efi.smbios.lp);
+
+	emap 	= (struct efi_memory_map_loongson *)((u64)lp+lp->memory_offset);
+	ecpu	= (struct efi_cpuinfo_loongson *)((u64)lp + lp->cpu_offset);
+	eirq_source = (struct irq_source_routing_table *)((u64)lp+lp->irq_offset);
+
+	//parse memory information
+	for (i = 0; i < emap->nr_map; i++){
+		mem_type = emap->map[i].mem_type;
+		node_id = emap->map[i].node_id;
+
+		if(node_id == 0){
+			switch(mem_type){
+			case SYSTEM_RAM_LOW:
+				memsize = emap->map[i].mem_size;	
+				memstart = emap->map[i].mem_start;
+				break;
+			case SYSTEM_RAM_HIGH:
+				highmemsize = emap->map[i].mem_size;	
+				highmemstart = emap->map[i].mem_start;
+				break;
+		   	}
+		}
+	}
+
+	cpu_clock_freq = ecpu->cpu_clock_freq;
+	cputype = ecpu->cputype;
+	nr_cpu_loongson = ecpu->nr_cpus; 
+
+	pci_mem_start_addr = eirq_source->pci_mem_start_addr;
+	pci_mem_end_addr = eirq_source->pci_mem_end_addr;
+	loongson_pciio_base = eirq_source->pci_io_start_addr;
+  
+	pr_info("memstart %llx size %u, highmemstart %llx size %u\n",
+                memstart, memsize, highmemstart, highmemsize);
+	
+	pr_info("pci-start:%llx,pci-end:%llx,pciio base:%llx\n", pci_mem_start_addr, pci_mem_end_addr, loongson_pciio_base);
+
+	ht_control_base = 0x90000EFDFB000000; // has no interface now
+#endif
 }
