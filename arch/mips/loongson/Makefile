@@ -20,4 +20,4 @@ obj-$(CONFIG_LEMOTE_MACH2F)  += lemote-2f/
 # Loongson3A family machines
 #
 
-obj-$(CONFIG_CPU_LOONGSON3A)  += loongson-3a/
+obj-$(CONFIG_CPU_LOONGSON3A)  += loongson-3/
