@@ -15,8 +15,8 @@ menuconfig MIPS_PLATFORM_DEVICES
 if MIPS_PLATFORM_DEVICES
 
 config LS3A_LAPTOP
-	tristate "Loongson 3A Laptop Driver."
-	depends on LOONGSON3A_RS780E
+	tristate "Loongson 3A Laptop Driver"
+	depends on LOONGSON3_RS780E
 	select BACKLIGHT_LCD_SUPPORT
 	select LCD_CLASS_DEVICE
 	select BACKLIGHT_CLASS_DEVICE

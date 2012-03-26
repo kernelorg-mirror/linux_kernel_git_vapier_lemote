@@ -1117,13 +1117,6 @@ config CPU_LOONGSON2F
 	  have a similar programming interface with FPGA northbridge used in
 	  Loongson2E.
  
-config CPU_LOONGSON3A
-	bool "Loongson 3A"
-	depends on SYS_HAS_CPU_LOONGSON3A
-	select CPU_LOONGSON3
-	help
-	  The Loongson 3A processor implements the MIPS III instruction set
-	  with many extensions.
 
 config CPU_MIPS32_R1
 	bool "MIPS32 Release 1"
@@ -1394,10 +1387,14 @@ config CPU_LOONGSON2
 	select CPU_SUPPORTS_HIGHMEM
  
 config CPU_LOONGSON3
-	bool
+	bool "Loongson3 CPU"
+	depends on SYS_HAS_CPU_LOONGSON3
 	select CPU_SUPPORTS_32BIT_KERNEL
 	select CPU_SUPPORTS_64BIT_KERNEL
 	select CPU_SUPPORTS_HIGHMEM
+	help
+	  The Loongson 3 processor implements the MIPS III instruction set
+	  with many extensions.
 
 config SYS_HAS_CPU_LOONGSON2E
 	bool
@@ -1408,7 +1405,7 @@ config SYS_HAS_CPU_LOONGSON2F
 	select CPU_SUPPORTS_ADDRWINCFG if 64BIT
 	select CPU_SUPPORTS_UNCACHED_ACCELERATED
  
-config SYS_HAS_CPU_LOONGSON3A
+config SYS_HAS_CPU_LOONGSON3
 	bool
 	select CPU_SUPPORTS_CPUFREQ
 	#select CPU_SUPPORTS_ADDRWINCFG if 64BIT
@@ -1938,7 +1935,7 @@ config ARCH_SPARSEMEM_ENABLE
 config NUMA
 	bool "NUMA Support"
 	depends on SYS_SUPPORTS_NUMA
-	select LOONGSON_BIGMEM if CPU_LOONGSON3A
+	select LOONGSON_BIGMEM if CPU_LOONGSON3
 	help
 	  Say Y to compile the kernel to support NUMA (Non-Uniform Memory
 	  Access).  This option improves performance on systems with more

@@ -38,7 +38,7 @@
 
 static inline void unmask_mips_irq(unsigned int irq)
 {
-#ifdef CONFIG_CPU_LOONGSON3A
+#ifdef CONFIG_CPU_LOONGSON3
 	if(irq==58){
 		int cpu = smp_processor_id();
 		*(volatile unsigned int *)(0x900000003ff01428) = (0x1<<10);

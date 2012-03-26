@@ -112,7 +112,7 @@ static void wait_for_wakeup_events(void)
  */
 static inline void stop_perf_counters(void)
 {
-#ifdef CONFIG_CPU_LOONGSON3A
+#ifdef CONFIG_CPU_LOONGSON3
 	__write_64bit_c0_register($25, 0, 0xc0000000);
 	__write_64bit_c0_register($25, 2, 0x40000000);
 #else
@@ -160,7 +160,7 @@ static int loongson_pm_enter(suspend_state_t state)
 		loongson_suspend_enter();
 		break;
 	case PM_SUSPEND_MEM:
-#ifdef CONFIG_CPU_LOONGSON3A
+#ifdef CONFIG_CPU_LOONGSON3
 		loongson_suspend_lowlevel();
 		cmos_write64(0x0, 0x40);  //pc
 		cmos_write64(0x0, 0x48);  //sp

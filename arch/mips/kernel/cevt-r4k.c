@@ -53,7 +53,7 @@ irqreturn_t c0_compare_interrupt(int irq, void *dev_id)
 	const int r2 = cpu_has_mips_r2;
 	struct clock_event_device *cd;
 	int cpu = smp_processor_id();
-#ifdef CONFIG_CPU_LOONGSON3A
+#ifdef CONFIG_CPU_LOONGSON3
 	if(!(read_c0_cause() & (1<<30)))  return IRQ_NONE;
 #endif
 	/*
@@ -89,7 +89,7 @@ out:
 
 struct irqaction c0_compare_irqaction = {
 	.handler = c0_compare_interrupt,
-#ifdef CONFIG_CPU_LOONGSON3A
+#ifdef CONFIG_CPU_LOONGSON3
 	.flags = IRQF_DISABLED | IRQF_PERCPU | IRQF_SHARED | IRQF_TIMER,
 #else
 	.flags = IRQF_DISABLED | IRQF_PERCPU | IRQF_TIMER,

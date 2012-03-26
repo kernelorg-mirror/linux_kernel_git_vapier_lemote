@@ -42,7 +42,7 @@ static int __init pcibios_init(void)
 
 	register_pci_controller(&loongson_pci_controller);
 
-#ifdef CONFIG_CPU_LOONGSON3A
+#ifdef CONFIG_CPU_LOONGSON3
 	/* SCI setup, daway 2011-03-11 */
 	sb700_acpi_init();
 #endif

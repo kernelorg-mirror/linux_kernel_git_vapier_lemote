@@ -27,7 +27,7 @@ static inline void CMOS_WRITE(unsigned char data, unsigned long addr)
 	outb_p(data, RTC_PORT(1));
 }
 
-#ifdef CONFIG_CPU_LOONGSON3A
+#ifdef CONFIG_CPU_LOONGSON3
 #define RTC_ALWAYS_BCD	1
 #else
 #define RTC_ALWAYS_BCD	0

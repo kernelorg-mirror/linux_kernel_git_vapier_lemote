@@ -145,7 +145,7 @@ static irqreturn_t loongson3_perfcount_handler(int irq, void * dev_id)
 	struct pt_regs *regs = get_irq_regs();
 	unsigned long flags;
 	
-#ifdef CONFIG_CPU_LOONGSON3A
+#ifdef CONFIG_CPU_LOONGSON3
         if(!(read_c0_cause() & (1<<26)))  return IRQ_NONE;
 #endif	
 	counter1 = read_c0_perfhi1();

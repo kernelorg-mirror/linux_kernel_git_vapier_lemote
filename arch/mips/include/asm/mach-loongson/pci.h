@@ -39,7 +39,7 @@ extern struct pci_ops loongson_pci_ops;
 
 #else	/* loongson2f/32bit & loongson2e */
 
-#ifdef CONFIG_CPU_LOONGSON3A
+#ifdef CONFIG_CPU_LOONGSON3
 #define LOONGSON_PCI_MEM_START	0x40000000ul
 #define LOONGSON_PCI_MEM_END	0x7efffffful
 #else

@@ -60,12 +60,12 @@ config LEMOTE_MACH2F
 	  These family machines include fuloong2f mini PC, yeeloong2f notebook,
 	  LingLoong allinone PC and so forth.
 
-config LOONGSON3A_RS780E
-	bool "Loongson 3A with RS780E"
+config LOONGSON3_RS780E
+	bool "Loongson3 with RS780E"
 	select ARCH_SPARSEMEM_ENABLE
 	select CEVT_R4K
 	select CSRC_R4K
-	select SYS_HAS_CPU_LOONGSON3A
+	select SYS_HAS_CPU_LOONGSON3
 	#select DMA_NONCOHERENT
 	select CPU_UART
 	select BOOT_ELF32
@@ -91,36 +91,6 @@ config LOONGSON3A_RS780E
 	help
 	  Loongson3a RS780E board based on the Chinese loongson3a CPU
 
-config LOONGSON3A_DAWNING
-	bool "Loongson 3A in Dawning"
-	select ARCH_SPARSEMEM_ENABLE
-	select CEVT_R4K
-	select CSRC_R4K
-	select SYS_HAS_CPU_LOONGSON3A
-	#select DMA_NONCOHERENT
-	select CPU_UART
-	select BOOT_ELF32
-	select BOARD_SCACHE
-	#select HAVE_STD_PC_SERIAL_PORT
-	select HW_HAS_PCI
-	select I8259
-	select ISA
-	select IRQ_CPU
-	select SYS_SUPPORTS_32BIT_KERNEL
-	select SYS_SUPPORTS_64BIT_KERNEL
-	select SYS_SUPPORTS_LITTLE_ENDIAN
-	select SYS_SUPPORTS_HIGHMEM
-	select SYS_HAS_EARLY_PRINTK
-	select GENERIC_HARDIRQS_NO__DO_IRQ
-	select GENERIC_ISA_DMA_SUPPORT_BROKEN
-	select CPU_HAS_WB
-	select SYS_SUPPORTS_SMP
-	select SYS_SUPPORTS_NUMA
-	#select ZONE_DMA32 if 64BIT
-	#select RS780
-	help
-	  Loongson3a Dawning board based on the Chinese loongson3a CPU
-
 endchoice
 
 config CS5536
@@ -140,7 +110,7 @@ config CS5536_MFGPT
 
 config RS780_HPET
 	bool "RS780 HPET Timer"
-	depends on LOONGSON3A_RS780E
+	depends on LOONGSON3_RS780E
 	select MIPS_EXTERNAL_TIMER
 	help
 	  This option enables the hpet timer of AMD RS780E.
@@ -164,13 +134,13 @@ config CPU_UART
 
 config LOONGSON_BIGMEM
 	bool "Soft IOMMU Support for Big Memory (>2G)"
-	depends on CPU_LOONGSON3A
+	depends on CPU_LOONGSON3
 	select SWIOTLB
 	select ZONE_DMA32
 
 config LOONGSON3_CPUAUTOPLUG
 	tristate "Loongson3 CPUAutoplug Driver"
-	depends on CPU_LOONGSON3A
+	depends on CPU_LOONGSON3
 	help
 	  This option adds a CPUAutoplug driver for Loongson-3 multi-core processors 
 	  which cpu frequencies of all cores  should be configured together.
