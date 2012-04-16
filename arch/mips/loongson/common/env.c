@@ -39,6 +39,8 @@ u64 memstart, highmemstart;
 u32 memsize, highmemsize;
 u64 ht_control_base;
 u64 loongson_pciio_base;
+u64 poweroff_addr;
+u64 reboot_addr;
 
 unsigned int nr_cpu_loongson;
 enum loongson_cpu_type cputype;
@@ -139,6 +141,10 @@ void __init prom_init_env(void)
                 memstart, memsize, highmemstart, highmemsize);
 	
 	pr_info("pci-start:%llx,pci-end:%llx,pciio base:%llx\n", pci_mem_start_addr, pci_mem_end_addr, loongson_pciio_base);
+
+        poweroff_addr = bp->reset_system.Shutdown;
+        reboot_addr = bp->reset_system.ResetWarm;
+        printk("shutdown:%llx reset:%llx\n",poweroff_addr,reboot_addr);
 
 	ht_control_base = 0x90000EFDFB000000; // has no interface now
 #endif

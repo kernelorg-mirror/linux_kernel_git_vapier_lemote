@@ -16,6 +16,9 @@
 
 #include <loongson.h>
 
+extern u64 poweroff_addr;
+extern u64 reboot_addr;
+
 static inline void loongson_reboot(void)
 {
 #ifndef CONFIG_CPU_JUMP_WORKAROUNDS
@@ -60,9 +63,9 @@ static void loongson_halt(void)
 
 static int __init mips_reboot_setup(void)
 {
-	_machine_restart = loongson_restart;
+	_machine_restart = (void *)reboot_addr;
 	_machine_halt = loongson_halt;
-	pm_power_off = loongson_poweroff;
+	pm_power_off = (void *)poweroff_addr;
 
 	return 0;
 }
