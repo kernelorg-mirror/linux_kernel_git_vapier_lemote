@@ -129,7 +129,7 @@ struct conexant_spec {
 	unsigned int thinkpad:1;
 	unsigned int hp_laptop:1;
 	unsigned int asus:1;
-	unsigned int lemote_laptop:1;
+	unsigned int lemote:1;
 
 	unsigned int ext_mic_present;
 	unsigned int recording;
@@ -2424,7 +2424,7 @@ static void cxt5066_automic(struct hda_codec *codec)
 		cxt5066_thinkpad_automic(codec);
 	else if (spec->hp_laptop)
 		cxt5066_hp_laptop_automic(codec);
-	else if (spec->asus || spec->lemote_laptop)
+	else if (spec->asus || spec->lemote)
 		cxt5066_asus_automic(codec);
 }
 
@@ -3057,7 +3057,7 @@ static struct hda_verb cxt5066_init_verbs_hp_laptop[] = {
 	{ } /* end */
 };
 
-static struct hda_verb cxt5066_init_verbs_lemote_laptop[] = {
+static struct hda_verb cxt5066_init_verbs_lemote[] = {
 	{0x14, AC_VERB_SET_CONNECT_SEL, 0x0}, /* ADC1: Connection index: 0 */
 	{0x19, AC_VERB_SET_UNSOLICITED_ENABLE, AC_USRSP_EN | CONEXANT_HP_EVENT},
 	{0x1b, AC_VERB_SET_UNSOLICITED_ENABLE, AC_USRSP_EN | CONEXANT_MIC_EVENT},
@@ -3120,7 +3120,7 @@ enum {
 	CXT5066_THINKPAD,	/* Lenovo ThinkPad T410s, others? */
 	CXT5066_ASUS,		/* Asus K52JU, Lenovo G560 - Int mic at 0x1a and Ext mic at 0x1b */
 	CXT5066_HP_LAPTOP,      /* HP Laptop */
-	CXT5066_LEMOTE_LAPTOP,  /* Lemote Laptop 9020 */
+	CXT5066_LEMOTE_LAPTOP_A1004,  /* Lemote Laptop a1004 */
 	CXT5066_MODELS
 };
 
@@ -3133,7 +3133,7 @@ static const char * const cxt5066_models[CXT5066_MODELS] = {
 	[CXT5066_THINKPAD]	= "thinkpad",
 	[CXT5066_ASUS]		= "asus",
 	[CXT5066_HP_LAPTOP]	= "hp-laptop",
-	[CXT5066_LEMOTE_LAPTOP] = "lemote-laptop",
+	[CXT5066_LEMOTE_LAPTOP_A1004] = "lemote-laptop-a1004",
 };
 
 static struct snd_pci_quirk cxt5066_cfg_tbl[] = {
@@ -3160,7 +3160,7 @@ static struct snd_pci_quirk cxt5066_cfg_tbl[] = {
 	SND_PCI_QUIRK(0x17aa, 0x21c6, "Thinkpad Edge 13", CXT5066_ASUS),
  	SND_PCI_QUIRK(0x17aa, 0x215e, "Lenovo Thinkpad", CXT5066_THINKPAD),
 	SND_PCI_QUIRK(0x17aa, 0x38af, "Lenovo G560", CXT5066_ASUS),
-	SND_PCI_QUIRK(0x1c06, 0x2011, "Lemote", CXT5066_LEMOTE_LAPTOP),
+	SND_PCI_QUIRK(0x1c06, 0x2011, "Lemote A1004", CXT5066_LEMOTE_LAPTOP_A1004),
 	SND_PCI_QUIRK_VENDOR(0x17aa, "Lenovo", CXT5066_IDEAPAD), /* Fallback for Lenovos without dock mic */
 	{}
 };
@@ -3310,13 +3310,13 @@ static int patch_cxt5066(struct hda_codec *codec)
 		spec->port_d_mode = 0;
 		spec->mic_boost = 3; /* default 30dB gain */
 		break;
-	case CXT5066_LEMOTE_LAPTOP:
+	case CXT5066_LEMOTE_LAPTOP_A1004:
 		codec->patch_ops.init = cxt5066_init;
 		codec->patch_ops.unsol_event = cxt5066_unsol_event;
 		spec->init_verbs[spec->num_init_verbs] =
-			cxt5066_init_verbs_lemote_laptop;
+			cxt5066_init_verbs_lemote;
 		spec->num_init_verbs++;
-		spec->lemote_laptop = 1;
+		spec->lemote = 1;
 		spec->mixers[spec->num_mixers++] = cxt5066_mixer_master;
 		spec->mixers[spec->num_mixers++] = cxt5066_mixers;
 		/* no S/PDIF out */
