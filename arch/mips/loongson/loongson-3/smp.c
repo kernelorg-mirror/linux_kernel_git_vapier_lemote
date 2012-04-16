@@ -158,7 +158,7 @@ void loongson3_timer_interrupt(struct pt_regs * regs)
 	int cpu = smp_processor_id();
 	int irq = 63;
 
-	printk("timer_int(%d)\n", cpu);
+	printk(KERN_DEBUG "timer_int(%d)\n", cpu);
 	if (cpu == 0) {
 		/*
 		 * CPU 0 handles the global timer interrupt job
@@ -218,7 +218,7 @@ void loongson3_init_secondary(void)
 	/* Set interrupt mask, but don't enable */
 	change_c0_status(ST0_IM, imask);                   
 
-	printk("\n CPU#%d call init_secondary!!!! \n", cpu);
+	printk(KERN_DEBUG "\n CPU#%d call init_secondary!!!! \n", cpu);
 	for (i = 0; i < NR_CPUS; i++) {
 		loongson3_ipi_write32(0xffffffff, ipi_en0_regs[i]);
 	}
@@ -235,14 +235,14 @@ void loongson3_init_secondary(void)
 	initcount = __get_cpu_var(core0_c0count) + i * 2;
 	write_c0_count(initcount);
 	write_c0_compare(initcount + 1000000);
-	printk("\n CPU#%d done init_secondary en=%x!!!! \n", cpu, *(int *)(ipi_en0_regs[cpu]));
+	printk(KERN_DEBUG "\n CPU#%d done init_secondary en=%x!!!! \n", cpu, *(int *)(ipi_en0_regs[cpu]));
 }
 
 void loongson3_smp_finish(void)
 {
 	local_irq_enable();
 	loongson3_ipi_write64(0, (void *)ipi_mailbox_buf[smp_processor_id()]+0x0);
-	printk("\n %s, CPU#%d CP0_ST=%x\n", __FUNCTION__, smp_processor_id(), read_c0_status());
+	printk(KERN_DEBUG "\n %s, CPU#%d CP0_ST=%x\n", __FUNCTION__, smp_processor_id(), read_c0_status());
 }
 
 void loongson3_ipi_interrupt(struct pt_regs *regs)
@@ -289,7 +289,7 @@ int loongson3_cpu_start(int cpu, void(*fn)(void), long sp, long gp, long a1)
 	startargs[2] = gp;
 	startargs[3] = a1;
 
-	printk("CPU %d, fn=%lx, sp=%lx, gp=%lx\n", cpu, (long)fn, sp, gp);
+	printk(KERN_DEBUG "CPU %d, fn=%lx, sp=%lx, gp=%lx\n", cpu, (long)fn, sp, gp);
 
 	loongson3_ipi_write64(startargs[3], (void*)(ipi_mailbox_buf[cpu]+0x18));
 	loongson3_ipi_write64(startargs[2], (void*)(ipi_mailbox_buf[cpu]+0x10));
@@ -362,12 +362,12 @@ void loongson3_boot_secondary(int cpu, struct task_struct *idle)
 	}
 #endif
 
-	printk("\n BOOT CPU#%d...\n", cpu);
+	printk(KERN_DEBUG "\n BOOT CPU#%d...\n", cpu);
 	retval = loongson3_cpu_start(cpu_logical_map(cpu), &smp_bootstrap,     
 			       __KSTK_TOS(idle),                                   
 			       (unsigned long)task_thread_info(idle), 0);
 	if (retval != 0)
-		printk("!!!!!!loongson3_cpu_start(%i) returned with err%i \n" , cpu, retval);
+		printk(KERN_DEBUG "!!!!!!loongson3_cpu_start(%i) returned with err%i \n" , cpu, retval);
 }
 
 
@@ -555,7 +555,7 @@ static int __cpuinit loongson3_cpu_callback(struct notifier_block *nfb,
 	switch (action) {
 	case CPU_POST_DEAD:
 	case CPU_POST_DEAD_FROZEN:
-		printk("Disable clock for CPU%d\n", cpu);
+		printk(KERN_DEBUG "Disable clock for CPU%d\n", cpu);
 		LOONGSON_CHIPCFG0 &= ~(1 << (12 + cpu));
 		break;
 	case CPU_UP_PREPARE:
