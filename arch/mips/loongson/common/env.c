@@ -41,6 +41,7 @@ u64 ht_control_base;
 u64 loongson_pciio_base;
 u64 poweroff_addr;
 u64 reboot_addr;
+u64 vbios_addr;
 
 unsigned int nr_cpu_loongson;
 enum loongson_cpu_type cputype;
@@ -145,6 +146,9 @@ void __init prom_init_env(void)
         poweroff_addr = bp->reset_system.Shutdown;
         reboot_addr = bp->reset_system.ResetWarm;
         printk("shutdown:%llx reset:%llx\n",poweroff_addr,reboot_addr);
+
+	vbios_addr = bp->efi.smbios.vga_bios;
+	printk("vbios locate in %llx\n", vbios_addr);
 
 	ht_control_base = 0x90000EFDFB000000; // has no interface now
 #endif

@@ -58,10 +58,6 @@ static bool igp_read_bios_from_vram(struct radeon_device *rdev)
 	rdev->bios = NULL;
 	vram_base = pci_resource_start(rdev->pdev, 0);
 
-    //for test  == by oldtai
-    //printk("changed  vram_base  ===========================by oldtai\n");
-    //vram_base = 0x13f00000;
-    //vram_base = 0xffffffffb3f00000;
 	bios = ioremap(vram_base, size);
 	if (!bios) {
 		return false;
@@ -80,6 +76,32 @@ static bool igp_read_bios_from_vram(struct radeon_device *rdev)
 	iounmap(bios);
 	return true;
 }
+
+#ifdef CONFIG_CPU_LOONGSON3
+extern u64 vbios_addr;
+static bool loongson3_read_bios(struct radeon_device *rdev)
+{
+	u8 *bios;
+	resource_size_t size = 512 * 1024; /* ??? */
+
+	rdev->bios = NULL;
+
+	bios = (u8 *)vbios_addr;
+	if (!bios) {
+		return false;
+	}
+
+	if (size == 0 || bios[0] != 0x55 || bios[1] != 0xaa) {
+		return false;
+	}
+	rdev->bios = kmalloc(size, GFP_KERNEL);
+	if (rdev->bios == NULL) {
+		return false;
+	}
+	memcpy(rdev->bios, bios, size);
+	return true;
+}
+#endif
 
 static bool radeon_read_bios(struct radeon_device *rdev)
 {
@@ -447,6 +469,12 @@ bool radeon_get_bios(struct radeon_device *rdev)
 	if (r == false) {
 		r = radeon_read_disabled_bios(rdev);
 	}
+
+#ifdef CONFIG_CPU_LOONGSON3
+	if (r == false) {
+		r = loongson3_read_bios(rdev);
+	}
+#endif
 	if (r == false) {
 		switch (mips_machtype) {
 		case MACH_LEMOTE_3A_A1004:
