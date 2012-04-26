@@ -14,11 +14,13 @@
 #include <asm/bootinfo.h>
 
 static struct platform_device notebook_a1004_pdev = {
-	.name = "loongson3a_notebook_a1004",
+	/* strlen(.name) should be less then PLATFORM_NAME_SIZE */
+	.name = "loongson3a_nb_a1004",
 	.id = -1,
 };
 
 static struct platform_device itx_a1101_pdev = {
+	/* strlen(.name) should be less then PLATFORM_NAME_SIZE */
 	.name = "loongson3a_itx_a1101",
 	.id = -1,
 };

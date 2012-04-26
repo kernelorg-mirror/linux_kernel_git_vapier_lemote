@@ -255,7 +255,12 @@ extern int ec_query_get_event_num(void);
 static struct platform_device_id platform_device_ids[] = 
 {
 	{
-		.name = "ls3a-laptop",
+		/*
+		 * strlen(.name) should be less then PLATFORM_NAME_SIZE
+		 * Platform driver will be attached to a platform device if
+		 * one entry of its .id_table matches name of platform device
+		 * */
+		.name = "loongson3a_nb_a1004",
 	},
 	{}
 };
@@ -1180,7 +1185,7 @@ static int sci_pci_init(void)
 	/* Clear sci status: GPM9Status field in bit14
 	 * of EVENT_STATUS register for SB710, write to
 	 * 1 clear. */
-    clean_ec_event_status();
+	clean_ec_event_status();
 
 	/* Alloc the interrupt for sci not pci */
 	ret = request_irq(ls3anb_sci_device->irq, ls3anb_sci_int_routine,
@@ -1219,7 +1224,7 @@ static irqreturn_t ls3anb_sci_int_routine(int irq, void * dev_id)
 	//printk(KERN_CRIT "LS3ANB Driver : Entry sci_int_routine(): event = 0x%x\n", event);
 	if((SCI_EVENT_NUM_START > event) || (SCI_EVENT_NUM_END < event))
 	{
-        goto exit_event_action;
+		goto exit_event_action;
 	}
 
 	/* Do event action */
@@ -1228,12 +1233,12 @@ static irqreturn_t ls3anb_sci_int_routine(int irq, void * dev_id)
 	/* Clear sci status: GPM9Status field in bit14
 	 * of EVENT_STATUS register for SB710, write to
 	 * 1 clear. */
-    clean_ec_event_status();
+	clean_ec_event_status();
 
 	return IRQ_HANDLED;
 
 exit_event_action:
-    clean_ec_event_status();
+	clean_ec_event_status();
 	return IRQ_NONE;
 }
  
