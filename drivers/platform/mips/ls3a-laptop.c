@@ -628,6 +628,18 @@ static int ls3anb_resume(struct platform_device * pdev)
 	dev = pci_get_device(PCI_VENDOR_ID_ATI, PCI_DEVICE_ID_ATI_SBX00_SMBUS, NULL);
 	pci_enable_device(dev);
 
+	/* Process LID event */
+	ls3anb_sci_event_handler(SCI_EVENT_NUM_LID);
+
+	/* 
+	 * Clear sci status: GPM9Status field in bit14
+	 * of EVENT_STATUS register for SB710, write to
+	 * 1 clear. 
+	 * 
+	 * Clear all SCI events when suspend
+	 * */
+	clean_ec_event_status();
+
 	return 0;
 }
 #else
