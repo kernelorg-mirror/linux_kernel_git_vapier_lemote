@@ -1,7 +1,7 @@
 VERSION = 2
 PATCHLEVEL = 6
 SUBLEVEL = 36
-EXTRAVERSION = -8.lemote
+EXTRAVERSION = -9.lemote
 NAME = Flesh-Eating Bats with Fangs
 
 # *DOCUMENTATION*
