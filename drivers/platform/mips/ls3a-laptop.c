@@ -230,6 +230,8 @@ static int sci_pci_init(void);
 static irqreturn_t ls3anb_sci_int_routine(int irq, void * dev_id);
 /* SCI event handler */
 void ls3anb_sci_event_handler(int event);
+/* SCI device dpms event handler */
+static int ls3anb_dpms_handler(int status);
 /* SCI device over temperature event handler */
 static int ls3anb_over_temp_handler(int status);
 /* SCI device Throttling the CPU event handler */
@@ -400,7 +402,7 @@ static const struct sci_event se[] =
 	[SCI_EVENT_NUM_AUDIO_MUTE] =		{0, NULL},
 	[SCI_EVENT_NUM_VOLUME_DN] =			{0, NULL},
 	[SCI_EVENT_NUM_VOLUME_UP] =			{0, NULL},
-	[SCI_EVENT_NUM_BLACK_SCREEN] =		{0, NULL},
+	[SCI_EVENT_NUM_BLACK_SCREEN] =		{0, ls3anb_dpms_handler},
 	[SCI_EVENT_NUM_DISPLAY_TOGGLE] =	{0, NULL},
 	[SCI_EVENT_NUM_3G] =				{0, NULL},
 	[SCI_EVENT_NUM_SIM] =				{0, NULL},
@@ -1285,6 +1287,28 @@ void ls3anb_sci_event_handler(int event)
 			sparse_keymap_report_entry(ls3anb_hotkey_dev, ke, 1, true);
 		}
 	}
+}
+
+extern void radeon_lvds_dpms_on(void);
+extern void radeon_lvds_dpms_off(void);
+
+static void ls3anb_lvds_dpms_callback(struct work_struct *dummy)
+{
+	int backlight_on = ec_read(INDEX_BACKLIGHT_STSCTRL);
+
+	if(backlight_on)
+		radeon_lvds_dpms_on();
+	else
+		radeon_lvds_dpms_off();
+}
+
+static DECLARE_WORK(lvds_dpms_work, ls3anb_lvds_dpms_callback);
+
+static int ls3anb_dpms_handler(int status)
+{
+	schedule_work(&lvds_dpms_work);
+
+	return 0;
 }
 
 /* SCI device over temperature event handler */
