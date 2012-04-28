@@ -12,7 +12,6 @@
 #include <linux/cpu.h>
 #include <linux/sched.h>
 #include <linux/tick.h>
-#include <linux/proc_fs.h>
 #include <linux/kernel_stat.h>
 #include <linux/platform_device.h>
 
@@ -25,6 +24,149 @@
  */
 int autoplug_enabled = 1;
 int autoplug_adjusting = 0;
+
+struct cpu_autoplug_info {
+	cputime64_t prev_idle;
+	cputime64_t prev_wall;
+	struct delayed_work work;
+	unsigned int sampling_rate;
+	int maxcpus;   /* max cpus for autoplug */
+	int mincpus;   /* min cpus for autoplug */
+	int dec_reqs;  /* continous core-decreasing requests */
+};
+
+struct cpu_autoplug_info ap_info;
+
+static ssize_t show_autoplug_enabled(struct sysdev_class *class,
+				     struct sysdev_class_attribute *attr,
+				     char *buf)
+{
+	return sprintf(buf, "%d\n", autoplug_enabled);
+}
+
+static ssize_t store_autoplug_enabled(struct sysdev_class *class,
+				      struct sysdev_class_attribute *attr,
+				      const char *buf, size_t count)
+{
+	char val[5];
+	int n;
+
+	memcpy(val, buf, count);
+	n = simple_strtol(val, NULL, 0);
+
+	if(n > 1 || n < 0)
+		return -EINVAL;
+
+	autoplug_enabled = n;
+
+	return count;
+}
+
+static ssize_t show_autoplug_maxcpus(struct sysdev_class *class,
+				     struct sysdev_class_attribute *attr,
+				     char *buf)
+{
+	return sprintf(buf, "%d\n", ap_info.maxcpus);
+}
+
+static ssize_t store_autoplug_maxcpus(struct sysdev_class *class,
+				      struct sysdev_class_attribute *attr,
+				      const char *buf, size_t count)
+{
+	char val[5];
+	int n;
+
+	memcpy(val, buf, count);
+	n = simple_strtol(val, NULL, 0);
+
+	if(n > NR_CPUS || n < ap_info.mincpus)
+		return -EINVAL;
+
+	ap_info.maxcpus = n;
+
+	return count;
+}
+
+static ssize_t show_autoplug_mincpus(struct sysdev_class *class,
+				     struct sysdev_class_attribute *attr,
+				     char *buf)
+{
+	return sprintf(buf, "%d\n", ap_info.mincpus);
+}
+
+static ssize_t store_autoplug_mincpus(struct sysdev_class *class,
+				      struct sysdev_class_attribute *attr,
+				      const char *buf, size_t count)
+{
+	char val[5];
+	int n;
+
+	memcpy(val, buf, count);
+	n = simple_strtol(val, NULL, 0);
+
+	if(n > ap_info.maxcpus || n < 1)
+		return -EINVAL;
+
+	ap_info.mincpus = n;
+
+	return count;
+}
+
+static ssize_t show_autoplug_sampling_rate(struct sysdev_class *class,
+				     struct sysdev_class_attribute *attr,
+				     char *buf)
+{
+	return sprintf(buf, "%d\n", ap_info.sampling_rate);
+}
+
+#define SAMPLING_RATE_MAX 1000
+#define SAMPLING_RATE_MIN 600
+
+static ssize_t store_autoplug_sampling_rate(struct sysdev_class *class,
+				      struct sysdev_class_attribute *attr,
+				      const char *buf, size_t count)
+{
+	char val[6];
+	int n;
+
+	memcpy(val, buf, count);
+	n = simple_strtol(val, NULL, 0);
+
+	if(n > SAMPLING_RATE_MAX || n < SAMPLING_RATE_MIN)
+		return -EINVAL;
+
+	ap_info.sampling_rate = n;
+
+	return count;
+}
+
+static ssize_t show_autoplug_available_values(struct sysdev_class *class,
+				     struct sysdev_class_attribute *attr,
+				     char *buf)
+{
+	return sprintf(buf, "enabled: 0-1\nmaxcpus: 1-%d\nmincpus: 1-%d\nsampling_rate: %d-%d\n",
+			NR_CPUS, NR_CPUS, SAMPLING_RATE_MIN, SAMPLING_RATE_MAX);
+}
+
+static SYSDEV_CLASS_ATTR(enabled, 0644, show_autoplug_enabled, store_autoplug_enabled);
+static SYSDEV_CLASS_ATTR(maxcpus, 0644, show_autoplug_maxcpus, store_autoplug_maxcpus);
+static SYSDEV_CLASS_ATTR(mincpus, 0644, show_autoplug_mincpus, store_autoplug_mincpus);
+static SYSDEV_CLASS_ATTR(sampling_rate, 0644, show_autoplug_sampling_rate, store_autoplug_sampling_rate);
+static SYSDEV_CLASS_ATTR(available_values, 0444, show_autoplug_available_values, NULL);
+
+static struct attribute *cpuclass_default_attrs[] = {
+	&attr_enabled.attr,
+	&attr_maxcpus.attr,
+	&attr_mincpus.attr,
+	&attr_sampling_rate.attr,
+	&attr_available_values.attr,
+	NULL
+};
+
+static struct attribute_group cpuclass_attr_group = {
+	.attrs = cpuclass_default_attrs,
+	.name = "cpuautoplug",
+};
 
 #ifndef MODULE
 /*
@@ -44,47 +186,6 @@ static int __init setup_autoplug(char *str)
 __setup("autoplug=", setup_autoplug);
 
 #endif
-
-static int autoplug_proc_show(struct seq_file *m, void *v)
-{
-	seq_printf(m, "%d\n", autoplug_enabled);
-
-	return 0;
-}
-
-static ssize_t
-autoplug_write(struct file *file, const char __user *buf, size_t count, loff_t *offset)
-{
-	char val[5];
-
-	copy_from_user(val, buf, count);
-	autoplug_enabled = simple_strtol(val, NULL, 0);
-
-	return count;
-}
-
-static int autoplug_proc_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, autoplug_proc_show, NULL);
-}
-
-static const struct file_operations autoplug_proc_fops = {
-	.open		= autoplug_proc_open,
-	.read		= seq_read,
-	.write		= autoplug_write,
-	.llseek		= seq_lseek,
-	.release	= single_release,
-};
-
-struct cpu_autoplug_info {
-	cputime64_t prev_idle;
-	cputime64_t prev_wall;
-	struct delayed_work work;
-	unsigned int sampling_rate;
-	int dec_reqs;  /* continous core-decreasing requests */
-};
-
-struct cpu_autoplug_info ap_info;
 
 static struct workqueue_struct *kautoplugd_wq;
 
@@ -133,7 +234,7 @@ static void increase_cores(int cur_cpus)
 {
 	int target_cpu;
 
-	if(cur_cpus == NR_CPUS)
+	if(cur_cpus == ap_info.maxcpus)
 		return;
 
 	target_cpu = cpumask_next_zero(0, cpu_online_mask);
@@ -147,7 +248,7 @@ static void decrease_cores(int cur_cpus)
 {
 	int target_cpu;
 
-	if(cur_cpus == 1)
+	if(cur_cpus == ap_info.mincpus)
 		return;
 
 	target_cpu = find_last_bit(cpumask_bits(cpu_online_mask), NR_CPUS);
@@ -172,6 +273,19 @@ static void do_autoplug_timer(struct work_struct *work)
 
 	autoplug_adjusting = 1;
 
+	/* user limits */
+	if(nr_cpus > ap_info.maxcpus) {
+		decrease_cores(nr_cpus);
+		autoplug_adjusting = 0;
+		goto out;
+	}
+	if(nr_cpus < ap_info.mincpus) {
+		increase_cores(nr_cpus);
+		autoplug_adjusting = 0;
+		goto out;
+	}
+
+	/* based on cpu load */
 	cur_idle_time = get_idle_time(&cur_wall_time);
 
 	wall_time = (unsigned int) cputime64_sub(cur_wall_time, ap_info.prev_wall);
@@ -225,18 +339,23 @@ static int __init cpuautoplug_init(void)
 {
 	int ret, delay;
 
+	ret = sysfs_create_group(&cpu_sysdev_class.kset.kobj, &cpuclass_attr_group);
+	if (ret)
+		return ret;
+
 	/* Register platform stuff */
-	proc_create("cpuautoplug", 0, NULL, &autoplug_proc_fops);
 	ret = platform_driver_register(&platform_driver);
 	if (ret)
 		return ret;
 
 	pr_info("cpuautoplug: Loongson-3A CPU autoplug driver.\n");
 
+	ap_info.maxcpus = setup_max_cpus;
+	ap_info.mincpus = 1;
 	ap_info.dec_reqs = 0; 
-	ap_info.sampling_rate = 700;  /* 700 ms */
+	ap_info.sampling_rate = 720;  /* 720 ms */
 #ifndef MODULE
-	delay = msecs_to_jiffies(ap_info.sampling_rate * 21);
+	delay = msecs_to_jiffies(ap_info.sampling_rate * 24);
 #else
 	delay = msecs_to_jiffies(ap_info.sampling_rate * 8);
 #endif
@@ -256,6 +375,7 @@ static void __exit cpuautoplug_exit(void)
 	cancel_delayed_work_sync(&ap_info.work);
 	destroy_workqueue(kautoplugd_wq);
 	platform_driver_unregister(&platform_driver);
+	sysfs_remove_group(&cpu_sysdev_class.kset.kobj, &cpuclass_attr_group);
 }
 
 late_initcall(cpuautoplug_init);

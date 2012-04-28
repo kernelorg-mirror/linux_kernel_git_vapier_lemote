@@ -201,12 +201,27 @@ static void loongson3_send_ipi_mask(const struct cpumask *mask, unsigned int act
 		loongson3_send_ipi_single(i, action);
 }
 
-#define MAX_LOOPS 1440
+#define MAX_LOOPS 1380
+
+void disable_unused_cpus(void)
+{
+	int cpu;
+	struct cpumask tmp;
+
+	cpumask_complement(&tmp, cpu_online_mask);
+	cpumask_and(&tmp, &tmp, cpu_possible_mask);
+
+	for_each_cpu(cpu, &tmp)
+		cpu_up(cpu);
+
+	for_each_cpu(cpu, &tmp)
+		cpu_down(cpu);
+}
 
 /*
  * SMP init and finish on secondary CPUs
  */
-void loongson3_init_secondary(void)
+void __cpuinit loongson3_init_secondary(void)
 {
 	int i;
 	uint32_t initcount;
@@ -238,10 +253,10 @@ void loongson3_init_secondary(void)
 	printk(KERN_DEBUG "\n CPU#%d done init_secondary en=%x!!!! \n", cpu, *(int *)(ipi_en0_regs[cpu]));
 }
 
-void loongson3_smp_finish(void)
+void __cpuinit loongson3_smp_finish(void)
 {
 	local_irq_enable();
-	loongson3_ipi_write64(0, (void *)ipi_mailbox_buf[smp_processor_id()]+0x0);
+	loongson3_ipi_write64(0, (void *)(ipi_mailbox_buf[smp_processor_id()]+0x0));
 	printk(KERN_DEBUG "\n %s, CPU#%d CP0_ST=%x\n", __FUNCTION__, smp_processor_id(), read_c0_status());
 }
 
@@ -340,7 +355,7 @@ void __init loongson3_prepare_cpus(unsigned int max_cpus)
  * Setup the PC, SP, and GP of a secondary processor and start it
  * running!
  */
-void loongson3_boot_secondary(int cpu, struct task_struct *idle)
+void __cpuinit loongson3_boot_secondary(int cpu, struct task_struct *idle)
 {
 	int retval;
 
@@ -374,8 +389,9 @@ void loongson3_boot_secondary(int cpu, struct task_struct *idle)
 /*
  * Final cleanup after all secondaries booted
  */
-void loongson3_cpus_done(void)
+void __init loongson3_cpus_done(void)
 {
+	disable_unused_cpus();
 }
 
 #ifdef CONFIG_HOTPLUG_CPU

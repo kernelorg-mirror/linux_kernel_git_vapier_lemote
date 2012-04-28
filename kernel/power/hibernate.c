@@ -304,6 +304,8 @@ static int create_image(int platform_mode)
 
  Enable_cpus:
 	enable_nonboot_cpus();
+	if(!in_suspend)
+		arch_finish_suspend();
 
  Platform_finish:
 	platform_finish(platform_mode);
