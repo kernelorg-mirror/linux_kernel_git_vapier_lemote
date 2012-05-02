@@ -62,8 +62,8 @@ static void hpet_stop_counter(void)
 
 static void hpet_reset_counter(void)
 {
-	hpet_write(0, HPET_COUNTER);
-	hpet_write(0, HPET_COUNTER + 4);
+	hpet_write(HPET_COUNTER, 0);
+	hpet_write(HPET_COUNTER + 4, 0);
 }
 
 static void hpet_restart_counter(void)
@@ -75,10 +75,12 @@ static void hpet_restart_counter(void)
 
 static void hpet_enable_legacy_int(void)
 {
+#if 0
 	unsigned int cfg = hpet_read(HPET_CFG);
 
 	cfg |= HPET_CFG_LEGACY;
-	hpet_write(cfg, HPET_CFG);
+	hpet_write(HPET_CFG, cfg);
+#endif
 }
 
 static void hpet_set_mode(enum clock_event_mode mode,
