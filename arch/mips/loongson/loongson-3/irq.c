@@ -220,6 +220,7 @@ void __init mach_init_irq(void)
 	printk("init_IRQ done\n");
 }
 
+#ifdef CONFIG_HOTPLUG_CPU
 void fixup_irqs(void)
 {
 	int irq;
@@ -287,4 +288,4 @@ void fixup_irqs(void)
 	}
 	clear_c0_status(ST0_IM);
 }
-
+#endif

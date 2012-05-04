@@ -203,21 +203,6 @@ static void loongson3_send_ipi_mask(const struct cpumask *mask, unsigned int act
 
 #define MAX_LOOPS 1380
 
-void disable_unused_cpus(void)
-{
-	int cpu;
-	struct cpumask tmp;
-
-	cpumask_complement(&tmp, cpu_online_mask);
-	cpumask_and(&tmp, &tmp, cpu_possible_mask);
-
-	for_each_cpu(cpu, &tmp)
-		cpu_up(cpu);
-
-	for_each_cpu(cpu, &tmp)
-		cpu_down(cpu);
-}
-
 /*
  * SMP init and finish on secondary CPUs
  */
