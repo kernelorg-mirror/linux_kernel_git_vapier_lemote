@@ -108,6 +108,7 @@ static void notify_temp(struct work_struct *work)
         	ec_write_noindex(0x4d, boardtemp);
 		break;
 	case MACH_LEMOTE_3A_A1101:
+	case MACH_LEMOTE_2GQ_A1205:
 		fan_adjust(nbtemp, cputemp);
 		return; // now keep fan speed constant
 	default:

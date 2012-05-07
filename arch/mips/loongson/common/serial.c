@@ -65,6 +65,15 @@ static struct plat_serial8250_port uart8250_data[][2] = {
 						},
 						{} 
 					},
+	[MACH_LEMOTE_2GQ_A1205]          {
+						{
+							.irq		= MIPS_CPU_IRQ_BASE + 2,
+							.uartclk	= 25000000,
+							.iotype		= UPIO_MEM,
+							.flags		= UPF_BOOT_AUTOCONF | UPF_SKIP_TEST,
+						},
+						{} 
+					},
 	[MACH_LOONGSON_END]             {},
 };
 

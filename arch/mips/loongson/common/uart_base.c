@@ -29,6 +29,7 @@ void prom_init_loongson_uart_base(void)
 	switch (mips_machtype) {
 	case MACH_LEMOTE_3A_A1004:
 	case MACH_LEMOTE_3A_A1101:
+	case MACH_LEMOTE_2GQ_A1205:
 		loongson_uart_base = LOONGSON_UART_BASE;
 		break;
 	case MACH_LEMOTE_FL2E:
