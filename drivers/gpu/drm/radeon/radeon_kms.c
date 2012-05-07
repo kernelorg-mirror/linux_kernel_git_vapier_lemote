@@ -46,11 +46,20 @@ int radeon_driver_unload_kms(struct drm_device *dev)
 	return 0;
 }
 
+#ifdef CONFIG_CPU_LOONGSON3
+#include <asm/bootinfo.h>
+extern void A1205_lvds_on(void);
+extern void A1205_lvds_off(void);
+#endif
 int radeon_driver_load_kms(struct drm_device *dev, unsigned long flags)
 {
 	struct radeon_device *rdev;
 	int r, acpi_status;
 
+#ifdef CONFIG_CPU_LOONGSON3
+	if (mips_machtype == MACH_LEMOTE_2GQ_A1205)
+		A1205_lvds_off();
+#endif
 	rdev = kzalloc(sizeof(struct radeon_device), GFP_KERNEL);
 	if (rdev == NULL) {
 		return -ENOMEM;
@@ -88,6 +97,12 @@ int radeon_driver_load_kms(struct drm_device *dev, unsigned long flags)
 	 * for shadowfb to run
 	 */
 	r = radeon_modeset_init(rdev);
+
+#ifdef CONFIG_CPU_LOONGSON3
+	if (mips_machtype == MACH_LEMOTE_2GQ_A1205)
+		A1205_lvds_on();
+#endif
+
 	if (r)
 		dev_err(&dev->pdev->dev, "Fatal error during modeset init\n");
 out:

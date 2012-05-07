@@ -2,7 +2,7 @@
 # Makefile for ICT CAS loongson3a board.
 #
 
-obj-y	+= irq.o dbg_io.o ec_wpce775l.o platform.o
+obj-y	+= irq.o dbg_io.o ec_wpce775l.o platform.o loongson3_gpio.o
 
 obj-$(CONFIG_SMP)	+= smp.o
 
