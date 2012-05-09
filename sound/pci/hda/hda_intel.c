@@ -2771,6 +2771,9 @@ static int __devinit azx_create(struct snd_card *card, struct pci_dev *pci,
 		snd_printd(SFX "Disabling 64bit DMA\n");
 		gcap &= ~ICH6_GCAP_64OK;
 	}
+#ifdef CONFIG_CPU_LOONGSON3
+	gcap &= ~ICH6_GCAP_64OK;
+#endif
 
 	/* disable buffer size rounding to 128-byte multiples if supported */
 	if (align_buffer_size >= 0)
