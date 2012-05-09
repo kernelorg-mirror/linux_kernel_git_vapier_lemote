@@ -2950,6 +2950,12 @@ static struct hda_verb cxt5066_init_verbs_lemote[] = {
 	{ } /* end */
 };
 
+static unsigned int cxt5066_raw_init_verbs_lemote_aio_a1205[] = {
+	0x273f01c, /* Set speaker power to 1.5W@8ohm */
+	0x2729003, /* Set High pass filter to 90Hz */
+	-1 /* end */
+};
+
 /* initialize jack-sensing, too */
 static int cxt5066_init(struct hda_codec *codec)
 {
@@ -2988,6 +2994,7 @@ enum {
 	CXT5066_ASUS,		/* Asus K52JU, Lenovo G560 - Int mic at 0x1a and Ext mic at 0x1b */
 	CXT5066_HP_LAPTOP,      /* HP Laptop */
 	CXT5066_LEMOTE_LAPTOP_A1004, /* Lemote Laptop a1004 */
+	CXT5066_LEMOTE_AIO_A1205,    /* Lemote AIO a1205 */
 	CXT5066_AUTO,		/* BIOS auto-parser */
 	CXT5066_MODELS
 };
@@ -3002,6 +3009,7 @@ static const char * const cxt5066_models[CXT5066_MODELS] = {
 	[CXT5066_ASUS]		= "asus",
 	[CXT5066_HP_LAPTOP]	= "hp-laptop",
 	[CXT5066_LEMOTE_LAPTOP_A1004] = "lemote-laptop-a1004",
+	[CXT5066_LEMOTE_AIO_A1205]    = "lemote-aio-a1205",
 	[CXT5066_AUTO]		= "auto",
 };
 
@@ -3036,6 +3044,7 @@ static const struct snd_pci_quirk cxt5066_cfg_tbl[] = {
 	SND_PCI_QUIRK(0x17aa, 0x3938, "Lenovo G565", CXT5066_AUTO),
 	SND_PCI_QUIRK(0x1b0a, 0x2092, "CyberpowerPC Gamer Xplorer N57001", CXT5066_AUTO),
 	SND_PCI_QUIRK(0x1c06, 0x2011, "Lemote A1004", CXT5066_LEMOTE_LAPTOP_A1004),
+	SND_PCI_QUIRK(0x1c06, 0x2012, "Lemote A1205", CXT5066_LEMOTE_AIO_A1205),
 	{}
 };
 
@@ -3278,6 +3287,28 @@ static int patch_cxt5066(struct hda_codec *codec)
 		/* input source automatically selected */
 		spec->input_mux = NULL;
 		break;
+	case CXT5066_LEMOTE_AIO_A1205:
+		codec->patch_ops.init = cxt5066_init;
+		codec->patch_ops.unsol_event = cxt5066_unsol_event;
+		spec->raw_init_verbs[spec->num_raw_init_verbs] =
+			cxt5066_raw_init_verbs_lemote_aio_a1205;
+		spec->num_raw_init_verbs++;
+		spec->init_verbs[spec->num_init_verbs] =
+			cxt5066_init_verbs_lemote;
+		spec->num_init_verbs++;
+		spec->lemote = 1;
+		spec->mixers[spec->num_mixers++] = cxt5066_mixer_master;
+		spec->mixers[spec->num_mixers++] = cxt5066_mixers;
+		spec->port_d_mode = 0;
+		spec->mic_boost = 3; /* default 30dB gain */
+
+		/* no S/PDIF out */
+		spec->multiout.dig_out_nid = 0;
+
+		/* input source automatically selected */
+		spec->input_mux = NULL;
+		break;
+
 	}
 
 	if (spec->beep_amp)
