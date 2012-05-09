@@ -38,8 +38,8 @@
 #define SNDRV_CTL_TLVT_DB_MINMAX 4	/* dB scale with min/max */
 #define SNDRV_CTL_TLVT_DB_MINMAX_MUTE 5	/* dB scale with min/max with mute */
 
-#define TLV_DB_SCALE_MASK       0xffff
-#define TLV_DB_SCALE_MUTE       0x10000
+#define TLV_DB_SCALE_MASK	0xffff
+#define TLV_DB_SCALE_MUTE	0x10000
 #define TLV_DB_SCALE_ITEM(min, step, mute)			\
 	SNDRV_CTL_TLVT_DB_SCALE, 2 * sizeof(unsigned int),	\
 	(min), ((step) & TLV_DB_SCALE_MASK) | ((mute) ? TLV_DB_SCALE_MUTE : 0)
