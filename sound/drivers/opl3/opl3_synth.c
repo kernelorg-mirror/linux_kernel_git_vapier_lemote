@@ -20,7 +20,7 @@
  */
 
 #include <linux/slab.h>
-#include <linux/export.h>
+#include <linux/module.h>
 #include <sound/opl3.h>
 #include <sound/asound_fm.h>
 

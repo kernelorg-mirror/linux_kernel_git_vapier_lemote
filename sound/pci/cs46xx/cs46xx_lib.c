@@ -53,7 +53,7 @@
 #include <linux/slab.h>
 #include <linux/gameport.h>
 #include <linux/mutex.h>
-#include <linux/export.h>
+#include <linux/module.h>
 
 
 #include <sound/core.h>

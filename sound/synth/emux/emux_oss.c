@@ -25,7 +25,7 @@
 
 #ifdef CONFIG_SND_SEQUENCER_OSS
 
-#include <linux/export.h>
+#include <linux/module.h>
 #include <asm/uaccess.h>
 #include <sound/core.h>
 #include "emux_voice.h"

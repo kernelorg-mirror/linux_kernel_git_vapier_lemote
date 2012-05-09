@@ -10,7 +10,7 @@
  */
 
 #include <linux/slab.h>
-#include <linux/export.h>
+#include <linux/module.h>
 #include <sound/core.h>
 #include <sound/control.h>
 #include <sound/tlv.h>

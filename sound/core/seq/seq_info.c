@@ -20,7 +20,7 @@
  */
 
 #include <linux/init.h>
-#include <linux/export.h>
+#include <linux/module.h>
 #include <sound/core.h>
 
 #include "seq_info.h"

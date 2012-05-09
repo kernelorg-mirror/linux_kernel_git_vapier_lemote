@@ -34,7 +34,7 @@
 #include <sound/core.h>
 #include "au88x0.h"
 #include <linux/gameport.h>
-#include <linux/export.h>
+#include <linux/module.h>
 
 #if defined(CONFIG_GAMEPORT) || (defined(MODULE) && defined(CONFIG_GAMEPORT_MODULE))
 
