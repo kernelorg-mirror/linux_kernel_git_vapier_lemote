@@ -10,7 +10,6 @@
  * published by the Free Software Foundation.
  */
 
-#include <linux/platform_device.h>
 #include <asm/uaccess.h>
 #include <linux/io.h>
 #include <linux/pci.h>
@@ -18,12 +17,8 @@
 #include <linux/backlight.h>
 #include <linux/fb.h>
 #include <linux/interrupt.h>
-#include <linux/hwmon.h>
-#include <linux/hwmon-sysfs.h>
 #include <linux/pm.h>
 #include <linux/power_supply.h>
-#include <linux/thermal.h>
-#include <linux/workqueue.h>
 #include <linux/video_output.h>
 #include <linux/input.h>
 #include <linux/input/sparse-keymap.h>
@@ -178,30 +173,6 @@ static int ls3anb_set_brightness(struct backlight_device * pdev);
 /* Backlight device get brightness handler */
 static int ls3anb_get_brightness(struct backlight_device * pdev);
 
-/* Hwmon device get fan pwm by manual */
-static ssize_t ls3anb_get_fan_pwm_enable(struct device * dev,
-			struct device_attribute * attr, char * buf);
-/* Hwmon device set fan pwm by manual */
-static ssize_t ls3anb_set_fan_pwm_enable(struct device * dev,
-			struct device_attribute * attr, const char * buf,
-			size_t count);
-/* Hwmon device get pwm level */
-static ssize_t ls3anb_get_fan_pwm(struct device * dev,
-			struct device_attribute * attr, char * buf);
-/* Hwmon device set pwm level */
-static ssize_t ls3anb_set_fan_pwm(struct device * dev,
-			struct device_attribute * attr, const char * buf,
-			size_t count);
-/* Hwmon device get fan rpm */
-static ssize_t ls3anb_get_fan_rpm(struct device * dev,
-			struct device_attribute * attr, char * buf);
-/* Hwmon device get cpu temperature */
-static ssize_t ls3anb_get_cpu_temp(struct device * dev,
-			struct device_attribute * attr, char * buf);
-/* Hwmon device get name */
-static ssize_t ls3anb_get_hwmon_name(struct device * dev,
-			struct device_attribute * attr, char * buf);
-
 /* >>>Power management operation */
 /* Update battery information handle function. */
 static void ls3anb_power_battery_info_update(unsigned char bat_reg_flag);
@@ -306,35 +277,6 @@ static struct backlight_ops ls3anb_backlight_ops =
 {
 	.get_brightness = ls3anb_get_brightness,
 	.update_status =  ls3anb_set_brightness,
-};
-
-/* Hwmon device object */
-static struct device * ls3anb_hwmon_dev = NULL;
-/* Sensors */
-static SENSOR_DEVICE_ATTR(fan1_input, S_IRUGO,
-			ls3anb_get_fan_rpm, NULL, 0);
-static SENSOR_DEVICE_ATTR(pwm1, S_IRUGO | S_IWUSR,
-			ls3anb_get_fan_pwm, ls3anb_set_fan_pwm, 0);
-static SENSOR_DEVICE_ATTR(pwm1_enable, S_IRUGO | S_IWUSR,
-			ls3anb_get_fan_pwm_enable, ls3anb_set_fan_pwm_enable, 0);
-static SENSOR_DEVICE_ATTR(temp1_input, S_IRUGO,
-			ls3anb_get_cpu_temp, NULL, 0);
-static SENSOR_DEVICE_ATTR(name, S_IRUGO,
-			ls3anb_get_hwmon_name, NULL, 0);
-/* Hwmon attributes table */
-static struct attribute * ls3anb_hwmon_attributes[] =
-{
-	&sensor_dev_attr_pwm1.dev_attr.attr,
-	&sensor_dev_attr_fan1_input.dev_attr.attr,
-	&sensor_dev_attr_pwm1_enable.dev_attr.attr,
-	&sensor_dev_attr_temp1_input.dev_attr.attr,
-	&sensor_dev_attr_name.dev_attr.attr,
-	NULL
-};
-/* Hwmon device attribute group */
-static struct attribute_group ls3anb_hwmon_attribute_group =
-{
-	.attrs = ls3anb_hwmon_attributes,
 };
 
 /* Power info object */
@@ -503,22 +445,6 @@ static int __init ls3anb_init(void)
 	}
 	/* Register power supply END */
 
-	/* Register sensors START */
-	ls3anb_hwmon_dev = hwmon_device_register(NULL);
-	if(IS_ERR(ls3anb_hwmon_dev))
-	{
-		ret = -ENOMEM;
-		goto fail_hwmon_device_register;
-	}
-	ret = sysfs_create_group(&ls3anb_hwmon_dev->kobj,
-				&ls3anb_hwmon_attribute_group);
-	if(ret)
-	{
-		ret = -ENOMEM;
-		goto fail_sysfs_create_group_hwmon;
-	}
-	/* Register sensors END */
-
 	/* Hotkey device START */
 	ret = ls3anb_hotkey_init();
 	if(ret)
@@ -557,11 +483,6 @@ fail_misc_register:
 fail_sci_pci_driver_init:
 	ls3anb_hotkey_exit();
 fail_hotkey_init:
-	sysfs_remove_group(&ls3anb_hwmon_dev->kobj,
-				&ls3anb_hwmon_attribute_group);
-fail_sysfs_create_group_hwmon:
-	hwmon_device_unregister(ls3anb_hwmon_dev);
-fail_hwmon_device_register:
 	power_supply_unregister(&ls3anb_ac);
 fail_ac_power_supply_register:
 	power_supply_unregister(&ls3anb_bat);
@@ -595,11 +516,6 @@ static void __exit ls3anb_exit(void)
 	power_supply_unregister(&ls3anb_ac);
 	power_supply_unregister(&ls3anb_bat);
 	kfree(power_info);
-
-	/* Sensors */
-	sysfs_remove_group(&ls3anb_hwmon_dev->kobj,
-				&ls3anb_hwmon_attribute_group);
-	hwmon_device_unregister(ls3anb_hwmon_dev);
 
 	/* Backlight */
 	backlight_device_unregister(ls3anb_backlight_dev);
@@ -733,103 +649,6 @@ static int ls3anb_get_brightness(struct backlight_device * pdev)
 	/* Read level from ec */
 	return ec_read(INDEX_DISPLAY_BRIGHTNESS);
 }
-
-/* Hwmon device get fan pwm by manual */
-static ssize_t ls3anb_get_fan_pwm_enable(struct device * dev,
-			struct device_attribute * attr, char * buf)
-{
-	return sprintf(buf, "%d\n", ec_read(INDEX_FAN_CTRLMOD));
-}
-
-/* Hwmon device set fan pwm by manual */
-static ssize_t ls3anb_set_fan_pwm_enable(struct device * dev,
-			struct device_attribute * attr, const char * buf,
-			size_t count)
-{
-	int value = 0;
-
-	if(!count)
-	{
-		return 0;
-	}
-	if(1 != sscanf(buf, "%i", &value))
-	{
-		return -EINVAL;
-	}
-
-	if(value)
-	{
-		ec_write(INDEX_FAN_CTRLMOD,FAN_CTRL_BYHOST);
-	}
-	else
-	{
-		ec_write(INDEX_FAN_CTRLMOD,FAN_CTRL_BYEC);
-	}
-
-	return count;
-}
-
-/* Hwmon device get pwm level */
-static ssize_t ls3anb_get_fan_pwm(struct device * dev,
-			struct device_attribute * attr, char * buf)
-{
-	return sprintf(buf, "%d\n", ec_read(INDEX_FAN_SPEED_LEVEL));
-}
-
-/* Hwmon device set pwm level */
-static ssize_t ls3anb_set_fan_pwm(struct device * dev,
-			struct device_attribute * attr, const char * buf,
-			size_t count)
-{
-	int value = 0;
-	int status = 0;
-
-	if(!count)
-	{
-		return 0;
-	}
-	if(1 != sscanf(buf, "%i", &value))
-	{
-		return -EINVAL;
-	}
-
-	status = ec_read(INDEX_FAN_CTRLMOD);
-	if(FAN_CTRL_BYEC == status)
-	{
-		ec_write(INDEX_FAN_CTRLMOD, FAN_CTRL_BYHOST);
-	}
-	ec_write(INDEX_FAN_SPEED_LEVEL, value);
-
-	return count;
-}
-
-/* Hwmon device get fan rpm */
-static ssize_t ls3anb_get_fan_rpm(struct device * dev,
-			struct device_attribute * attr, char * buf)
-{
-	return sprintf(buf, "%d\n", ((ec_read(INDEX_FAN_SPEED_HIGH) << 8) |
-				ec_read(INDEX_FAN_SPEED_LOW)));
-}
-
-/* Hwmon device get cpu temperature */
-static ssize_t ls3anb_get_cpu_temp(struct device * dev,
-			struct device_attribute * attr, char * buf)
-{
-	int value = 0;
-
-	value = ec_read(INDEX_TEMPERATURE_VALUE);
-
-	return sprintf(buf, "%d\n", value);
-}
-
-/* Hwmon device get name */
-static ssize_t ls3anb_get_hwmon_name(struct device * dev,
-			struct device_attribute * attr, char * buf)
-{
-	return sprintf(buf, "ls3a-laptop\n");
-}
-
-
 
 /* Update battery information handle function. */
 static void ls3anb_power_battery_info_update(unsigned char bat_reg_flag)
@@ -1430,11 +1249,9 @@ static void ls3anb_hotkey_exit(void)
 	}
 }
 
-
 module_init(ls3anb_init);
 module_exit(ls3anb_exit);
 
 MODULE_AUTHOR("Huangw Wei <huangw@lemote.com>; Wang rui <wangr@lemote.com>");
 MODULE_DESCRIPTION("Loongson3A Laptop Driver");
 MODULE_LICENSE("GPL");
-
