@@ -17,7 +17,7 @@
 #ifndef __EC_WPCE775L_H__
 #define __EC_WPCE775L_H__
 
-#define EC_VERSION		"1.09"
+#define EC_VERSION		"1.10"
 
 /* 
  * The following registers are determined by the EC index configureation.
@@ -60,7 +60,9 @@ enum
 {
 	RESET_OFF = 0,
 	RESET_ON,
-	PWROFF_ON
+	PWROFF_ON,
+	STR_ON,
+	STANDBY_ON
 };
 
 #define CMD_EC_VERSION		0x4F	/* EC Version OEM command: 36 Bytes */
@@ -108,7 +110,7 @@ enum
 	BACKLIGHT_ON
 };
 #define	INDEX_DISPLAY_MAXBRIGHTNESS_LEVEL	0x59	/* LCD backlight brightness max level */
-#define	INDEX_DISPLAY_BRIGHTNESS	0x5A	/* 10 stages (0~A) LCD backlight brightness adjust */
+#define	INDEX_DISPLAY_BRIGHTNESS	0x5A	/* 10 stages (0~9) LCD backlight brightness adjust */
 enum
 {
 	FLAG_DISPLAY_BRIGHTNESS_LEVEL_0	= 0,	/* This level is backlight turn off. */
@@ -240,7 +242,8 @@ enum
 #define INDEX_POWER_STATUS		0xA2	/* Read current power status. */
 enum
 {
-	BIT_POWER_BATVL = 1,	/* Battery in very low status. */
+	BIT_POWER_PWRON = 0,	/* Power-on start status, 1 = on power-on, 0 = power-on complete. */
+	BIT_POWER_BATVL,		/* Battery in very low status. */
 	BIT_POWER_BATL,			/* Battery in low status. */
 	BIT_POWER_BATFCHG,		/* Battery in fully charging status. */
 	BIT_POWER_BATCHG,		/* Battery in charging status. */
@@ -271,7 +274,8 @@ enum
 	BIT_SHUTDNID_SYSCMD,	/* System command */
 	BIT_SHUTDNID_LPRESSPWN,	/* Long press power button */
 	BIT_SHUTDNID_PWRUNDER9V,/* Batery voltage low under 9V */
-	BIT_SHUTDNID_S3			/* Entry S3 state */
+	BIT_SHUTDNID_S3,		/* Entry S3 state */
+	BIT_SHUTDNID_S1			/* Entry S1 state */
 };
 
 #define	INDEX_SYSTEM_CFG		0xA5		/* Read System config */
@@ -342,11 +346,12 @@ enum
 	SCI_EVENT_NUM_BAT,				/* 0x31, BAT in/out */
 	SCI_EVENT_NUM_BATL,				/* 0x32, Battery Low capacity alarm, < 10% */
 	SCI_EVENT_NUM_BATVL,			/* 0x33, Battery VeryLow capacity alarm, < 5% */
-	SCI_EVENT_NUM_THROT				/* 0x34, CPU Throttling event alarm, CPU Temperature > 85 or < 80. */
+	SCI_EVENT_NUM_THROT,			/* 0x34, CPU Throttling event alarm, CPU Temperature > 85 or < 80. */
+	SCI_EVENT_NUM_POWER = 0x37		/* 0x37, Power button */
 };
 
 #define SCI_EVENT_NUM_START		SCI_EVENT_NUM_WLAN
-#define SCI_EVENT_NUM_END		SCI_EVENT_NUM_THROT
+#define SCI_EVENT_NUM_END		SCI_EVENT_NUM_POWER
 
 extern unsigned char app_access_ec_flag;
 

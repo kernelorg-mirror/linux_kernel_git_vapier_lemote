@@ -356,6 +356,7 @@ static const struct sci_event se[] =
 	[SCI_EVENT_NUM_BATL] =				{0, ls3anb_bat_low_handler},
 	[SCI_EVENT_NUM_BATVL] =				{0, ls3anb_bat_very_low_handler},
 	[SCI_EVENT_NUM_THROT] =				{0, ls3anb_throttling_CPU_handler},
+	[SCI_EVENT_NUM_POWER] =				{0, NULL},
 };
 /* Hotkey device object */
 static struct input_dev * ls3anb_hotkey_dev = NULL;
@@ -374,6 +375,7 @@ static const struct key_entry ls3anb_keymap[] =
 	{KE_KEY, SCI_EVENT_NUM_3G, { KEY_MODEM } }, /* Fn + F9 */
 	{KE_KEY, SCI_EVENT_NUM_CAMERA, { KEY_CAMERA } }, /* Fn + F10 */
 	{KE_KEY, SCI_EVENT_NUM_TP, { KEY_TOUCHPAD_TOGGLE } }, /* Fn + F11 */
+	{KE_KEY, SCI_EVENT_NUM_POWER, { KEY_POWER } }, /* Power */
 	{KE_END, 0 }
 };
 
