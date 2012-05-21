@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
-# Linux kernel version: 2.6.36-6.lemote
-# Sun Mar 25 13:12:52 2012
+# Linux kernel version: 2.6.36-11.lemote
+# Wed May 23 13:21:29 2012
 #
 CONFIG_MIPS=y
 
@@ -843,14 +843,16 @@ CONFIG_MTD=m
 # CONFIG_MTD_DEBUG is not set
 # CONFIG_MTD_TESTS is not set
 # CONFIG_MTD_CONCAT is not set
-# CONFIG_MTD_PARTITIONS is not set
+CONFIG_MTD_PARTITIONS=y
+# CONFIG_MTD_REDBOOT_PARTS is not set
+# CONFIG_MTD_AR7_PARTS is not set
 
 #
 # User Modules And Translation Layers
 #
 # CONFIG_MTD_CHAR is not set
-# CONFIG_MTD_BLKDEVS is not set
-# CONFIG_MTD_BLOCK is not set
+CONFIG_MTD_BLKDEVS=m
+CONFIG_MTD_BLOCK=m
 # CONFIG_MTD_BLOCK_RO is not set
 # CONFIG_FTL is not set
 # CONFIG_NFTL is not set
@@ -864,7 +866,9 @@ CONFIG_MTD=m
 # RAM/ROM/Flash chip drivers
 #
 # CONFIG_MTD_CFI is not set
-# CONFIG_MTD_JEDECPROBE is not set
+CONFIG_MTD_JEDECPROBE=m
+CONFIG_MTD_GEN_PROBE=m
+# CONFIG_MTD_CFI_ADV_OPTIONS is not set
 CONFIG_MTD_MAP_BANK_WIDTH_1=y
 CONFIG_MTD_MAP_BANK_WIDTH_2=y
 CONFIG_MTD_MAP_BANK_WIDTH_4=y
@@ -875,6 +879,10 @@ CONFIG_MTD_CFI_I1=y
 CONFIG_MTD_CFI_I2=y
 # CONFIG_MTD_CFI_I4 is not set
 # CONFIG_MTD_CFI_I8 is not set
+# CONFIG_MTD_CFI_INTELEXT is not set
+CONFIG_MTD_CFI_AMDSTD=m
+# CONFIG_MTD_CFI_STAA is not set
+CONFIG_MTD_CFI_UTIL=m
 # CONFIG_MTD_RAM is not set
 # CONFIG_MTD_ROM is not set
 # CONFIG_MTD_ABSENT is not set
@@ -883,6 +891,7 @@ CONFIG_MTD_CFI_I2=y
 # Mapping drivers for chip access
 #
 # CONFIG_MTD_COMPLEX_MAPPINGS is not set
+# CONFIG_MTD_PHYSMAP is not set
 # CONFIG_MTD_INTEL_VR_NOR is not set
 # CONFIG_MTD_PLATRAM is not set
 
