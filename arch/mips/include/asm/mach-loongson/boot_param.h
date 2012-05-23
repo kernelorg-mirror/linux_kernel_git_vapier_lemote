@@ -3,7 +3,7 @@
 
 #define SYSTEM_RAM_LOW		1
 #define SYSTEM_RAM_HIGH		2
-#define MEM_RESERVEI		3
+#define MEM_RESERVED		3
 #define PCI_IO			4
 #define PCI_MEM			5
 #define LOONGSON_CFG_REG	6
@@ -146,4 +146,5 @@ extern u64 ht_control_base;
 extern u64 loongson_pciio_base;
 extern u32 nr_cpu_loongson;
 extern enum loongson_cpu_type cputype;
+extern struct efi_memory_map_loongson *emap;
 #endif

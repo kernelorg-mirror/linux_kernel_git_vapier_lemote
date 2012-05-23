@@ -13,34 +13,33 @@
 #include <pci.h>
 #include <boot_param.h>
 
-extern unsigned long long memstart, highmemstart;
-
 void __init prom_init_memory(void)
 {
-	phys_t	size1, size2;
+	int i;
+	u32 node_id;
+	u32 mem_type;
 
-	if (memstart != 0)
-		add_memory_region(0, memstart, BOOT_MEM_RESERVED); // reserve the front nMB memory for BIOS runtime services
+	/* parse memory information */
+	for (i = 0; i < emap->nr_map; i++){
+		node_id = emap->map[i].node_id;
+		mem_type = emap->map[i].mem_type;
 
-	add_memory_region(memstart, memsize << 20, BOOT_MEM_RAM);
-
-#ifdef CONFIG_64BIT
-        //Reserver bottom 8M above 4G for rs780 chip
-	//check whether mem map overlap with [4G-8M, 4G)
-	if ((highmemstart <= 0x100000000) && 
-		((highmemstart + (highmemsize << 20)) > 0xff800000)) {
-		size1 = 4088 - (highmemstart >> 20); // size < 4G-8M
-		size2 = highmemsize - 8 - size1;     // size > 4G
-
-		add_memory_region(highmemstart, size1 << 20, BOOT_MEM_RAM);
-                add_memory_region(0xff800000, 0x800000, BOOT_MEM_RESERVED);
-
-		if (size2)
-			add_memory_region(0x100000000, size2 << 20, BOOT_MEM_RAM);
-	} else {
-		add_memory_region(highmemstart, highmemsize << 20, BOOT_MEM_RAM);
+		if (node_id == 0) {
+			switch (mem_type) {
+			case SYSTEM_RAM_LOW:
+			case SYSTEM_RAM_HIGH:
+				add_memory_region(emap->map[i].mem_start,
+					emap->map[i].mem_size << 20,
+					BOOT_MEM_RAM);
+				break;
+			case MEM_RESERVED:
+				add_memory_region(emap->map[i].mem_start,
+					emap->map[i].mem_size << 20,
+					BOOT_MEM_RESERVED);
+				break;
+			}
+		}
 	}
-#endif /* !CONFIG_64BIT */
 }
 
 /* override of arch/mips/mm/cache.c: __uncached_access */

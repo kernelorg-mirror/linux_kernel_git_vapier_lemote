@@ -59,7 +59,6 @@ do {									\
 void __init prom_init_env(void)
 {
 	/* pmon passes arguments in 32bit pointers */
-	int i;
 #ifndef BOOT_PARAM
 	unsigned long bus_clock;
 	unsigned int processor_id;
@@ -101,34 +100,12 @@ void __init prom_init_env(void)
 	pr_info("busclock=%ld, cpuclock=%ld, memsize=%ld, highmemsize=%ld, sharevram=%d, vramsize=%d\n",
 		bus_clock, cpu_clock_freq, memsize, highmemsize, sharevram, vramsize);
 #else
-	u32 mem_type;
-	u32 node_id;
-
 	bp = (struct boot_params *)fw_arg2;
 	lp = &(bp->efi.smbios.lp);
 
 	emap 	= (struct efi_memory_map_loongson *)((u64)lp+lp->memory_offset);
 	ecpu	= (struct efi_cpuinfo_loongson *)((u64)lp + lp->cpu_offset);
 	eirq_source = (struct irq_source_routing_table *)((u64)lp+lp->irq_offset);
-
-	//parse memory information
-	for (i = 0; i < emap->nr_map; i++){
-		mem_type = emap->map[i].mem_type;
-		node_id = emap->map[i].node_id;
-
-		if(node_id == 0){
-			switch(mem_type){
-			case SYSTEM_RAM_LOW:
-				memsize = emap->map[i].mem_size;	
-				memstart = emap->map[i].mem_start;
-				break;
-			case SYSTEM_RAM_HIGH:
-				highmemsize = emap->map[i].mem_size;	
-				highmemstart = emap->map[i].mem_start;
-				break;
-		   	}
-		}
-	}
 
 	cpu_clock_freq = ecpu->cpu_clock_freq;
 	cputype = ecpu->cputype;
@@ -138,17 +115,10 @@ void __init prom_init_env(void)
 	pci_mem_end_addr = eirq_source->pci_mem_end_addr;
 	loongson_pciio_base = eirq_source->pci_io_start_addr;
   
-	pr_info("memstart %llx size %u, highmemstart %llx size %u\n",
-                memstart, memsize, highmemstart, highmemsize);
-	
-	pr_info("pci-start:%llx,pci-end:%llx,pciio base:%llx\n", pci_mem_start_addr, pci_mem_end_addr, loongson_pciio_base);
-
         poweroff_addr = bp->reset_system.Shutdown;
         reboot_addr = bp->reset_system.ResetWarm;
-        printk("shutdown:%llx reset:%llx\n",poweroff_addr,reboot_addr);
 
 	vbios_addr = bp->efi.smbios.vga_bios;
-	printk("vbios locate in %llx\n", vbios_addr);
 
 	ht_control_base = 0x90000EFDFB000000; // has no interface now
 #endif
