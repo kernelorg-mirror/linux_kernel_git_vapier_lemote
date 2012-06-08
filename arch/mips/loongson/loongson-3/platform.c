@@ -43,7 +43,7 @@ static struct platform_device sb700_fan2 = {
 };
 
 /*
- * A1004 Fan0 controler polic
+ * A1004 Fan1 controler polic
  *
  * Fan is controlled by EC in A1004 pruducts, but EC can not get the current 
  * cpu temprature which used for adjusting the current fan speed.
@@ -58,9 +58,9 @@ struct loongson_fan_policy a1004_fan1_default_policy = {
 };
 
 /* 
- * A1101 Fan0/Fan1 control policy 
+ * A1101 Fan1/Fan2 control policy 
  * 
- * Fan0 & Fan1 keep at half-speed
+ * Fan1 & Fan2 keep at half-speed
  *
  */
 struct loongson_fan_policy a1101_fan1_default_policy = {
@@ -74,15 +74,15 @@ struct loongson_fan_policy a1101_fan2_default_policy = {
 };
 
 /*
- * A1205 Fan0 at step mode
+ * A1205 Fan1 at step mode
  *
  * up_step array    |   down_step array
  *                  |    
- * [min, 65), 50%   |   (min, 60), 50%
- * [65, 75),  60%   |   [60 ,70),  60%
- * [75, 85),  70%   |   [70 ,80),  70%
- * [85, 90),  80%   |   [80 ,85),  80%
- * [90, max), 100%  |   [85,max),  100%
+ * [min, 60), 50%   |   (min, 57), 50%
+ * [60, 65),  60%   |   [57 ,62),  60%
+ * [65, 70),  70%   |   [62 ,70),  70%
+ * [70, 80),  80%   |   [70 ,75),  80%
+ * [80, max), 100%  |   [75,max),  100%
  *
  */
 struct loongson_fan_policy a1205_fan1_default_policy = {
@@ -92,18 +92,18 @@ struct loongson_fan_policy a1205_fan1_default_policy = {
 	.up_step_num = 5,
 	.down_step_num = 5,
 	.up_step = {
-			{MIN_TEMP,    65,   50},
-			{   65,       75,   60},
-			{   75,       85,   70},
-			{   85,       90,   80},
-			{   90,    MAX_TEMP,100},
+			{MIN_TEMP,    60,   50},
+			{   60,       65,   60},
+			{   65,       70,   70},
+			{   70,       80,   80},
+			{   80,    MAX_TEMP,100},
 		   },
 	.down_step = {
-			{MIN_TEMP, 60,    50},
-			{   60,    70,    60},
-			{   70,    80,    70},
-			{   80,    85,    80},
-			{   85, MAX_TEMP, 100},
+			{MIN_TEMP, 57,    50},
+			{   57,    62,    60},
+			{   62,    70,    70},
+			{   70,    75,    80},
+			{   75, MAX_TEMP, 100},
 		     },
 };
 
