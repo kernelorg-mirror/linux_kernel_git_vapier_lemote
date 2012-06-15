@@ -33,7 +33,6 @@
 #include "drm_crtc.h"
 #include "drm_crtc_helper.h"
 #include "drm_fb_helper.h"
-#include <asm/bootinfo.h>
 
 static bool drm_kms_helper_poll = true;
 module_param_named(poll, drm_kms_helper_poll, bool, 0600);
@@ -748,8 +747,8 @@ static int drm_helper_choose_crtc_dpms(struct drm_crtc *crtc)
 }
 
 #ifdef CONFIG_CPU_LOONGSON3
-extern void A1205_lvds_on(void);
-extern void A1205_lvds_off(void);
+void turn_off_lvds(void);
+void turn_on_lvds(void);
 #endif
 /**
  * drm_helper_connector_dpms
@@ -774,9 +773,8 @@ void drm_helper_connector_dpms(struct drm_connector *connector, int mode)
 	/* from off to on, do crtc then encoder */
 	if (mode < old_dpms) {
 #ifdef CONFIG_CPU_LOONGSON3
-		if (mips_machtype == MACH_LEMOTE_2GQ_A1205)
-			if(connector->connector_type == DRM_MODE_CONNECTOR_LVDS)
-				A1205_lvds_on();
+		if(connector->connector_type == DRM_MODE_CONNECTOR_LVDS)
+			turn_on_lvds();
 #endif
 		if (crtc) {
 			struct drm_crtc_helper_funcs *crtc_funcs = crtc->helper_private;
@@ -795,9 +793,8 @@ void drm_helper_connector_dpms(struct drm_connector *connector, int mode)
 	/* from on to off, do encoder then crtc */
 	if (mode > old_dpms) {
 #ifdef CONFIG_CPU_LOONGSON3
-		if (mips_machtype == MACH_LEMOTE_2GQ_A1205)
-			if(connector->connector_type == DRM_MODE_CONNECTOR_LVDS)
-				A1205_lvds_off();
+		if(connector->connector_type == DRM_MODE_CONNECTOR_LVDS)
+			turn_off_lvds();
 #endif
 		if (encoder) {
 			struct drm_encoder_helper_funcs *encoder_funcs = encoder->helper_private;

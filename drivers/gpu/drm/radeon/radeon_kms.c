@@ -47,9 +47,8 @@ int radeon_driver_unload_kms(struct drm_device *dev)
 }
 
 #ifdef CONFIG_CPU_LOONGSON3
-#include <asm/bootinfo.h>
-extern void A1205_lvds_on(void);
-extern void A1205_lvds_off(void);
+extern void turn_on_lvds(void);
+extern void turn_off_lvds(void);
 #endif
 int radeon_driver_load_kms(struct drm_device *dev, unsigned long flags)
 {
@@ -57,8 +56,7 @@ int radeon_driver_load_kms(struct drm_device *dev, unsigned long flags)
 	int r, acpi_status;
 
 #ifdef CONFIG_CPU_LOONGSON3
-	if (mips_machtype == MACH_LEMOTE_2GQ_A1205)
-		A1205_lvds_off();
+	turn_off_lvds();
 #endif
 	rdev = kzalloc(sizeof(struct radeon_device), GFP_KERNEL);
 	if (rdev == NULL) {
@@ -99,8 +97,7 @@ int radeon_driver_load_kms(struct drm_device *dev, unsigned long flags)
 	r = radeon_modeset_init(rdev);
 
 #ifdef CONFIG_CPU_LOONGSON3
-	if (mips_machtype == MACH_LEMOTE_2GQ_A1205)
-		A1205_lvds_on();
+	turn_on_lvds();
 #endif
 
 	if (r)
