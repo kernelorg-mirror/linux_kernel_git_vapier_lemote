@@ -38,6 +38,26 @@
 	.regshift	= 0,					\
 }
 
+#define PORT_25M(int)				\
+{								\
+	.irq		= MIPS_CPU_IRQ_BASE + (int),		\
+	.uartclk	= 25000000,				\
+	.iotype		= UPIO_MEM,				\
+	.membase	= (void __iomem *)NULL,			\
+	.flags		= UPF_BOOT_AUTOCONF | UPF_SKIP_TEST,	\
+	.regshift	= 0,					\
+}
+
+#define PORT_33M(int)				\
+{								\
+	.irq		= MIPS_CPU_IRQ_BASE + (int),		\
+	.uartclk	= 33177600,				\
+	.iotype		= UPIO_MEM,				\
+	.membase	= (void __iomem *)NULL,			\
+	.flags		= UPF_BOOT_AUTOCONF | UPF_SKIP_TEST,	\
+	.regshift	= 0,					\
+}
+
 static struct plat_serial8250_port uart8250_data[][2] = {
 	[MACH_LOONGSON_UNKNOWN]         {},
 	[MACH_LEMOTE_FL2E]              {PORT(4), {} },
@@ -47,33 +67,10 @@ static struct plat_serial8250_port uart8250_data[][2] = {
 	[MACH_DEXXON_GDIUM2F10]         {PORT_M(3), {} },
 	[MACH_LEMOTE_NAS]               {PORT_M(3), {} },
 	[MACH_LEMOTE_LL2F]              {PORT(3), {} },
-	[MACH_LEMOTE_3A_A1004]          {
-						{
-							.irq		= MIPS_CPU_IRQ_BASE + 2,
-							.uartclk	= 33177600,
-							.iotype		= UPIO_MEM,
-							.flags		= UPF_BOOT_AUTOCONF | UPF_SKIP_TEST,
-						},
-						{} 
-					},
-	[MACH_LEMOTE_3A_A1101]          {
-						{
-							.irq		= MIPS_CPU_IRQ_BASE + 2,
-							.uartclk	= 25000000,
-							.iotype		= UPIO_MEM,
-							.flags		= UPF_BOOT_AUTOCONF | UPF_SKIP_TEST,
-						},
-						{} 
-					},
-	[MACH_LEMOTE_2GQ_A1205]          {
-						{
-							.irq		= MIPS_CPU_IRQ_BASE + 2,
-							.uartclk	= 25000000,
-							.iotype		= UPIO_MEM,
-							.flags		= UPF_BOOT_AUTOCONF | UPF_SKIP_TEST,
-						},
-						{} 
-					},
+	[MACH_LEMOTE_3A_A1004]          {PORT_33M(2), {} },
+	[MACH_LEMOTE_3A_A1101]          {PORT_25M(2), {} },
+	[MACH_LEMOTE_2GQ_A1201]         {PORT_25M(2), {} },
+	[MACH_LEMOTE_2GQ_A1205]         {PORT_25M(2), {} },
 	[MACH_LOONGSON_END]             {},
 };
 
