@@ -1,5 +1,5 @@
 /* 
- * Driver for Loongson3A Laptop
+ * Driver for Lemote 3A/2GQ series Laptop with WPCE775l Embeded Controller
  *
  * Copyright (C) 2011 Lemote Inc.
  * Author : Huangw Wei <huangw@lemote.com>
@@ -78,7 +78,7 @@ enum //bat_reg_flag
 const char *version = EC_VERSION;
 
 /* Power information structure */
-struct ls3anb_power_info
+struct lemote_power_info
 {
 	/* AC insert or not */
 	unsigned int ac_in;
@@ -148,46 +148,46 @@ struct sci_event
 };
 
 /* Platform driver init handler */
-static int __init ls3anb_init(void);
+static int __init lemote_laptop_init(void);
 /* Platform driver exit handler */
-static void __exit ls3anb_exit(void);
+static void __exit lemote_laptop_exit(void);
 /* Platform device suspend handler */
-static int ls3anb_suspend(struct platform_device * pdev, pm_message_t state);
+static int lemote_laptop_suspend(struct platform_device * pdev, pm_message_t state);
 /* Platform device resume handler */
-static int ls3anb_resume(struct platform_device * pdev);
-static ssize_t ls3anb_get_version(struct device_driver * driver, char * buf);
+static int lemote_laptop_resume(struct platform_device * pdev);
+static ssize_t lemote_get_version(struct device_driver * driver, char * buf);
 
 /* Camera control misc device open handler */
-static int ls3anb_cam_misc_open(struct inode * inode, struct file * filp);
+static int lemote_cam_misc_open(struct inode * inode, struct file * filp);
 /* Camera control misc device release handler */
-static int ls3anb_cam_misc_release(struct inode * inode, struct file * filp);
+static int lemote_cam_misc_release(struct inode * inode, struct file * filp);
 /* Camera control misc device read handler */
-ssize_t ls3anb_cam_misc_read(struct file * filp,
+ssize_t lemote_cam_misc_read(struct file * filp,
 			char __user * buffer, size_t size, loff_t * offset);
 /* Camera control misc device write handler */
-static ssize_t ls3anb_cam_misc_write(struct file * filp,
+static ssize_t lemote_cam_misc_write(struct file * filp,
 			const char __user * buffer, size_t size, loff_t * offset);
 
 /* Backlight device set brightness handler */
-static int ls3anb_set_brightness(struct backlight_device * pdev);
+static int lemote_set_brightness(struct backlight_device * pdev);
 /* Backlight device get brightness handler */
-static int ls3anb_get_brightness(struct backlight_device * pdev);
+static int lemote_get_brightness(struct backlight_device * pdev);
 
 /* >>>Power management operation */
 /* Update battery information handle function. */
-static void ls3anb_power_battery_info_update(unsigned char bat_reg_flag);
+static void lemote_power_battery_info_update(unsigned char bat_reg_flag);
 /* Clear battery static information. */
-static void ls3anb_power_info_battery_static_clear(void);
+static void lemote_power_info_battery_static_clear(void);
 /* Get battery static information. */
-static void ls3anb_power_info_battery_static_update(void);
+static void lemote_power_info_battery_static_update(void);
 /* Update power_status value */
-static void ls3anb_power_info_power_status_update(void);
-static void ls3anb_bat_get_string(unsigned char index, unsigned char *bat_string);
+static void lemote_power_info_power_status_update(void);
+static void lemote_bat_get_string(unsigned char index, unsigned char *bat_string);
 /* Power supply Battery get property handler */
-static int ls3anb_bat_get_property(struct power_supply * pws,
+static int lemote_bat_get_property(struct power_supply * pws,
 			enum power_supply_property psp, union power_supply_propval * val);
 /* Power supply AC get property handler */
-static int ls3anb_ac_get_property(struct power_supply * pws,
+static int lemote_ac_get_property(struct power_supply * pws,
 			enum power_supply_property psp, union power_supply_propval * val);
 /* <<<End power management operation */
 
@@ -198,30 +198,30 @@ static void sci_pci_driver_exit(void);
 /* SCI device pci driver init */
 static int sci_pci_init(void);
 /* SCI event routine handler */
-static irqreturn_t ls3anb_sci_int_routine(int irq, void * dev_id);
+static irqreturn_t lemote_sci_int_routine(int irq, void * dev_id);
 /* SCI event handler */
-void ls3anb_sci_event_handler(int event);
+void lemote_sci_event_handler(int event);
 /* SCI device dpms event handler */
-static int ls3anb_dpms_handler(int status);
+static int lemote_laptop_dpms_handler(int status);
 /* SCI device over temperature event handler */
-static int ls3anb_over_temp_handler(int status);
+static int lemote_over_temp_handler(int status);
 /* SCI device Throttling the CPU event handler */
-static int ls3anb_throttling_CPU_handler(int status);
+static int lemote_throttling_CPU_handler(int status);
 /* SCI device AC event handler */
-static int ls3anb_ac_handler(int status);
+static int lemote_ac_handler(int status);
 /* SCI device Battery event handler */
-static int ls3anb_bat_handler(int status);
+static int lemote_bat_handler(int status);
 /* SCI device Battery low event handler */
-static int ls3anb_bat_low_handler(int status);
+static int lemote_bat_low_handler(int status);
 /* SCI device Battery very low event handler */
-static int ls3anb_bat_very_low_handler(int status);
+static int lemote_bat_very_low_handler(int status);
 /* SCI device LID event handler */
-static int ls3anb_lid_handler(int status);
+static int lemote_lid_handler(int status);
 
 /* Hotkey device init handler */
-static int ls3anb_hotkey_init(void);
+static int lemote_hotkey_init(void);
 /* Hotkey device exit handler */
-static void ls3anb_hotkey_exit(void);
+static void lemote_hotkey_exit(void);
 extern int ec_query_get_event_num(void);
 
 /* Platform device ids table object */
@@ -233,7 +233,7 @@ static struct platform_device_id platform_device_ids[] =
 		 * Platform driver will be attached to a platform device if
 		 * one entry of its .id_table matches name of platform device
 		 * */
-		.name = "loongson3a_nb_a1004",
+		.name = "lemote-laptop",
 	},
 	{}
 };
@@ -243,46 +243,46 @@ static struct platform_driver platform_driver =
 {
 	.driver = 
 	{
-		.name = "ls3a-laptop",
+		.name = "lemote-laptop",
 		.owner = THIS_MODULE,
 	},
 	.id_table = platform_device_ids,
 #ifdef CONFIG_PM
-	.suspend = ls3anb_suspend,
-	.resume  = ls3anb_resume,
+	.suspend = lemote_laptop_suspend,
+	.resume  = lemote_laptop_resume,
 #endif /* CONFIG_PM */
 };
-static DRIVER_ATTR(version, S_IRUGO, ls3anb_get_version, NULL);
+static DRIVER_ATTR(version, S_IRUGO, lemote_get_version, NULL);
 
 /* Camera control misc device object file operations */
-static const struct file_operations ls3anb_cam_misc_fops =
+static const struct file_operations lemote_cam_misc_fops =
 {
-	.open = ls3anb_cam_misc_open,
-	.release = ls3anb_cam_misc_release,
-	.read = ls3anb_cam_misc_read,
-	.write = ls3anb_cam_misc_write
+	.open = lemote_cam_misc_open,
+	.release = lemote_cam_misc_release,
+	.read = lemote_cam_misc_read,
+	.write = lemote_cam_misc_write
 };
 /* Camera control misc device object */
-static struct miscdevice ls3anb_cam_misc_dev =
+static struct miscdevice lemote_cam_misc_dev =
 {
 	.minor = MISC_DYNAMIC_MINOR,
 	.name = "webcam",
-	.fops = &ls3anb_cam_misc_fops
+	.fops = &lemote_cam_misc_fops
 };
 
 /* Backlight device object */
-static struct backlight_device * ls3anb_backlight_dev = NULL;
+static struct backlight_device * lemote_backlight_dev = NULL;
 /* Backlight device operations table object */
-static struct backlight_ops ls3anb_backlight_ops =
+static struct backlight_ops lemote_backlight_ops =
 {
-	.get_brightness = ls3anb_get_brightness,
-	.update_status =  ls3anb_set_brightness,
+	.get_brightness = lemote_get_brightness,
+	.update_status =  lemote_set_brightness,
 };
 
 /* Power info object */
-static struct ls3anb_power_info * power_info = NULL;
+static struct lemote_power_info * power_info = NULL;
 /* Power supply Battery property object */
-static enum power_supply_property ls3anb_bat_props[] =
+static enum power_supply_property lemote_bat_props[] =
 {
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_HEALTH,
@@ -307,61 +307,61 @@ static enum power_supply_property ls3anb_bat_props[] =
 };
 
 /* Power supply Battery device object */
-static struct power_supply ls3anb_bat =
+static struct power_supply lemote_bat =
 {
-	.name = "ls3anb-bat",
+	.name = "lemote-bat",
 	.type = POWER_SUPPLY_TYPE_BATTERY,
-	.properties = ls3anb_bat_props,
-	.num_properties = ARRAY_SIZE(ls3anb_bat_props),
-	.get_property = ls3anb_bat_get_property,
+	.properties = lemote_bat_props,
+	.num_properties = ARRAY_SIZE(lemote_bat_props),
+	.get_property = lemote_bat_get_property,
 };
 /* Power supply AC property object */
-static enum power_supply_property ls3anb_ac_props[] =
+static enum power_supply_property lemote_ac_props[] =
 {
 	POWER_SUPPLY_PROP_ONLINE,
 };
 /* Power supply AC device object */
-static struct power_supply ls3anb_ac =
+static struct power_supply lemote_ac =
 {
-	.name = "ls3anb-ac",
+	.name = "lemote-ac",
 	.type = POWER_SUPPLY_TYPE_MAINS,
-	.properties = ls3anb_ac_props,
-	.num_properties = ARRAY_SIZE(ls3anb_ac_props),
-	.get_property = ls3anb_ac_get_property,
+	.properties = lemote_ac_props,
+	.num_properties = ARRAY_SIZE(lemote_ac_props),
+	.get_property = lemote_ac_get_property,
 };
 
 /* SCI device object */
-static struct sci_device * ls3anb_sci_device = NULL;
+static struct sci_device * lemote_sci_device = NULL;
 
 /* SCI device event handler table */
 static const struct sci_event se[] =
 {
-	[SCI_EVENT_NUM_LID] =				{INDEX_DEVICE_STATUS, ls3anb_lid_handler},
-	[SCI_EVENT_NUM_SLEEP] =				{0, NULL},
-	[SCI_EVENT_NUM_WLAN] =				{0, NULL},
-	[SCI_EVENT_NUM_BRIGHTNESS_DN] =		{0, NULL},
-	[SCI_EVENT_NUM_BRIGHTNESS_UP] =		{0, NULL},
-	[SCI_EVENT_NUM_AUDIO_MUTE] =		{0, NULL},
-	[SCI_EVENT_NUM_VOLUME_DN] =			{0, NULL},
-	[SCI_EVENT_NUM_VOLUME_UP] =			{0, NULL},
-	[SCI_EVENT_NUM_BLACK_SCREEN] =		{0, ls3anb_dpms_handler},
-	[SCI_EVENT_NUM_DISPLAY_TOGGLE] =	{0, NULL},
-	[SCI_EVENT_NUM_3G] =				{0, NULL},
-	[SCI_EVENT_NUM_SIM] =				{0, NULL},
-	[SCI_EVENT_NUM_CAMERA] =			{0, NULL},
-	[SCI_EVENT_NUM_TP] =				{0, NULL},
-	[SCI_EVENT_NUM_OVERTEMP] =			{0, ls3anb_over_temp_handler},
-	[SCI_EVENT_NUM_AC] =				{0, ls3anb_ac_handler},
-	[SCI_EVENT_NUM_BAT] =				{INDEX_POWER_STATUS, ls3anb_bat_handler},
-	[SCI_EVENT_NUM_BATL] =				{0, ls3anb_bat_low_handler},
-	[SCI_EVENT_NUM_BATVL] =				{0, ls3anb_bat_very_low_handler},
-	[SCI_EVENT_NUM_THROT] =				{0, ls3anb_throttling_CPU_handler},
-	[SCI_EVENT_NUM_POWER] =				{0, NULL},
+	[SCI_EVENT_NUM_LID] =		{INDEX_DEVICE_STATUS, lemote_lid_handler},
+	[SCI_EVENT_NUM_SLEEP] =		{0, NULL},
+	[SCI_EVENT_NUM_WLAN] =		{0, NULL},
+	[SCI_EVENT_NUM_BRIGHTNESS_DN] =	{0, NULL},
+	[SCI_EVENT_NUM_BRIGHTNESS_UP] =	{0, NULL},
+	[SCI_EVENT_NUM_AUDIO_MUTE] =	{0, NULL},
+	[SCI_EVENT_NUM_VOLUME_DN] =	{0, NULL},
+	[SCI_EVENT_NUM_VOLUME_UP] =	{0, NULL},
+	[SCI_EVENT_NUM_BLACK_SCREEN] =	{0, lemote_laptop_dpms_handler},
+	[SCI_EVENT_NUM_DISPLAY_TOGGLE] ={0, NULL},
+	[SCI_EVENT_NUM_3G] =		{0, NULL},
+	[SCI_EVENT_NUM_SIM] =		{0, NULL},
+	[SCI_EVENT_NUM_CAMERA] =	{0, NULL},
+	[SCI_EVENT_NUM_TP] =		{0, NULL},
+	[SCI_EVENT_NUM_OVERTEMP] =	{0, lemote_over_temp_handler},
+	[SCI_EVENT_NUM_AC] =		{0, lemote_ac_handler},
+	[SCI_EVENT_NUM_BAT] =		{INDEX_POWER_STATUS, lemote_bat_handler},
+	[SCI_EVENT_NUM_BATL] =		{0, lemote_bat_low_handler},
+	[SCI_EVENT_NUM_BATVL] =		{0, lemote_bat_very_low_handler},
+	[SCI_EVENT_NUM_THROT] =		{0, lemote_throttling_CPU_handler},
+	[SCI_EVENT_NUM_POWER] =		{0, NULL},
 };
 /* Hotkey device object */
-static struct input_dev * ls3anb_hotkey_dev = NULL;
+static struct input_dev * lemote_hotkey_dev = NULL;
 /* Hotkey keymap object */
-static const struct key_entry ls3anb_keymap[] = 
+static const struct key_entry lemote_keymap[] = 
 {
 	{KE_SW,  SCI_EVENT_NUM_LID, { SW_LID } },
 	{KE_KEY, SCI_EVENT_NUM_SLEEP, { KEY_SLEEP } }, /* Fn + ESC */
@@ -381,65 +381,65 @@ static const struct key_entry ls3anb_keymap[] =
 
 
 /* Platform driver init handler */
-static int __init ls3anb_init(void)
+static int __init lemote_laptop_init(void)
 {
 	int ret;
 
 	if (mips_machtype != MACH_LEMOTE_3A_A1004)
 		return -1;
 
-	printk(KERN_INFO "LS3ANB Driver : Load Platform Specific Driver V%s.\n", version);
+	printk(KERN_INFO "Lemote Laptop Support version %s\n", version);
 
 	/* Register platform stuff START */
 	ret = platform_driver_register(&platform_driver);
 	if(ret)
 	{
-		printk(KERN_ERR "LS3ANB Driver : Fail to register ls3anb laptop platform driver.\n");
+		printk(KERN_ERR "Lemote Laptop Platform Driver: Fail to register lemote laptop platform driver.\n");
 		return ret;
 	}
 	ret = driver_create_file(&platform_driver.driver, &driver_attr_version);
 	/* Register platform stuff END */
 	
 	/* Register backlight START */
-	ls3anb_backlight_dev = backlight_device_register("lemote",
-				NULL, NULL, &ls3anb_backlight_ops, NULL);
-	if(IS_ERR(ls3anb_backlight_dev))
+	lemote_backlight_dev = backlight_device_register("lemote",
+				NULL, NULL, &lemote_backlight_ops, NULL);
+	if(IS_ERR(lemote_backlight_dev))
 	{
-		ret = PTR_ERR(ls3anb_backlight_dev);
+		ret = PTR_ERR(lemote_backlight_dev);
 		goto fail_backlight_device_register;
 	}
-	ls3anb_backlight_dev->props.max_brightness = ec_read(INDEX_DISPLAY_MAXBRIGHTNESS_LEVEL);
-	ls3anb_backlight_dev->props.brightness = ec_read(INDEX_DISPLAY_BRIGHTNESS);
-	backlight_update_status(ls3anb_backlight_dev);
+	lemote_backlight_dev->props.max_brightness = ec_read(INDEX_DISPLAY_MAXBRIGHTNESS_LEVEL);
+	lemote_backlight_dev->props.brightness = ec_read(INDEX_DISPLAY_BRIGHTNESS);
+	backlight_update_status(lemote_backlight_dev);
 	/* Register backlight END */
 
 	/* Register power supply START */
-	power_info = kzalloc(sizeof(struct ls3anb_power_info), GFP_KERNEL);
+	power_info = kzalloc(sizeof(struct lemote_power_info), GFP_KERNEL);
 	if(!power_info)
 	{
-		printk(KERN_ERR "LS3ANB Driver: Alloc memory for power_info failed!\n");
+		printk(KERN_ERR "Lemote Laptop Platform Driver: Alloc memory for power_info failed!\n");
 		ret = -ENOMEM;
 		goto fail_power_info_alloc;
 	}
 
-	ls3anb_power_info_power_status_update();
+	lemote_power_info_power_status_update();
 	if(power_info->bat_in)
  	{
 		/* Get battery static information. */
-		ls3anb_power_info_battery_static_update();
+		lemote_power_info_battery_static_update();
 	}
 	else
 	{
-		printk(KERN_ERR "LS3ANB Driver: The battery does not exist!!\n");
+		printk(KERN_ERR "Lemote Laptop Platform Driver: The battery does not exist!!\n");
 	}
-	ret = power_supply_register(NULL, &ls3anb_bat);
+	ret = power_supply_register(NULL, &lemote_bat);
 	if(ret)
 	{
 		ret = -ENOMEM;
 		goto fail_bat_power_supply_register;
 	}
 
-	ret = power_supply_register(NULL, &ls3anb_ac);
+	ret = power_supply_register(NULL, &lemote_ac);
 	if(ret)
 	{
 		ret = -ENOMEM;
@@ -448,10 +448,10 @@ static int __init ls3anb_init(void)
 	/* Register power supply END */
 
 	/* Hotkey device START */
-	ret = ls3anb_hotkey_init();
+	ret = lemote_hotkey_init();
 	if(ret)
 	{
-		printk(KERN_ERR "LS3ANB Driver : Fail to register hotkey device.\n");
+		printk(KERN_ERR "Lemote Laptop Platform Driver: Fail to register hotkey device.\n");
 		goto fail_hotkey_init;
 	}
 	/* Hotkey device END */
@@ -460,16 +460,16 @@ static int __init ls3anb_init(void)
 	ret = sci_pci_driver_init();
 	if(ret)
 	{
-		printk(KERN_ERR "LS3ANB Driver : Fail to register sci pci driver.\n");
+		printk(KERN_ERR "Lemote Laptop Platform Driver: Fail to register sci pci driver.\n");
 		goto fail_sci_pci_driver_init;
 	}
 	/* SCI PCI Driver Init END */
 
 	/* Camera control misc Device START */
-	ret = misc_register(&ls3anb_cam_misc_dev);
+	ret = misc_register(&lemote_cam_misc_dev);
 	if(ret)
 	{
-		printk(KERN_ERR "LS3ANB Driver : Fail to register camera control misc device.\n");
+		printk(KERN_ERR "Lemote Laptop Platform Driver: Fail to register camera control misc device.\n");
 		goto fail_misc_register;
 	}
 	/* Camera control misc Device END */
@@ -483,15 +483,15 @@ static int __init ls3anb_init(void)
 fail_misc_register:
 	sci_pci_driver_exit();
 fail_sci_pci_driver_init:
-	ls3anb_hotkey_exit();
+	lemote_hotkey_exit();
 fail_hotkey_init:
-	power_supply_unregister(&ls3anb_ac);
+	power_supply_unregister(&lemote_ac);
 fail_ac_power_supply_register:
-	power_supply_unregister(&ls3anb_bat);
+	power_supply_unregister(&lemote_bat);
 fail_bat_power_supply_register:
 	kfree(power_info);
 fail_power_info_alloc:
-	backlight_device_unregister(ls3anb_backlight_dev);
+	backlight_device_unregister(lemote_backlight_dev);
 fail_backlight_device_register:
 	platform_driver_unregister(&platform_driver);
 
@@ -499,38 +499,38 @@ fail_backlight_device_register:
 }
 
 /* Platform driver exit handler */
-static void __exit ls3anb_exit(void)
+static void __exit lemote_laptop_exit(void)
 {
-	free_irq(ls3anb_sci_device->irq, ls3anb_sci_device);
+	free_irq(lemote_sci_device->irq, lemote_sci_device);
 
 	/* Return control for backlight device START */
 	ec_write(INDEX_BACKLIGHT_CTRLMODE, BACKLIGHT_CTRL_BYEC);
 	/* Return control for backlight device END */
 
 	/* Camera control misc device */
-	misc_deregister(&ls3anb_cam_misc_dev);
+	misc_deregister(&lemote_cam_misc_dev);
 
 	/* Hotkey & SCI device */
 	sci_pci_driver_exit();
-	ls3anb_hotkey_exit();
+	lemote_hotkey_exit();
 
 	/* Power supply */
-	power_supply_unregister(&ls3anb_ac);
-	power_supply_unregister(&ls3anb_bat);
+	power_supply_unregister(&lemote_ac);
+	power_supply_unregister(&lemote_bat);
 	kfree(power_info);
 
 	/* Backlight */
-	backlight_device_unregister(ls3anb_backlight_dev);
+	backlight_device_unregister(lemote_backlight_dev);
 
 	/* Platform device & driver */
 	platform_driver_unregister(&platform_driver);
 
-	printk(KERN_INFO "LS3ANB Driver : Unload Platform Specific Driver.\n");
+	printk(KERN_INFO "Lemote Laptop Platform Driver: Unload Platform Specific Driver.\n");
 }
 
 #ifdef CONFIG_PM
 /* Platform device suspend handler */
-static int ls3anb_suspend(struct platform_device * pdev, pm_message_t state)
+static int lemote_laptop_suspend(struct platform_device * pdev, pm_message_t state)
 {
 	struct pci_dev *dev;
 
@@ -541,7 +541,7 @@ static int ls3anb_suspend(struct platform_device * pdev, pm_message_t state)
 }
 
 /* Platform device resume handler */
-static int ls3anb_resume(struct platform_device * pdev)
+static int lemote_laptop_resume(struct platform_device * pdev)
 {
 	struct pci_dev *dev;
 
@@ -549,7 +549,7 @@ static int ls3anb_resume(struct platform_device * pdev)
 	pci_enable_device(dev);
 
 	/* Process LID event */
-	ls3anb_sci_event_handler(SCI_EVENT_NUM_LID);
+	lemote_sci_event_handler(SCI_EVENT_NUM_LID);
 
 	/* 
 	 * Clear sci status: GPM9Status field in bit14
@@ -563,36 +563,36 @@ static int ls3anb_resume(struct platform_device * pdev)
 	return 0;
 }
 #else
-static int ls3anb_suspend(struct platform_device * pdev, pm_message_t state)
+static int lemote_laptop_suspend(struct platform_device * pdev, pm_message_t state)
 {
 	return 0;
 }
 
-static int ls3anb_resume(struct platform_device * pdev)
+static int lemote_laptop_resume(struct platform_device * pdev)
 {
 	return 0;
 }
 #endif /* CONFIG_PM */
 
-static ssize_t ls3anb_get_version(struct device_driver * driver, char * buf)
+static ssize_t lemote_get_version(struct device_driver * driver, char * buf)
 {
 	return sprintf(buf, "%s\n", version);
 }
  
 /* Camera control misc device open handler */
-static int ls3anb_cam_misc_open(struct inode * inode, struct file * filp)
+static int lemote_cam_misc_open(struct inode * inode, struct file * filp)
 {
 	return 0;
 }
 
 /* Camera control misc device release handler */
-static int ls3anb_cam_misc_release(struct inode * inode, struct file * filp)
+static int lemote_cam_misc_release(struct inode * inode, struct file * filp)
 {
 	return 0;
 }
 
 /* Camera control misc device read handler */
-ssize_t ls3anb_cam_misc_read(struct file * filp,
+ssize_t lemote_cam_misc_read(struct file * filp,
 			char __user * buffer, size_t size, loff_t * offset)
 {
 	int ret = 0;
@@ -608,7 +608,7 @@ ssize_t ls3anb_cam_misc_read(struct file * filp,
 }
 
 /* Camera control misc device write handler */
-static ssize_t ls3anb_cam_misc_write(struct file * filp,
+static ssize_t lemote_cam_misc_write(struct file * filp,
 			const char __user * buffer, size_t size, loff_t * offset)
 {
 	if(0 >= size)
@@ -623,7 +623,7 @@ static ssize_t ls3anb_cam_misc_write(struct file * filp,
 }
 
 /* Backlight device set brightness handler */
-static int ls3anb_set_brightness(struct backlight_device * pdev)
+static int lemote_set_brightness(struct backlight_device * pdev)
 {
 	unsigned int level = 0;
 
@@ -646,39 +646,39 @@ static int ls3anb_set_brightness(struct backlight_device * pdev)
 }
 
 /* Backlight device get brightness handler */
-static int ls3anb_get_brightness(struct backlight_device * pdev)
+static int lemote_get_brightness(struct backlight_device * pdev)
 {
 	/* Read level from ec */
 	return ec_read(INDEX_DISPLAY_BRIGHTNESS);
 }
 
 /* Update battery information handle function. */
-static void ls3anb_power_battery_info_update(unsigned char bat_reg_flag)
+static void lemote_power_battery_info_update(unsigned char bat_reg_flag)
 {
 	short bat_info_value = 0;
 
 	switch(bat_reg_flag){
 		/* Update power_info->temperature value */
 		case BAT_REG_TEMP_FLAG:
-			ls3anb_power_info_power_status_update();
+			lemote_power_info_power_status_update();
 			bat_info_value = (ec_read(INDEX_BATTERY_TEMP_HIGH) << 8) | ec_read(INDEX_BATTERY_TEMP_LOW);
 			power_info->temperature = (power_info->bat_in) ? (bat_info_value / 10 - 273) : 0;
 			break;
 		/* Update power_info->voltage value */
 		case BAT_REG_VOLTAGE_FLAG:
-			ls3anb_power_info_power_status_update();
+			lemote_power_info_power_status_update();
 			bat_info_value = (ec_read(INDEX_BATTERY_VOL_HIGH) << 8) | ec_read(INDEX_BATTERY_VOL_LOW);
 			power_info->voltage_now = (power_info->bat_in) ? bat_info_value : 0;
 			break;
 		/* Update power_info->current_now value */
 		case BAT_REG_CURRENT_FLAG:
-			ls3anb_power_info_power_status_update();
+			lemote_power_info_power_status_update();
 			bat_info_value = (ec_read(INDEX_BATTERY_CURRENT_HIGH) << 8) | ec_read(INDEX_BATTERY_CURRENT_LOW);
 			power_info->current_now = (power_info->bat_in) ? bat_info_value : 0;
 			break;
 		/* Update power_info->current_avg value */
 		case BAT_REG_AC_FLAG:
-			ls3anb_power_info_power_status_update();
+			lemote_power_info_power_status_update();
 			bat_info_value = (ec_read(INDEX_BATTERY_AC_HIGH) << 8) | ec_read(INDEX_BATTERY_AC_LOW);
 			power_info->current_average = (power_info->bat_in) ? bat_info_value : 0;
 			break;
@@ -713,7 +713,7 @@ static void ls3anb_power_battery_info_update(unsigned char bat_reg_flag)
 }
 
 /* Clear battery static information. */
-static void ls3anb_power_info_battery_static_clear(void)
+static void lemote_power_info_battery_static_clear(void)
 {
 	strcpy(power_info->manufacturer_name, "Unknown");
 	strcpy(power_info->device_name, "Unknown");
@@ -726,7 +726,7 @@ static void ls3anb_power_info_battery_static_clear(void)
 }
 
 /* Get battery static information. */
-static void ls3anb_power_info_battery_static_update(void)
+static void lemote_power_info_battery_static_update(void)
 {
 	unsigned int manufacture_date, bat_serial_number;
 	char device_chemistry[5];
@@ -734,9 +734,9 @@ static void ls3anb_power_info_battery_static_update(void)
 	manufacture_date = (ec_read(INDEX_BATTERY_MFD_HIGH) << 8) | ec_read(INDEX_BATTERY_MFD_LOW);
 	sprintf(power_info->manufacture_date, "%d-%d-%d", (manufacture_date >> 9) + 1980,
             (manufacture_date & 0x01E0) >> 5, manufacture_date & 0x001F);
-	ls3anb_bat_get_string(INDEX_BATTERY_MFN_LENG, power_info->manufacturer_name);
-	ls3anb_bat_get_string(INDEX_BATTERY_DEVNAME_LENG, power_info->device_name);
-	ls3anb_bat_get_string(INDEX_BATTERY_DEVCHEM_LENG, device_chemistry);
+	lemote_bat_get_string(INDEX_BATTERY_MFN_LENG, power_info->manufacturer_name);
+	lemote_bat_get_string(INDEX_BATTERY_DEVNAME_LENG, power_info->device_name);
+	lemote_bat_get_string(INDEX_BATTERY_DEVCHEM_LENG, device_chemistry);
 	if((device_chemistry[2] == 'o') || (device_chemistry[2] == 'O'))
 	{
 		power_info->technology = POWER_SUPPLY_TECHNOLOGY_LION; 
@@ -776,7 +776,7 @@ static void ls3anb_power_info_battery_static_update(void)
 	power_info->design_capacity = (ec_read(INDEX_BATTERY_DC_HIGH) << 8) | ec_read(INDEX_BATTERY_DC_LOW);
 	power_info->design_voltage = (ec_read(INDEX_BATTERY_DV_HIGH) << 8) | ec_read(INDEX_BATTERY_DV_LOW);
 	power_info->full_charged_capacity = (ec_read(INDEX_BATTERY_FCC_HIGH) << 8) | ec_read(INDEX_BATTERY_FCC_LOW);
-	printk(KERN_INFO "LS3ANB Battery Information:\nManufacturerName: %s, DeviceName: %s, DeviceChemistry: %s\n",
+	printk(KERN_INFO "Lemote Battery Information:\nManufacturerName: %s, DeviceName: %s, DeviceChemistry: %s\n",
 			power_info->manufacturer_name, power_info->device_name, device_chemistry);
 	printk(KERN_INFO "SerialNumber: %s, ManufactureDate: %s, CellNumber: %d\n",
 			power_info->serial_number, power_info->manufacture_date, power_info->cell_count);
@@ -785,7 +785,7 @@ static void ls3anb_power_info_battery_static_update(void)
 }
 
 /* Update power_status value */
-static void ls3anb_power_info_power_status_update(void)
+static void lemote_power_info_power_status_update(void)
 {
 	unsigned int power_status = 0;
 
@@ -829,7 +829,7 @@ static void ls3anb_power_info_power_status_update(void)
 }
 
 /* Get battery static information string */
-static void ls3anb_bat_get_string(unsigned char index, unsigned char *bat_string)
+static void lemote_bat_get_string(unsigned char index, unsigned char *bat_string)
 {
 	unsigned char length, i;
 
@@ -850,7 +850,7 @@ static void ls3anb_bat_get_string(unsigned char index, unsigned char *bat_string
 }
 
 /* Power supply Battery get property handler */
-static int ls3anb_bat_get_property(struct power_supply * pws,
+static int lemote_bat_get_property(struct power_supply * pws,
 			enum power_supply_property psp, union power_supply_propval * val)
 {
 	switch(psp)
@@ -877,43 +877,43 @@ static int ls3anb_bat_get_property(struct power_supply * pws,
 
 		/* Get battery dynamic information. */
 		case POWER_SUPPLY_PROP_STATUS:
-			ls3anb_power_info_power_status_update();
+			lemote_power_info_power_status_update();
 			val->intval = power_info->charge_status;
 			break;
 		case POWER_SUPPLY_PROP_PRESENT:
-			ls3anb_power_info_power_status_update();
+			lemote_power_info_power_status_update();
 			val->intval = power_info->bat_in; 
 			break;
 		case POWER_SUPPLY_PROP_HEALTH:
-			ls3anb_power_info_power_status_update();
+			lemote_power_info_power_status_update();
 			val->intval = power_info->health;
 			break;
 		case POWER_SUPPLY_PROP_CURRENT_NOW:
-			ls3anb_power_battery_info_update(BAT_REG_CURRENT_FLAG);
+			lemote_power_battery_info_update(BAT_REG_CURRENT_FLAG);
 			val->intval = power_info->current_now * 1000; /* mA -> uA */
 			break;
 		case POWER_SUPPLY_PROP_CURRENT_AVG:
-			ls3anb_power_battery_info_update(BAT_REG_AC_FLAG);
+			lemote_power_battery_info_update(BAT_REG_AC_FLAG);
 			val->intval = power_info->current_average * 1000; /* mA -> uA */
 			break;
 		case POWER_SUPPLY_PROP_VOLTAGE_NOW:
-			ls3anb_power_battery_info_update(BAT_REG_VOLTAGE_FLAG);
+			lemote_power_battery_info_update(BAT_REG_VOLTAGE_FLAG);
 			val->intval =  power_info->voltage_now * 1000; /* mV -> uV */
 			break;
 		case POWER_SUPPLY_PROP_CHARGE_NOW:
-			ls3anb_power_battery_info_update(BAT_REG_RC_FLAG);
+			lemote_power_battery_info_update(BAT_REG_RC_FLAG);
 			val->intval = power_info->remain_capacity * 1000; /* mAh -> uAh */
 			break;
 		case POWER_SUPPLY_PROP_CAPACITY:
-			ls3anb_power_battery_info_update(BAT_REG_RSOC_FLAG);
+			lemote_power_battery_info_update(BAT_REG_RSOC_FLAG);
 			val->intval = power_info->remain_capacity_percent;	/* Percentage */
 			break;	
 		case POWER_SUPPLY_PROP_TEMP:
-			ls3anb_power_battery_info_update(BAT_REG_TEMP_FLAG);
+			lemote_power_battery_info_update(BAT_REG_TEMP_FLAG);
 			val->intval = power_info->temperature;	 /* Celcius */
 			break;
 		case POWER_SUPPLY_PROP_TIME_TO_EMPTY_AVG: 
-			ls3anb_power_battery_info_update(BAT_REG_ATTE_FLAG);
+			lemote_power_battery_info_update(BAT_REG_ATTE_FLAG);
 			if(power_info->remain_time == 0xFFFF)
 			{
 				power_info->remain_time = 0;
@@ -921,7 +921,7 @@ static int ls3anb_bat_get_property(struct power_supply * pws,
 			val->intval = power_info->remain_time * 60;  /* seconds */
 			break;
 		case POWER_SUPPLY_PROP_TIME_TO_FULL_AVG: 
-			ls3anb_power_battery_info_update(BAT_REG_ATTF_FLAG);
+			lemote_power_battery_info_update(BAT_REG_ATTF_FLAG);
 			if(power_info->fullchg_time == 0xFFFF)
 			{
 				power_info->fullchg_time = 0;
@@ -929,11 +929,11 @@ static int ls3anb_bat_get_property(struct power_supply * pws,
 			val->intval = power_info->fullchg_time * 60;  /* seconds */
 			break;
 		case POWER_SUPPLY_PROP_CHARGE_FULL:
-			ls3anb_power_battery_info_update(BAT_REG_FCC_FLAG);
+			lemote_power_battery_info_update(BAT_REG_FCC_FLAG);
 			val->intval = power_info->full_charged_capacity * 1000;/* mAh -> uAh */
 			break;
 		case POWER_SUPPLY_PROP_CYCLE_COUNT:
-			ls3anb_power_battery_info_update(BAT_REG_CYCLCNT_FLAG);
+			lemote_power_battery_info_update(BAT_REG_CYCLCNT_FLAG);
 			val->intval = power_info->cycle_count;
 			break;
 		default:
@@ -944,13 +944,13 @@ static int ls3anb_bat_get_property(struct power_supply * pws,
 }
 
 /* Power supply AC get property handler */
-static int ls3anb_ac_get_property(struct power_supply * pws,
+static int lemote_ac_get_property(struct power_supply * pws,
 			enum power_supply_property psp, union power_supply_propval * val)
 {
 	switch(psp)
 	{
 		case POWER_SUPPLY_PROP_ONLINE:
-			ls3anb_power_info_power_status_update();
+			lemote_power_info_power_status_update();
 			val->intval = power_info->ac_in;
 			break;
 		default:
@@ -968,12 +968,12 @@ static int sci_pci_driver_init(void)
 	ret = sci_pci_init();
 	if(ret)
 	{
-		printk(KERN_ERR "LS3ANB Drvier : Register pci driver error.\n");
+		printk(KERN_ERR "Lemote Laptop Platform Drvier: Register pci driver error.\n");
 
 		return ret;
 	}
 
-	printk(KERN_INFO "LS3ANB Driver : SCI event handler on WPCE775L Embedded Controller init.\n");
+	printk(KERN_INFO "Lemote Laptop Platform Driver: SCI event handler init.\n");
 
 	return ret;
 }
@@ -981,7 +981,7 @@ static int sci_pci_driver_init(void)
 /* SCI device pci driver exit handler */
 static void sci_pci_driver_exit(void)
 {
-	printk(KERN_INFO "LS3ANB Driver : SCI event handler on WPCE775L Embedded Controll exit.\n");
+	printk(KERN_INFO "Lemote Laptop Platform Driver: SCI event handler exit.\n");
 }
 
 /* SCI device pci driver init */
@@ -993,26 +993,26 @@ static int sci_pci_init(void)
 	pdev = pci_get_device(PCI_VENDOR_ID_ATI, PCI_DEVICE_ID_ATI_SBX00_SMBUS, NULL);
 
 	/* Create the sci device */
-	ls3anb_sci_device = kmalloc(sizeof(struct sci_device), GFP_KERNEL);
-	if(NULL == ls3anb_sci_device)
+	lemote_sci_device = kmalloc(sizeof(struct sci_device), GFP_KERNEL);
+	if(NULL == lemote_sci_device)
 	{
-		printk(KERN_ERR "LS3ANB Drvier : Malloc memory for sci_device failed!\n");
+		printk(KERN_ERR "Lemote Laptop Platform Drvier: Malloc memory for sci_device failed!\n");
 
 		return -ENOMEM;
 	}
 	
 	/* Fill sci device */
-	ls3anb_sci_device->irq = SCI_IRQ_NUM;
-	ls3anb_sci_device->irq_data = 0x00;
-	ls3anb_sci_device->number = 0x00;
-	ls3anb_sci_device->parameter = 0x00;
-	strcpy(ls3anb_sci_device->name, EC_SCI_DEV);
+	lemote_sci_device->irq = SCI_IRQ_NUM;
+	lemote_sci_device->irq_data = 0x00;
+	lemote_sci_device->number = 0x00;
+	lemote_sci_device->parameter = 0x00;
+	strcpy(lemote_sci_device->name, EC_SCI_DEV);
 
 	/* Enable pci device and get the GPIO resources. */
 	ret = pci_enable_device(pdev);
 	if(ret)
 	{
-		printk(KERN_ERR "LS3ANB Driver : Enable pci device failed!\n");
+		printk(KERN_ERR "Lemote Laptop Platform Driver: Enable pci device failed!\n");
 		ret = -ENODEV;
 		goto out_pdev;
 	}
@@ -1023,47 +1023,47 @@ static int sci_pci_init(void)
 	clean_ec_event_status();
 
 	/* Alloc the interrupt for sci not pci */
-	ret = request_irq(ls3anb_sci_device->irq, ls3anb_sci_int_routine,
-				IRQF_SHARED, ls3anb_sci_device->name, ls3anb_sci_device);
+	ret = request_irq(lemote_sci_device->irq, lemote_sci_int_routine,
+				IRQF_SHARED, lemote_sci_device->name, lemote_sci_device);
 	if(ret)
 	{
-		printk(KERN_ERR "LS3ANB Driver : Request irq %d failed!\n", ls3anb_sci_device->irq);
+		printk(KERN_ERR "Lemote Laptop Platform Driver: Request irq %d failed!\n", lemote_sci_device->irq);
 		ret = -EFAULT;
 		goto out_irq;
 	}
 
 	ret = 0;
-	printk(KERN_DEBUG "LS3ANB Driver : PCI Init successful!\n");
+	printk(KERN_DEBUG "Lemote Laptop Platform Driver: PCI Init successful!\n");
 	goto out;
 
 out_irq:
 	pci_disable_device(pdev);
 out_pdev:
-	kfree(ls3anb_sci_device);
+	kfree(lemote_sci_device);
 out:
 	return ret;
 }
 
 /* SCI event routine handler */
-static irqreturn_t ls3anb_sci_int_routine(int irq, void * dev_id)
+static irqreturn_t lemote_sci_int_routine(int irq, void * dev_id)
 {
 	int event;
 
-	//printk(KERN_CRIT "LS3ANB Driver : Entry sci_int_routine...\n");
-	if(ls3anb_sci_device->irq != irq)
+	//printk(KERN_CRIT "Lemote Laptop Platform Driver: Entry sci_int_routine...\n");
+	if(lemote_sci_device->irq != irq)
 	{
 		return IRQ_NONE;
 	}
 
 	event = ec_query_get_event_num();
-	//printk(KERN_CRIT "LS3ANB Driver : Entry sci_int_routine(): event = 0x%x\n", event);
+	//printk(KERN_CRIT "Lemote Laptop Platform Driver: Entry sci_int_routine(): event = 0x%x\n", event);
 	if((SCI_EVENT_NUM_START > event) || (SCI_EVENT_NUM_END < event))
 	{
 		goto exit_event_action;
 	}
 
 	/* Do event action */
-	ls3anb_sci_event_handler(event);
+	lemote_sci_event_handler(event);
 
 	/* Clear sci status: GPM9Status field in bit14
 	 * of EVENT_STATUS register for SB710, write to
@@ -1078,7 +1078,7 @@ exit_event_action:
 }
  
 /* SCI device event handler */
-void ls3anb_sci_event_handler(int event)
+void lemote_sci_event_handler(int event)
 {
 	int status = 0;
 	struct key_entry * ke = NULL;
@@ -1094,18 +1094,18 @@ void ls3anb_sci_event_handler(int event)
 		status = sep->handler(status);
 	}
 
-	ke = sparse_keymap_entry_from_scancode(ls3anb_hotkey_dev, event);
+	ke = sparse_keymap_entry_from_scancode(lemote_hotkey_dev, event);
 	if(ke)
 	{
 		if(SW_LID == ke->keycode)
 		{
 			// report LID event.
-			input_report_switch(ls3anb_hotkey_dev, SW_LID, status);
-			input_sync(ls3anb_hotkey_dev);
+			input_report_switch(lemote_hotkey_dev, SW_LID, status);
+			input_sync(lemote_hotkey_dev);
 		}
 		else
 		{
-			sparse_keymap_report_entry(ls3anb_hotkey_dev, ke, 1, true);
+			sparse_keymap_report_entry(lemote_hotkey_dev, ke, 1, true);
 		}
 	}
 }
@@ -1113,7 +1113,7 @@ void ls3anb_sci_event_handler(int event)
 extern void radeon_lvds_dpms_on(void);
 extern void radeon_lvds_dpms_off(void);
 
-static void ls3anb_lvds_dpms_callback(struct work_struct *dummy)
+static void lemote_lvds_dpms_callback(struct work_struct *dummy)
 {
 	int backlight_on = ec_read(INDEX_BACKLIGHT_STSCTRL);
 
@@ -1123,9 +1123,9 @@ static void ls3anb_lvds_dpms_callback(struct work_struct *dummy)
 		radeon_lvds_dpms_off();
 }
 
-static DECLARE_WORK(lvds_dpms_work, ls3anb_lvds_dpms_callback);
+static DECLARE_WORK(lvds_dpms_work, lemote_lvds_dpms_callback);
 
-static int ls3anb_dpms_handler(int status)
+static int lemote_laptop_dpms_handler(int status)
 {
 	schedule_work(&lvds_dpms_work);
 
@@ -1133,68 +1133,68 @@ static int ls3anb_dpms_handler(int status)
 }
 
 /* SCI device over temperature event handler */
-static int ls3anb_over_temp_handler(int status)
+static int lemote_over_temp_handler(int status)
 {
 	// do something
 	return 0;
 }
 
 /* SCI device Throttling the CPU event handler */
-static int ls3anb_throttling_CPU_handler(int status)
+static int lemote_throttling_CPU_handler(int status)
 {
 	// do something
 	return 0;
 }
 
 /* SCI device AC event handler */
-static int ls3anb_ac_handler(int status)
+static int lemote_ac_handler(int status)
 {
 	/* Report status changed */
-	power_supply_changed(&ls3anb_ac);
+	power_supply_changed(&lemote_ac);
 
 	return 0;
 }
 
 /* SCI device Battery event handler */
-static int ls3anb_bat_handler(int status)
+static int lemote_bat_handler(int status)
 {
 	/* Battery insert/pull-out to handle battery static information. */
 	if(status & MASK(BIT_POWER_BATPRES))
 	{
 		/* If battery is insert, get battery static information. */
-		ls3anb_power_info_battery_static_update();
+		lemote_power_info_battery_static_update();
 	}
 	else
 	{
 		/* Else if battery is pull-out, clear battery static information. */
-		ls3anb_power_info_battery_static_clear();
+		lemote_power_info_battery_static_clear();
 	}
 	/* Report status changed */
-	power_supply_changed(&ls3anb_bat);
+	power_supply_changed(&lemote_bat);
 
 	return 0;
 }
 
 /* SCI device Battery low event handler */
-static int ls3anb_bat_low_handler(int status)
+static int lemote_bat_low_handler(int status)
 {
 	/* Report status changed */
-	power_supply_changed(&ls3anb_bat);
+	power_supply_changed(&lemote_bat);
 
 	return 0;
 }
 
 /* SCI device Battery very low event handler */
-static int ls3anb_bat_very_low_handler(int status)
+static int lemote_bat_very_low_handler(int status)
 {
 	/* Report status changed */
-	power_supply_changed(&ls3anb_bat);
+	power_supply_changed(&lemote_bat);
 
 	return 0;
 }
 
 /* SCI device LID event handler */
-static int ls3anb_lid_handler(int status)
+static int lemote_lid_handler(int status)
 {
 	if(status & BIT(BIT_DEVICE_LID))
 	{
@@ -1205,35 +1205,35 @@ static int ls3anb_lid_handler(int status)
 }
 
 /* Hotkey device init handler */
-static int ls3anb_hotkey_init(void)
+static int lemote_hotkey_init(void)
 {
 	int ret;
 
-	ls3anb_hotkey_dev = input_allocate_device();
-	if(!ls3anb_hotkey_dev)
+	lemote_hotkey_dev = input_allocate_device();
+	if(!lemote_hotkey_dev)
 	{
 		return -ENOMEM;
 	}
 
-	ls3anb_hotkey_dev->name = "Loongson3A Laptop Hotkeys";
-	ls3anb_hotkey_dev->phys = "button/input0";
-	ls3anb_hotkey_dev->id.bustype = BUS_HOST;
-	ls3anb_hotkey_dev->dev.parent = NULL;
+	lemote_hotkey_dev->name = "Lemote Laptop Hotkeys";
+	lemote_hotkey_dev->phys = "button/input0";
+	lemote_hotkey_dev->id.bustype = BUS_HOST;
+	lemote_hotkey_dev->dev.parent = NULL;
 
-	ret = sparse_keymap_setup(ls3anb_hotkey_dev, ls3anb_keymap, NULL);
+	ret = sparse_keymap_setup(lemote_hotkey_dev, lemote_keymap, NULL);
 	if(ret)
 	{
-		printk(KERN_ERR "LS3ANB Driver : Fail to setup input device keymap\n");
-		input_free_device(ls3anb_hotkey_dev);
+		printk(KERN_ERR "Lemote Laptop Platform Driver: Fail to setup input device keymap\n");
+		input_free_device(lemote_hotkey_dev);
 
 		return ret;
 	}
 
-	ret = input_register_device(ls3anb_hotkey_dev);
+	ret = input_register_device(lemote_hotkey_dev);
 	if(ret)
 	{
-		sparse_keymap_free(ls3anb_hotkey_dev);
-		input_free_device(ls3anb_hotkey_dev);
+		sparse_keymap_free(lemote_hotkey_dev);
+		input_free_device(lemote_hotkey_dev);
 
 		return ret;
 	}
@@ -1241,19 +1241,19 @@ static int ls3anb_hotkey_init(void)
 }
 
 /* Hotkey device exit handler */
-static void ls3anb_hotkey_exit(void)
+static void lemote_hotkey_exit(void)
 {
-	if(ls3anb_hotkey_dev)
+	if(lemote_hotkey_dev)
 	{
-		sparse_keymap_free(ls3anb_hotkey_dev);
-		input_unregister_device(ls3anb_hotkey_dev);
-		ls3anb_hotkey_dev = NULL;
+		sparse_keymap_free(lemote_hotkey_dev);
+		input_unregister_device(lemote_hotkey_dev);
+		lemote_hotkey_dev = NULL;
 	}
 }
 
-module_init(ls3anb_init);
-module_exit(ls3anb_exit);
+module_init(lemote_laptop_init);
+module_exit(lemote_laptop_exit);
 
 MODULE_AUTHOR("Huangw Wei <huangw@lemote.com>; Wang rui <wangr@lemote.com>");
-MODULE_DESCRIPTION("Loongson3A Laptop Driver");
+MODULE_DESCRIPTION("Lemote Laptop Driver");
 MODULE_LICENSE("GPL");
