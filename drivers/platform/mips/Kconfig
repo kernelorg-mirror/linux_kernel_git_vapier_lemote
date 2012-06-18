@@ -14,8 +14,8 @@ menuconfig MIPS_PLATFORM_DEVICES
 
 if MIPS_PLATFORM_DEVICES
 
-config LS3A_LAPTOP
-	tristate "Loongson 3A Laptop Driver"
+config LEMOTE_LAPTOP
+	tristate "Lemote Laptop Driver."
 	depends on LOONGSON3_RS780E
 	select BACKLIGHT_LCD_SUPPORT
 	select LCD_CLASS_DEVICE
@@ -28,6 +28,6 @@ config LS3A_LAPTOP
 	depends on INPUT
 	default y
 	help
-	  Lemote Loongson 3A laptop driver.
+	  Lemote Loongson family laptop driver.
 
 endif # MIPS_PLATFORM_DEVICES
