@@ -351,10 +351,13 @@ static int fsp_opc_tag_enable(struct psmouse *psmouse, bool enable)
 
 static int fsp_onpad_vscr(struct psmouse *psmouse, bool enable)
 {
+	struct fsp_data *pad = psmouse->private;
 	int val;
 
 	if (fsp_reg_read(psmouse, FSP_REG_ONPAD_CTL, &val))
 		return -EIO;
+
+	pad->vscroll = enable;
 
 	if (enable)
 		val |= (FSP_BIT_FIX_VSCR | FSP_BIT_ONPAD_ENABLE);
@@ -369,6 +372,7 @@ static int fsp_onpad_vscr(struct psmouse *psmouse, bool enable)
 
 static int fsp_onpad_hscr(struct psmouse *psmouse, bool enable)
 {
+	struct fsp_data *pad = psmouse->private;
 	int val, v2;
 
 	if (fsp_reg_read(psmouse, FSP_REG_ONPAD_CTL, &val))
@@ -376,6 +380,8 @@ static int fsp_onpad_hscr(struct psmouse *psmouse, bool enable)
 
 	if (fsp_reg_read(psmouse, FSP_REG_SYSCTL5, &v2))
 		return -EIO;
+
+	pad->hscroll = enable;
 
 	if (enable) {
 		val |= (FSP_BIT_FIX_HSCR | FSP_BIT_ONPAD_ENABLE);
@@ -489,16 +495,61 @@ static ssize_t fsp_attr_set_pagereg(struct psmouse *psmouse, void *data,
 PSMOUSE_DEFINE_ATTR(page, S_IWUSR | S_IRUGO, NULL,
 			fsp_attr_show_pagereg, fsp_attr_set_pagereg);
 
+static ssize_t fsp_attr_show_vscroll(struct psmouse *psmouse,
+					void *data, char *buf)
+{
+	struct fsp_data *pad = psmouse->private;
+
+	return sprintf(buf, "%d\n", pad->vscroll);
+}
+
+static ssize_t fsp_attr_set_vscroll(struct psmouse *psmouse, void *data,
+					const char *buf, size_t count)
+{
+	unsigned long val;
+
+	if (strict_strtoul(buf, 10, &val) || val > 1)
+		return -EINVAL;
+
+	fsp_onpad_vscr(psmouse, val);
+
+	return count;
+}
+
+PSMOUSE_DEFINE_ATTR(vscroll, S_IWUSR | S_IRUGO, NULL,
+			fsp_attr_show_vscroll, fsp_attr_set_vscroll);
+
+static ssize_t fsp_attr_show_hscroll(struct psmouse *psmouse,
+					void *data, char *buf)
+{
+	struct fsp_data *pad = psmouse->private;
+
+	return sprintf(buf, "%d\n", pad->hscroll);
+}
+
+static ssize_t fsp_attr_set_hscroll(struct psmouse *psmouse, void *data,
+					const char *buf, size_t count)
+{
+	unsigned long val;
+
+	if (strict_strtoul(buf, 10, &val) || val > 1)
+		return -EINVAL;
+
+	fsp_onpad_hscr(psmouse, val);
+
+	return count;
+}
+
+PSMOUSE_DEFINE_ATTR(hscroll, S_IWUSR | S_IRUGO, NULL,
+			fsp_attr_show_hscroll, fsp_attr_set_hscroll);
+
 static ssize_t fsp_attr_show_flags(struct psmouse *psmouse,
 					void *data, char *buf)
 {
 	struct fsp_data *pad = psmouse->private;
 
-	return sprintf(buf, "%c%c%c%c\n",
-			pad->flags & FSPDRV_FLAG_ENABLE ? 'E' : 'e',
-			pad->flags & FSPDRV_FLAG_CLICK_ENABLE ? 'C' : 'c',
-			pad->flags & FSPDRV_FLAG_VSCROLL_ENABLE ? 'V' : 'v',
-			pad->flags & FSPDRV_FLAG_HSCROLL_ENABLE ? 'H' : 'h');
+	return sprintf(buf, "%c\n",
+			pad->flags & FSPDRV_FLAG_EN_OPC ? 'C' : 'c');
 }
 
 static ssize_t fsp_attr_set_flags(struct psmouse *psmouse, void *data,
@@ -507,35 +558,13 @@ static ssize_t fsp_attr_set_flags(struct psmouse *psmouse, void *data,
 	struct fsp_data *pad = psmouse->private;
 	size_t i;
 
-	for (i = 0; i < (count-1); i++) {
+	for (i = 0; i < count; i++) {
 		switch (buf[i]) {
-		case 'E':
-			pad->flags |= FSPDRV_FLAG_ENABLE;
-			break;
-		case 'e':
-			pad->flags &= ~FSPDRV_FLAG_ENABLE;
-			break;
 		case 'C':
-			pad->flags |= FSPDRV_FLAG_CLICK_ENABLE;
+			pad->flags |= FSPDRV_FLAG_EN_OPC;
 			break;
 		case 'c':
-			pad->flags &= ~FSPDRV_FLAG_CLICK_ENABLE;
-			break;
-		case 'V':
-			if(0 == fsp_onpad_vscr(psmouse, true))
-				pad->flags |= FSPDRV_FLAG_VSCROLL_ENABLE;
-			break;
-		case 'v':
-			if(0 == fsp_onpad_vscr(psmouse, false))
-				pad->flags &= ~FSPDRV_FLAG_VSCROLL_ENABLE;
-			break;
-		case 'H':
-			if(0 == fsp_onpad_hscr(psmouse, true))
-				pad->flags |= FSPDRV_FLAG_HSCROLL_ENABLE;
-			break;
-		case 'h':
-			if(0 == fsp_onpad_hscr(psmouse, false))
-				pad->flags &= ~FSPDRV_FLAG_HSCROLL_ENABLE;
+			pad->flags &= ~FSPDRV_FLAG_EN_OPC;
 			break;
 		default:
 			return -EINVAL;
@@ -544,7 +573,7 @@ static ssize_t fsp_attr_set_flags(struct psmouse *psmouse, void *data,
 	return count;
 }
 
-PSMOUSE_DEFINE_ATTR(flags, S_IRUGO | S_IWUGO, NULL,
+PSMOUSE_DEFINE_ATTR(flags, S_IWUSR | S_IRUGO, NULL,
 			fsp_attr_show_flags, fsp_attr_set_flags);
 
 static ssize_t fsp_attr_show_ver(struct psmouse *psmouse,
@@ -559,6 +588,8 @@ static struct attribute *fsp_attributes[] = {
 	&psmouse_attr_setreg.dattr.attr,
 	&psmouse_attr_getreg.dattr.attr,
 	&psmouse_attr_page.dattr.attr,
+	&psmouse_attr_vscroll.dattr.attr,
+	&psmouse_attr_hscroll.dattr.attr,
 	&psmouse_attr_flags.dattr.attr,
 	&psmouse_attr_ver.dattr.attr,
 	NULL
@@ -606,26 +637,21 @@ static psmouse_ret_t fsp_process_byte(struct psmouse *psmouse)
 	/*
 	 * Full packet accumulated, process it
 	 */
-	switch (psmouse->packet[0] >> FSP_PKT_TYPE_SHIFT)
-	{
+
+	switch (psmouse->packet[0] >> FSP_PKT_TYPE_SHIFT) {
 	case FSP_PKT_TYPE_ABS:
-		dev_warn(&psmouse->ps2dev.serio->dev, "Unexpected absolute mode packet, ignored.\n");
+		dev_warn(&psmouse->ps2dev.serio->dev,
+			 "Unexpected absolute mode packet, ignored.\n");
 		break;
 
 	case FSP_PKT_TYPE_NORMAL_OPC:
 		/* on-pad click, filter it if necessary */
-		if ((ad->flags & FSPDRV_FLAG_CLICK_ENABLE) != FSPDRV_FLAG_CLICK_ENABLE)
+		if ((ad->flags & FSPDRV_FLAG_EN_OPC) != FSPDRV_FLAG_EN_OPC)
 			packet[0] &= ~BIT(0);
 		/* fall through */
+
 	case FSP_PKT_TYPE_NORMAL:
 		/* normal packet */
-		if((ad->flags & FSPDRV_FLAG_ENABLE) != FSPDRV_FLAG_ENABLE)
-		{
-			packet[0] &= ~BIT(0);
-			packet[1] = 0;
-			packet[2] = 0;
-			packet[3] = 0;
-		}
 		/* special packet data translation from on-pad packets */
 		if (packet[3] != 0) {
 			if (packet[3] & BIT(0))
@@ -663,9 +689,6 @@ static psmouse_ret_t fsp_process_byte(struct psmouse *psmouse)
 
 		input_report_rel(dev, REL_X, rel_x);
 		input_report_rel(dev, REL_Y, rel_y);
-		break;
-
-	default:
 		break;
 	}
 
@@ -811,8 +834,7 @@ int fsp_init(struct psmouse *psmouse)
 	priv->buttons = buttons;
 
 	/* enable on-pad click by default */
-	priv->flags = (FSPDRV_FLAG_ENABLE | FSPDRV_FLAG_CLICK_ENABLE |
-					FSPDRV_FLAG_VSCROLL_ENABLE | FSPDRV_FLAG_HSCROLL_ENABLE);
+	priv->flags |= FSPDRV_FLAG_EN_OPC;
 
 	/* Set up various supported input event bits */
 	__set_bit(BTN_MIDDLE, psmouse->dev->keybit);
