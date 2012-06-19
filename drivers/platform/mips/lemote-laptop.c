@@ -224,29 +224,16 @@ static int lemote_hotkey_init(void);
 static void lemote_hotkey_exit(void);
 extern int ec_query_get_event_num(void);
 
-/* Platform device ids table object */
-static struct platform_device_id platform_device_ids[] = 
-{
-	{
-		/*
-		 * strlen(.name) should be less then PLATFORM_NAME_SIZE
-		 * Platform driver will be attached to a platform device if
-		 * one entry of its .id_table matches name of platform device
-		 * */
-		.name = "lemote-laptop",
-	},
-	{}
-};
-MODULE_DEVICE_TABLE(platform, platform_device_ids);
+static int __devinit wpce775l_probe(struct platform_device *dev);
+
 /* Platform driver object */
 static struct platform_driver platform_driver = 
 {
-	.driver = 
-	{
-		.name = "lemote-laptop",
+	.probe	= wpce775l_probe, 
+	.driver = {
+		.name = "wpce775l",
 		.owner = THIS_MODULE,
 	},
-	.id_table = platform_device_ids,
 #ifdef CONFIG_PM
 	.suspend = lemote_laptop_suspend,
 	.resume  = lemote_laptop_resume,
@@ -379,27 +366,12 @@ static const struct key_entry lemote_keymap[] =
 	{KE_END, 0 }
 };
 
-
-/* Platform driver init handler */
-static int __init lemote_laptop_init(void)
+static int __devinit wpce775l_probe(struct platform_device *dev)
 {
 	int ret;
 
-	if (mips_machtype != MACH_LEMOTE_3A_A1004)
-		return -1;
-
 	printk(KERN_INFO "Lemote Laptop Support version %s\n", version);
 
-	/* Register platform stuff START */
-	ret = platform_driver_register(&platform_driver);
-	if(ret)
-	{
-		printk(KERN_ERR "Lemote Laptop Platform Driver: Fail to register lemote laptop platform driver.\n");
-		return ret;
-	}
-	ret = driver_create_file(&platform_driver.driver, &driver_attr_version);
-	/* Register platform stuff END */
-	
 	/* Register backlight START */
 	lemote_backlight_dev = backlight_device_register("lemote",
 				NULL, NULL, &lemote_backlight_ops, NULL);
@@ -494,6 +466,22 @@ fail_power_info_alloc:
 	backlight_device_unregister(lemote_backlight_dev);
 fail_backlight_device_register:
 	platform_driver_unregister(&platform_driver);
+
+	return ret;
+}
+
+/* Platform driver init handler */
+static int __init lemote_laptop_init(void)
+{
+	int ret;
+
+	/* Register platform stuff START */
+	ret = platform_driver_register(&platform_driver);
+	if(ret) {
+		printk(KERN_ERR "Lemote Laptop Platform Driver: Fail to register lemote laptop platform driver.\n");
+		return ret;
+	}
+	ret = driver_create_file(&platform_driver.driver, &driver_attr_version);
 
 	return ret;
 }

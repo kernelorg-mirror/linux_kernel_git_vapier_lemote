@@ -13,9 +13,9 @@
 #include <loongson_hwmon.h>
 #include <asm/bootinfo.h>
 
-/* for ls3a-laptop module use */
-static struct platform_device notebook_a1004_pdev = {
-	.name = "loongson3a_nb_a1004",
+/* Loongson 3A/2GQ series laptop use wpce775l as Embeded Controller */
+static struct platform_device wpce775l_chip = {
+	.name = "wpce775l",
 	.id = -1,
 };
 
@@ -123,8 +123,8 @@ static int __init loongson3a_platform_init(void)
 		platform_device_register(&a1004_fan1);
 		loongson_fan1_ops.fan_policy = &a1004_fan1_default_policy;
 
-		/* for ls3a-laptop use */
-		platform_device_register(&notebook_a1004_pdev);
+		/* for lempte-laptop */
+		platform_device_register(&wpce775l_chip);
 		break;
 	case MACH_LEMOTE_3A_A1101:
 		/* thermal sensor register and interface init */
@@ -139,6 +139,19 @@ static int __init loongson3a_platform_init(void)
 		loongson_fan1_ops.fan_policy = &a1101_fan1_default_policy;
 		platform_device_register(&sb700_fan2);
 		loongson_fan2_ops.fan_policy = &a1101_fan2_default_policy;
+		break;
+	case MACH_LEMOTE_2GQ_A1201:
+		/* thermal sensor register and interface init */
+		loongson_temp_info.get_cpu_temp = loongson3_cpu_temp; 
+		loongson_temp_info.get_nb_temp = emc1412_external_temp;
+		loongson_temp_info.get_mb_temp = emc1412_internal_temp;
+		loongson_temp_info.get_sb_temp = NULL; // not implement now
+		platform_device_register(&emc1412_sensor);
+
+		/* A1201 without fan */
+
+		/* for lempte-laptop */
+		platform_device_register(&wpce775l_chip);
 		break;
 	case MACH_LEMOTE_2GQ_A1205:
 		/* thermal sensor register and interface init */
