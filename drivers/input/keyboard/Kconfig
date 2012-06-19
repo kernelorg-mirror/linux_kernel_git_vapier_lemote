@@ -457,4 +457,14 @@ config KEYBOARD_W90P910
 	  To compile this driver as a module, choose M here: the
 	  module will be called w90p910_keypad.
 
+config KEYBOARD_ATKBD_LMA1201_KEYCODES
+	bool "Use Lemote A1201 keyboard support"
+	depends on KEYBOARD_ATKBD
+	default y
+	help
+	  Say Y here if you want to use an AT or PS/2 keyboard, and your
+	  keyboard uses keycodes that are specific to LS2GQNB keyboards.
+
+	  Say N if you use a standard keyboard.
+
 endif
