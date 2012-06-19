@@ -364,14 +364,14 @@ static struct input_dev * lemote_hotkey_dev = NULL;
 static const struct key_entry lemote_keymap[] = 
 {
 	{KE_SW,  SCI_EVENT_NUM_LID, { SW_LID } },
-	{KE_KEY, SCI_EVENT_NUM_SLEEP, { KEY_SLEEP } }, /* Fn + ESC */
-	{KE_KEY, SCI_EVENT_NUM_BRIGHTNESS_DN, { KEY_BRIGHTNESSDOWN } }, /* Fn + F2 */
-	{KE_KEY, SCI_EVENT_NUM_BRIGHTNESS_UP, { KEY_BRIGHTNESSUP } }, /* Fn + F3 */
-	{KE_KEY, SCI_EVENT_NUM_AUDIO_MUTE, { KEY_MUTE } }, /* Fn + F4 */
-	{KE_KEY, SCI_EVENT_NUM_VOLUME_DN, { KEY_VOLUMEDOWN } }, /* Fn + F5 */
-	{KE_KEY, SCI_EVENT_NUM_VOLUME_UP, { KEY_VOLUMEUP } }, /* Fn + F6 */
+	{KE_KEY, SCI_EVENT_NUM_SLEEP, { KEY_SLEEP } }, /* ls3anb: Fn + ESC; ls2gqnb: Fn + F10 */
+	{KE_KEY, SCI_EVENT_NUM_BRIGHTNESS_DN, { KEY_BRIGHTNESSDOWN } }, /* ls3anb: Fn + F2; ls2gqnb: Fn + F6 */
+	{KE_KEY, SCI_EVENT_NUM_BRIGHTNESS_UP, { KEY_BRIGHTNESSUP } }, /* ls3anb: Fn + F3; ls2gqnb: Fn + F5 */
+	{KE_KEY, SCI_EVENT_NUM_AUDIO_MUTE, { KEY_MUTE } }, /* ls3anb: Fn + F4; ls2gqnb: Fn + F7 */
+	{KE_KEY, SCI_EVENT_NUM_VOLUME_DN, { KEY_VOLUMEDOWN } }, /* ls3anb: Fn + F5; ls2gqnb: Fn + F4 */
+	{KE_KEY, SCI_EVENT_NUM_VOLUME_UP, { KEY_VOLUMEUP } }, /* ls3anb: Fn + F6; ls2gqnb: Fn + F3 */
 	{KE_KEY, SCI_EVENT_NUM_BLACK_SCREEN, { KEY_DISPLAYTOGGLE } }, /* Fn + F7 */
-	{KE_KEY, SCI_EVENT_NUM_DISPLAY_TOGGLE, { KEY_SWITCHVIDEOMODE } }, /* Fn + F8 */
+	{KE_KEY, SCI_EVENT_NUM_DISPLAY_TOGGLE, { KEY_SWITCHVIDEOMODE } }, /* ls3anb: Fn + F8; ls2gqnb: Fn + F2 */
 	{KE_KEY, SCI_EVENT_NUM_3G, { KEY_MODEM } }, /* Fn + F9 */
 	{KE_KEY, SCI_EVENT_NUM_CAMERA, { KEY_CAMERA } }, /* Fn + F10 */
 	{KE_KEY, SCI_EVENT_NUM_TP, { KEY_TOUCHPAD_TOGGLE } }, /* Fn + F11 */
@@ -795,6 +795,8 @@ static void lemote_power_info_power_status_update(void)
 					APM_AC_ONLINE : APM_AC_OFFLINE;
 
 	power_info->bat_in = (power_status & MASK(BIT_POWER_BATPRES)) ? 1 : 0;
+	if( power_info->bat_in && ((ec_read(INDEX_BATTERY_DC_LOW) | (ec_read(INDEX_BATTERY_DC_HIGH) << 8)) == 0) )
+		power_info->bat_in = 0;
 
 	power_info->health = (power_info->bat_in) ?	POWER_SUPPLY_HEALTH_GOOD :
 							POWER_SUPPLY_HEALTH_UNKNOWN;
@@ -833,15 +835,7 @@ static void lemote_bat_get_string(unsigned char index, unsigned char *bat_string
 {
 	unsigned char length, i;
 
-	if(index == INDEX_BATTERY_CELLCNT_START)
-	{
-		length = BATTERY_CELLCNT_LENG;
-		index--;
-	}
-	else
-	{
-		length = ec_read(index);
-	}
+	length = ec_read(index);
 	for(i = 0; i < length; i++)
 	{
 		*bat_string++ = ec_read(++index);
