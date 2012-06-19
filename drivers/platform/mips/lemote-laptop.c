@@ -359,9 +359,9 @@ static const struct key_entry lemote_keymap[] =
 	{KE_KEY, SCI_EVENT_NUM_VOLUME_UP, { KEY_VOLUMEUP } }, /* ls3anb: Fn + F6; ls2gqnb: Fn + F3 */
 	{KE_KEY, SCI_EVENT_NUM_BLACK_SCREEN, { KEY_DISPLAYTOGGLE } }, /* Fn + F7 */
 	{KE_KEY, SCI_EVENT_NUM_DISPLAY_TOGGLE, { KEY_SWITCHVIDEOMODE } }, /* ls3anb: Fn + F8; ls2gqnb: Fn + F2 */
-	{KE_KEY, SCI_EVENT_NUM_3G, { KEY_MODEM } }, /* Fn + F9 */
+	{KE_KEY, SCI_EVENT_NUM_3G, { KEY_F24 } }, /* Fn + F9 */
 	{KE_KEY, SCI_EVENT_NUM_CAMERA, { KEY_CAMERA } }, /* Fn + F10 */
-	{KE_KEY, SCI_EVENT_NUM_TP, { KEY_TOUCHPAD_TOGGLE } }, /* Fn + F11 */
+	{KE_KEY, SCI_EVENT_NUM_TP, { KEY_F21 } }, /* Fn + F11 */
 	{KE_KEY, SCI_EVENT_NUM_POWER, { KEY_POWER } }, /* Power */
 	{KE_END, 0 }
 };
