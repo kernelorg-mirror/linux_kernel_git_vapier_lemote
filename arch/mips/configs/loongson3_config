@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
-# Linux kernel version: 2.6.36-14.lemote
-# Mon Jun 25 15:38:40 2012
+# Linux kernel version: 2.6.36-15.lemote
+# Fri Jun 29 11:46:14 2012
 #
 CONFIG_MIPS=y
 
@@ -689,7 +689,9 @@ CONFIG_ATM=m
 # CONFIG_ATM_CLIP is not set
 # CONFIG_ATM_LANE is not set
 # CONFIG_ATM_BR2684 is not set
-# CONFIG_L2TP is not set
+CONFIG_L2TP=m
+# CONFIG_L2TP_DEBUGFS is not set
+# CONFIG_L2TP_V3 is not set
 # CONFIG_BRIDGE is not set
 # CONFIG_NET_DSA is not set
 # CONFIG_VLAN_8021Q is not set
@@ -1191,7 +1193,7 @@ CONFIG_NETDEVICES=y
 # CONFIG_BONDING is not set
 # CONFIG_MACVLAN is not set
 # CONFIG_EQUALIZER is not set
-# CONFIG_TUN is not set
+CONFIG_TUN=m
 # CONFIG_VETH is not set
 # CONFIG_NET_SB1000 is not set
 # CONFIG_ARCNET is not set
@@ -1322,15 +1324,16 @@ CONFIG_ATM_DRIVERS=y
 # CONFIG_FDDI is not set
 # CONFIG_HIPPI is not set
 CONFIG_PPP=m
-# CONFIG_PPP_MULTILINK is not set
-# CONFIG_PPP_FILTER is not set
+CONFIG_PPP_MULTILINK=y
+CONFIG_PPP_FILTER=y
 CONFIG_PPP_ASYNC=m
-# CONFIG_PPP_SYNC_TTY is not set
-# CONFIG_PPP_DEFLATE is not set
-# CONFIG_PPP_BSDCOMP is not set
-# CONFIG_PPP_MPPE is not set
-# CONFIG_PPPOE is not set
+CONFIG_PPP_SYNC_TTY=m
+CONFIG_PPP_DEFLATE=m
+CONFIG_PPP_BSDCOMP=m
+CONFIG_PPP_MPPE=m
+CONFIG_PPPOE=m
 # CONFIG_PPPOATM is not set
+CONFIG_PPPOL2TP=m
 # CONFIG_SLIP is not set
 CONFIG_SLHC=m
 # CONFIG_NET_FC is not set
