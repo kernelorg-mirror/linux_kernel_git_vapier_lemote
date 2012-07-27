@@ -33,6 +33,9 @@ struct efi_memory_map_loongson *emap;
 struct efi_cpuinfo_loongson *ecpu;
 struct system_loongson *esys;
 struct irq_source_routing_table *eirq_source;
+struct interface_info *einter;
+struct loongson_special_attribute *especial;
+struct board_devices *eboard;
 
 u64 pci_mem_start_addr,pci_mem_end_addr;
 u64 memstart, highmemstart;
@@ -106,6 +109,9 @@ void __init prom_init_env(void)
 	emap 	= (struct efi_memory_map_loongson *)((u64)lp+lp->memory_offset);
 	ecpu	= (struct efi_cpuinfo_loongson *)((u64)lp + lp->cpu_offset);
 	eirq_source = (struct irq_source_routing_table *)((u64)lp+lp->irq_offset);
+	einter = (struct interface_info *)((unsigned long long)lp+lp->interface_offset);
+	eboard = (struct board_devices *)((unsigned long long)lp+lp->boarddev_table_offset);
+	especial = (struct loongson_special_attribute *)((unsigned long long)lp+lp->special_offset);
 
 	cpu_clock_freq = ecpu->cpu_clock_freq;
 	cputype = ecpu->cputype;
