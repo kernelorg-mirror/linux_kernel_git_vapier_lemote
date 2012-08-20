@@ -753,8 +753,8 @@ static int fsp_activate_protocol(struct psmouse *psmouse)
 			 "Failed to enable OPC tag mode.\n");
 
 	/* Enable on-pad vertical and horizontal scrolling */
-	fsp_onpad_vscr(psmouse, true);
-	fsp_onpad_hscr(psmouse, true);
+	fsp_onpad_vscr(psmouse, pad->vscroll);
+	fsp_onpad_hscr(psmouse, pad->hscroll);
 
 	return 0;
 }
