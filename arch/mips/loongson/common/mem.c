@@ -29,12 +29,12 @@ void __init prom_init_memory(void)
 			case SYSTEM_RAM_LOW:
 			case SYSTEM_RAM_HIGH:
 				add_memory_region(emap->map[i].mem_start,
-					emap->map[i].mem_size << 20,
+					(u64)emap->map[i].mem_size << 20,
 					BOOT_MEM_RAM);
 				break;
 			case MEM_RESERVED:
 				add_memory_region(emap->map[i].mem_start,
-					emap->map[i].mem_size << 20,
+					(u64)emap->map[i].mem_size << 20,
 					BOOT_MEM_RESERVED);
 				break;
 			}
