@@ -262,7 +262,7 @@ static void decrease_cores(int cur_cpus)
 
 static void do_autoplug_timer(struct work_struct *work)
 {
-	cputime64_t cur_wall_time, cur_idle_time;
+	cputime64_t cur_wall_time = 0, cur_idle_time;
 	unsigned int idle_time, wall_time;
 	int delay, load, nr_cpus = num_online_cpus();
 
@@ -287,6 +287,8 @@ static void do_autoplug_timer(struct work_struct *work)
 
 	/* based on cpu load */
 	cur_idle_time = get_idle_time(&cur_wall_time);
+	if (cur_wall_time == 0)
+		cur_wall_time = jiffies64_to_cputime64(get_jiffies_64());
 
 	wall_time = (unsigned int) cputime64_sub(cur_wall_time, ap_info.prev_wall);
 	ap_info.prev_wall = cur_wall_time;
@@ -295,22 +297,25 @@ static void do_autoplug_timer(struct work_struct *work)
 	idle_time += wall_time * (NR_CPUS - nr_cpus);
 	ap_info.prev_idle = cur_idle_time;
 
-	if (unlikely(!wall_time || wall_time * NR_CPUS < idle_time))
+	if (unlikely(!wall_time || wall_time * NR_CPUS < idle_time)) {
+		autoplug_adjusting = 0;
 		goto out;
+	}
 
 	load = 100 * (wall_time * NR_CPUS - idle_time) / wall_time;
 
 	if(load < (nr_cpus - 1) * 100 - DEC_THRESHOLD) {
-		if(ap_info.dec_reqs > 2){
+		if(ap_info.dec_reqs <= 2)
+			ap_info.dec_reqs++;
+		else {
 			ap_info.dec_reqs = 0;
 			decrease_cores(nr_cpus);
 		}
-		else
-			ap_info.dec_reqs++;
 	}
-	else if(load > (nr_cpus - 1) * 100 + INC_THRESHOLD) {
+	else {
 		ap_info.dec_reqs = 0;
-		increase_cores(nr_cpus);
+		if(load > (nr_cpus - 1) * 100 + INC_THRESHOLD)
+			increase_cores(nr_cpus);
 	}
 
 	autoplug_adjusting = 0;

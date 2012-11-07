@@ -219,7 +219,7 @@ void __cpuinit loongson3_init_secondary(void)
 	change_c0_status(ST0_IM, imask);                   
 
 	printk(KERN_DEBUG "\n CPU#%d call init_secondary!!!! \n", cpu);
-	for (i = 0; i < NR_CPUS; i++) {
+	for (i = 0; i < nr_cpu_loongson; i++) {
 		loongson3_ipi_write32(0xffffffff, ipi_en0_regs[i]);
 	}
  
@@ -274,7 +274,7 @@ void loongson3_ipi_interrupt(struct pt_regs *regs)
 	if (action & SMP_ASK_C0COUNT) {
 		int i;
 		uint32_t c0count = read_c0_count();
-		for(i=1; i<NR_CPUS; i++)
+		for(i = 1; i < nr_cpu_loongson; i++)
 			per_cpu(core0_c0count, i) = c0count;
 	}
 }
@@ -319,7 +319,7 @@ void __init loongson3_smp_setup(void)
 	__cpu_number_map[0] = 0;
 	__cpu_logical_map[0] = 0;
 
-	for (i = 1, num = 0; i < NR_CPUS; i++) {
+	for (i = 1, num = 0; i < nr_cpu_loongson; i++) {
 		if (loongson3_cpu_stop(i) == 0) {
 			//cpu_set(i, phys_cpu_present_map);
 			cpu_set(i, cpu_possible_map);
@@ -384,19 +384,20 @@ void __init loongson3_cpus_done(void)
 static DEFINE_SPINLOCK(smp_reserve_lock);
 
 extern void fixup_irqs(void);
+extern void (*flush_cache_all)(void);
 
 static int loongson3_cpu_disable(void)
 {
-	extern void (*flush_cache_all)(void);
+	unsigned long flags;
 	unsigned int cpu = smp_processor_id();
 
 	if(cpu == 0) return -EBUSY;
 	spin_lock(&smp_reserve_lock);
 	cpu_clear(cpu, cpu_online_map);
 	cpu_clear(cpu, cpu_callin_map);
-	local_irq_disable();
+	local_irq_save(flags);
 	fixup_irqs();
-	local_irq_enable();
+	local_irq_restore(flags);
 	flush_cache_all();
 	local_flush_tlb_all();
 	spin_unlock(&smp_reserve_lock);
