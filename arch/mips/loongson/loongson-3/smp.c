@@ -401,17 +401,17 @@ static int loongson3_cpu_disable(void)
 	local_flush_tlb_all();
 	spin_unlock(&smp_reserve_lock);
 
-#ifdef CONFIG_LOONGSON2_CPUFREQ
-	if(num_online_cpus() == 1)
-		cpufreq_enabled = 1;
-#endif
-
 	return 0;
 }
 
 
 static void loongson3_cpu_die(unsigned int cpu)
 {
+#ifdef CONFIG_LOONGSON2_CPUFREQ
+	if(num_online_cpus() == 1)
+		cpufreq_enabled = 1;
+#endif
+
 	while (per_cpu(cpu_state, cpu) != CPU_DEAD)
 		cpu_relax();
 
