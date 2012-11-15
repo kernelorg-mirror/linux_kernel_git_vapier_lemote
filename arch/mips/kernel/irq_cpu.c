@@ -39,11 +39,11 @@
 static inline void unmask_mips_irq(unsigned int irq)
 {
 #ifdef CONFIG_CPU_LOONGSON3
-	if(irq==58){
+	if (irq == 58) {
 		int cpu = smp_processor_id();
-		*(volatile unsigned int *)(0x900000003ff01428) = (0x1<<10);
+		*(volatile unsigned int *)(0x900000003ff01428) |= (0x1<<10);
 		*(volatile unsigned char *)(0x900000003ff0140a) = 0x10+(1<<(cpu%4));
-		}
+	}
 #endif
 	set_c0_status(0x100 << (irq - MIPS_CPU_IRQ_BASE));
 	irq_enable_hazard();
@@ -53,6 +53,13 @@ static inline void mask_mips_irq(unsigned int irq)
 {
 	clear_c0_status(0x100 << (irq - MIPS_CPU_IRQ_BASE));
 	irq_disable_hazard();
+#ifdef CONFIG_CPU_LOONGSON3
+	if (irq == 58) {
+		int cpu = smp_processor_id();
+		*(volatile unsigned int *)(0x900000003ff01428) &= ~(0x1<<10);
+		*(volatile unsigned char *)(0x900000003ff0140a) = 0x10+(1<<(cpu%4));
+	}
+#endif
 }
 
 static struct irq_chip mips_cpu_irq_controller = {

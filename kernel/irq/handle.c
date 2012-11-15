@@ -371,11 +371,6 @@ irqreturn_t handle_IRQ_event(unsigned int irq, struct irqaction *action)
 	unsigned int status = 0;
 
 	do {
-		if(!action) {
-			printk("Too early interrupt from irq %d\n", irq);
-			break;
-		}
-
 		trace_irq_handler_entry(irq, action);
 		ret = action->handler(irq, action->dev_id);
 		trace_irq_handler_exit(irq, action, ret);
