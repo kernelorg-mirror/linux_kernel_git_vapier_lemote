@@ -46,6 +46,9 @@ u64 poweroff_addr;
 u64 reboot_addr;
 u64 vbios_addr;
 
+unsigned int has_smbios = 0;
+unsigned long smbios_addr;
+
 unsigned int nr_cpu_loongson;
 enum loongson_cpu_type cputype;
 

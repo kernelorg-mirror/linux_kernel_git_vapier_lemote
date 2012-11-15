@@ -13,6 +13,9 @@
 #include <pci.h>
 #include <boot_param.h>
 
+extern unsigned int has_smbios;
+extern unsigned long smbios_addr;
+
 void __init prom_init_memory(void)
 {
 	int i;
@@ -36,6 +39,11 @@ void __init prom_init_memory(void)
 				add_memory_region(emap->map[i].mem_start,
 					(u64)emap->map[i].mem_size << 20,
 					BOOT_MEM_RESERVED);
+				break;
+			case SMBIOS_TABLE:
+				has_smbios = 1;
+				smbios_addr = emap->map[i].mem_start &
+					0x000000000ffffffful;
 				break;
 			}
 		}

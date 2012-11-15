@@ -10,7 +10,21 @@
 #define VIDEO_ROM		7
 #define ADAPTER_ROM		8 
 #define ACPI_TABLE		9
-#define MAX_MEMORY_TYPE		10
+#define SMBIOS_TABLE		10
+#define MAX_MEMORY_TYPE		11
+
+struct efi_systab {
+	unsigned long long fw_vendor;	/* physical addr of CHAR16 vendor string */
+	unsigned long long fw_revision;	/* vesion of efi */
+	unsigned long long con_in_handle;	/* control handle of input */
+	unsigned long long con_in;	/* control input,support for inputing in kernel */
+	unsigned long long con_out_handle;	/* control handle of output */
+	unsigned long long con_out;	/* control output,support for outputing in kernel */
+	unsigned long long stderr_handle;	/* standed error handle */
+	unsigned long long boottime;	/* boottime */
+	unsigned int nr_tables;		/* table id */
+	unsigned long long tables;	/* all tables entry */
+};
 
 #define LOONGSON3_BOOT_MEM_MAP_MAX 128
 struct efi_memory_map_loongson{
