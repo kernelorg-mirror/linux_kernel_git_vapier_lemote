@@ -112,6 +112,7 @@ static int __init loongson3a_platform_init(void)
 	/* temprature info */
 	switch (mips_machtype) {
 	case MACH_LEMOTE_3A_A1004:
+	case MACH_LEMOTE_3A_A1217:
 		/* thermal sensor register and interface init */
 		loongson_temp_info.get_cpu_temp = loongson3_cpu_temp; 
 		loongson_temp_info.get_nb_temp = emc1412_external_temp;

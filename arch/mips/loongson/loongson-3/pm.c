@@ -66,6 +66,7 @@ void setup_wakeup_events(void)
 
 	switch (mips_machtype) {
 	case MACH_LEMOTE_3A_A1004:
+	case MACH_LEMOTE_3A_A1217:
 		/* open the keyboard irq in i8259A */
 		outb_p((0xff & ~(1 << I8042_KBD_IRQ)), PIC_MASTER_IMR);
 
