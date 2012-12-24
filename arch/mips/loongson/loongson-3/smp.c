@@ -37,22 +37,24 @@ extern void cmos_write64(uint64_t data, unsigned long addr);
  
 void loongson3_ipi_write64(uint64_t action, void * addr)   // write a value to mem 
 {                                                           // the value is action     
-	*((uint64_t *)addr) = action;
+	*((volatile uint64_t *)addr) = action;
+	__wbflush();
 };
 
 uint64_t loongson3_ipi_read64(void * addr)                 // read a value from mem 
 {                                                           
-	return *((uint64_t *)addr);                         // the value will be return     
+	return *((volatile uint64_t *)addr);                         // the value will be return     
 };
 
 void loongson3_ipi_write32(uint32_t action, void * addr)   // write a value to mem 
 {                                                           // the value is action     
-	*((uint32_t *)addr) = action;
+	*((volatile uint32_t *)addr) = action;
+	__wbflush();
 };
 
 uint32_t loongson3_ipi_read32(void * addr)                 // read a value from mem 
 {                                                           
-	return *((uint32_t *)addr);                         // the value will be return     
+	return *((volatile uint32_t *)addr);                         // the value will be return     
 };
 
 static void *ipi_set0_regs[] = {                        // addr for core_set0 reg,
