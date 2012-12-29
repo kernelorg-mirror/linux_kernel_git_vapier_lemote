@@ -681,6 +681,12 @@ extern void pci_sort_breadthfirst(void);
 #define dev_is_pf(d) ((dev_is_pci(d) ? to_pci_dev(d)->is_physfn : false))
 #define dev_num_vf(d) ((dev_is_pci(d) ? pci_num_vf(to_pci_dev(d)) : 0))
 
+ /*PCI_VGA_STATE_CHANGE_BRIDGE and PCI_VGA_STATE_CHANGE_DECODES are just used for driver/gpu modlue.
+  *They come from the newest kernel-3.5.7.
+  *Please do no use it for any other modules.
+  */
+#define PCI_VGA_STATE_CHANGE_BRIDGE (1 << 0)
+#define PCI_VGA_STATE_CHANGE_DECODES (1 << 1)
 /* Generic PCI functions exported to card drivers */
 
 enum pci_lost_interrupt_reason {

@@ -42,6 +42,7 @@
  */
 
 #include <linux/pci.h>
+#include <boot_param.h>
 
 static void print_fixup_info(struct pci_dev * pdev)
 {
@@ -56,6 +57,18 @@ int __init pcibios_map_irq(struct pci_dev *dev, u8 slot, u8 pin)
 	print_fixup_info(dev);
 	return dev->irq;
 }
+
+static void __init pci_fixup_radeon(struct pci_dev *pdev)
+{
+        if (pdev->resource[PCI_ROM_RESOURCE].start)
+                return;
+
+        pdev->resource[PCI_ROM_RESOURCE].start  = vbios_addr;
+        pdev->resource[PCI_ROM_RESOURCE].end    = vbios_addr + 256*1024 - 1;
+        pdev->resource[PCI_ROM_RESOURCE].flags |= IORESOURCE_ROM_COPY;
+}
+
+DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_ATI, 0x9615, pci_fixup_radeon);
 
 /* Do platform specific device initialization at pci_enable_device() time */
 int pcibios_plat_dev_init(struct pci_dev *dev)

@@ -36,6 +36,7 @@ extern const char linux_proc_banner[];
 #define LLONG_MAX	((long long)(~0ULL>>1))
 #define LLONG_MIN	(-LLONG_MAX - 1)
 #define ULLONG_MAX	(~0ULL)
+#define SIZE_MAX        (~(size_t)0)
 
 #define STACK_MAGIC	0xdeadbeef
 
@@ -161,6 +162,15 @@ extern int _cond_resched(void);
 		long __x = (x);			\
 		(__x < 0) ? -__x : __x;		\
 	})
+
+/*The abs64 is just used for driver/gpu modlue.
+ *It comes from the newest kernel-3.5.7.
+ *Please do no use it for any other modules.
+ */
+#define abs64(x) ({             \
+         s64 __x = (x);          \
+         (__x < 0) ? -__x : __x;     \
+     })
 
 #ifdef CONFIG_PROVE_LOCKING
 void might_fault(void);

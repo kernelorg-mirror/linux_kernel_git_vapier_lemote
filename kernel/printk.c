@@ -1037,6 +1037,12 @@ void acquire_console_sem(void)
 }
 EXPORT_SYMBOL(acquire_console_sem);
 
+void console_lock(void)
+{
+	acquire_console_sem();
+}
+EXPORT_SYMBOL(console_lock);
+
 int try_acquire_console_sem(void)
 {
 	if (down_trylock(&console_sem))
@@ -1050,6 +1056,12 @@ int try_acquire_console_sem(void)
 	return 0;
 }
 EXPORT_SYMBOL(try_acquire_console_sem);
+
+int console_trylock(void)
+{
+	try_acquire_console_sem();
+}
+EXPORT_SYMBOL(console_trylock);
 
 int is_console_locked(void)
 {
@@ -1130,6 +1142,12 @@ void release_console_sem(void)
 		wake_up_klogd();
 }
 EXPORT_SYMBOL(release_console_sem);
+
+void console_unlock(void)
+{
+	release_console_sem();
+}
+EXPORT_SYMBOL(console_unlock);
 
 /**
  * console_conditional_schedule - yield the CPU if required

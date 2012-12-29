@@ -158,6 +158,7 @@ struct boot_params{
 extern u64 pci_mem_start_addr,pci_mem_end_addr;
 extern u64 ht_control_base;
 extern u64 loongson_pciio_base;
+extern u64 vbios_addr;
 extern u32 nr_cpu_loongson;
 extern enum loongson_cpu_type cputype;
 extern struct efi_memory_map_loongson *emap;
