@@ -105,7 +105,7 @@
 #define NAPI_SUFFIX	""
 #endif
 
-#define RTL8168_VERSION "8.031.00" NAPI_SUFFIX
+#define RTL8168_VERSION "8.035.00" NAPI_SUFFIX
 #define MODULENAME "r8168"
 #define PFX MODULENAME ": "
 
@@ -172,6 +172,7 @@ This is free software, and you are welcome to redistribute it under certain cond
 #define Jumbo_Frame_8k	(8 * 1024)
 #define Jumbo_Frame_9k	(9 * 1024)
 #define InterFrameGap	0x03	/* 3 means InterFrameGap = the shortest one */
+#define RxEarly_off	(1 << 11)
 
 #define R8168_REGS_SIZE		256
 #define R8168_NAPI_WEIGHT	64
@@ -941,6 +942,7 @@ enum RTL8168_register_content {
 	INTT_3		= 0x0003,
 
 	/* rtl8168_PHYstatus */
+	PowerSaveStatus = 0x80,	
 	TxFlowCtrl = 0x40,
 	RxFlowCtrl = 0x20,
 	_1000bpsF = 0x10,
@@ -1007,7 +1009,8 @@ enum RTL8168_register_content {
 	OCPR_Read = 0x00000000,
 	OCPR_Addr_Reg_shift = 16,
 	OCPR_Flag = 0x80000000,
-	
+	OCP_STD_PHY_BASE_PAGE = 0x0A40,
+
 	/* MCU Command */
 	Now_is_oob = (1 << 7),
 	Txfifo_empty = (1 << 5),
@@ -1155,10 +1158,16 @@ struct pci_resource {
 	u16	mem_base_h;
 	u16	mem_base_l;
 	u8	ilr;
+	u16	resv_0x1c_h;
+	u16	resv_0x1c_l;	
 	u16	resv_0x20_h;
 	u16	resv_0x20_l;
 	u16	resv_0x24_h;
 	u16	resv_0x24_l;
+	u16	resv_0x2c_h;
+	u16	resv_0x2c_l;	
+	u32	pci_nvidia_geforce_6200;
+	u32 pci_nvidia_geforce__6250_1;
 };
 
 struct rtl8168_private {
@@ -1260,6 +1269,7 @@ enum mcfg {
 	CFG_METHOD_21,
 	CFG_METHOD_22,
 	CFG_METHOD_23,
+	CFG_METHOD_24,	
 	CFG_METHOD_MAX,
 	CFG_METHOD_DEFAULT = 0xFF
 };
