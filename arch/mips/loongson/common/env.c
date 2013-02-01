@@ -24,8 +24,6 @@
 
 #define BOOT_PARAM
 
-#undef CONFIG_NR_CPUS
-#define CONFIG_NR_CPUS nr_cpu_loongson
 struct boot_params *bp;
 struct loongson_params *lp; 
 
@@ -119,6 +117,8 @@ void __init prom_init_env(void)
 	cpu_clock_freq = ecpu->cpu_clock_freq;
 	cputype = ecpu->cputype;
 	nr_cpu_loongson = ecpu->nr_cpus; 
+	if (nr_cpu_loongson > NR_CPUS || nr_cpu_loongson == 0)
+		nr_cpu_loongson = NR_CPUS;
 
 	pci_mem_start_addr = eirq_source->pci_mem_start_addr;
 	pci_mem_end_addr = eirq_source->pci_mem_end_addr;
