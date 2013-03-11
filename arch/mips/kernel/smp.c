@@ -192,7 +192,6 @@ void __devinit smp_prepare_boot_cpu(void)
  * physical, not logical.
  */
 static struct task_struct *cpu_idle_thread[NR_CPUS];
-int hotplug_flags[NR_CPUS];  /* 0 for boot, 1 for hotplug */
 
 int __cpuinit __cpu_up(unsigned int cpu)
 {
@@ -206,7 +205,6 @@ int __cpuinit __cpu_up(unsigned int cpu)
 	if (!cpu_idle_thread[cpu]) {
 		idle = fork_idle(cpu);
 		cpu_idle_thread[cpu] = idle;
-		hotplug_flags[cpu] = 0;
 
 		if (IS_ERR(idle))
 			panic(KERN_ERR "Fork failed for CPU %d", cpu);
@@ -216,7 +214,6 @@ int __cpuinit __cpu_up(unsigned int cpu)
 	} else {
 		idle = cpu_idle_thread[cpu];
 		init_idle(idle, cpu);
-		hotplug_flags[cpu] = 1;
 	}
 
 	mp_ops->boot_secondary(cpu, idle);

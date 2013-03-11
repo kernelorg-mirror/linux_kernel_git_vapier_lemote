@@ -1471,10 +1471,6 @@ static int __init ulri_disable(char *s)
 }
 __setup("noulri", ulri_disable);
 
-#ifdef CONFIG_HOTPLUG_CPU
-extern int hotplug_flags[NR_CPUS];  /* 0 for boot, 1 for hotplug */
-#endif
-
 void __cpuinit per_cpu_trap_init(void)
 {
 	unsigned int cpu = smp_processor_id();
@@ -1562,9 +1558,9 @@ void __cpuinit per_cpu_trap_init(void)
 	}
 #endif /* CONFIG_MIPS_MT_SMTC */
 
-#ifdef CONFIG_HOTPLUG_CPU
-	if (!hotplug_flags[cpu]) 
-#endif
+	cpu_data[cpu].asid_cache =
+		(cpu_data[cpu].asid_cache & ASID_VERSION_MASK) + ASID_FIRST_VERSION;
+	if (!cpu_data[cpu].asid_cache)
 		cpu_data[cpu].asid_cache = ASID_FIRST_VERSION;
 
 	TLBMISS_HANDLER_SETUP();
