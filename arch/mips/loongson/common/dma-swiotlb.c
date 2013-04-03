@@ -103,6 +103,31 @@ static void loongson_dma_free_coherent(struct device *dev, size_t size,
 	swiotlb_free_coherent(dev, size, vaddr, dma_handle);
 }
 
+static int loongson_set_dma_mask(struct device *dev, u64 mask)
+{
+
+/*
+	if (mask > DMA_BIT_MASK(32))
+		return -EIO;
+*/
+	*dev->dma_mask = mask;
+
+	return 0;
+}
+
+static dma_addr_t loongson_unity_phys_to_dma(struct device *dev, phys_addr_t paddr)
+{
+	return (paddr < 0x10000000) ?
+			(paddr | 0x0000000080000000) : paddr;
+}
+
+static phys_addr_t loongson_unity_dma_to_phys(struct device *dev, dma_addr_t daddr)
+{
+	return (daddr < 0x90000000 && daddr >= 0x80000000) ?
+			(daddr & 0x0fffffff) : daddr;
+}
+
+
 static struct mips_dma_map_ops loongson_linear_dma_map_ops = {
 	.dma_map_ops = {
 		.alloc_coherent = loongson_dma_alloc_coherent,
@@ -116,12 +141,13 @@ static struct mips_dma_map_ops loongson_linear_dma_map_ops = {
 		.sync_sg_for_cpu = swiotlb_sync_sg_for_cpu,
 		.sync_sg_for_device = loongson_dma_sync_sg_for_device,
 		.mapping_error = swiotlb_dma_mapping_error,
-		.dma_supported = swiotlb_dma_supported
+		.dma_supported = swiotlb_dma_supported,
 		//.map_single = swiotlb_map_single,
 		//.unmap_single = swiotlb_unmap_single,
+		.set_dma_mask = loongson_set_dma_mask
 	},
-	.phys_to_dma = mips_unity_phys_to_dma,
-	.dma_to_phys = mips_unity_dma_to_phys
+	.phys_to_dma = loongson_unity_phys_to_dma,
+	.dma_to_phys = loongson_unity_dma_to_phys
 };
 
 void __init plat_swiotlb_setup(void)

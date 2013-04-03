@@ -736,7 +736,8 @@ int radeon_device_init(struct radeon_device *rdev,
 	rdev->need_dma32 = false;
 	if (rdev->flags & RADEON_IS_AGP)
 		rdev->need_dma32 = true;
-	if (rdev->flags & RADEON_IS_PCI)
+	if ((rdev->flags & RADEON_IS_PCI) &&
+	    (rdev->family <= CHIP_RS740))
 		rdev->need_dma32 = true;
 
 	dma_bits = rdev->need_dma32 ? 32 : 40;

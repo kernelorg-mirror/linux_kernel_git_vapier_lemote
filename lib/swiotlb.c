@@ -567,8 +567,8 @@ swiotlb_alloc_coherent(struct device *hwdev, size_t size,
 	int order = get_order(size);
 	u64 dma_mask = DMA_BIT_MASK(32);
 
-	//if (hwdev && hwdev->coherent_dma_mask)
-	//	dma_mask = hwdev->coherent_dma_mask;
+	if (hwdev && hwdev->coherent_dma_mask)
+		dma_mask = hwdev->coherent_dma_mask;
 
 	ret = (void *)__get_free_pages(flags, order);
 	if (ret && swiotlb_virt_to_bus(hwdev, ret) + size - 1 > dma_mask) {
