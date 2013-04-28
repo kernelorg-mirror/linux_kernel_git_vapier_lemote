@@ -42,8 +42,9 @@ void __init prom_init_memory(void)
 				break;
 			case SMBIOS_TABLE:
 				has_smbios = 1;
-				smbios_addr = emap->map[i].mem_start &
-					0x000000000ffffffful;
+				smbios_addr = emap->map[i].mem_start;
+				add_memory_region(emap->map[i].mem_start,
+					0x2000, BOOT_MEM_RESERVED);
 				break;
 			}
 		}
