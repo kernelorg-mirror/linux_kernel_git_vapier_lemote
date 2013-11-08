@@ -35,7 +35,7 @@
 #include <sound/timer.h>
 #include <sound/minors.h>
 #include <asm/io.h>
-#if defined(CONFIG_MIPS) && defined(CONFIG_DMA_NONCOHERENT)
+#if defined(CONFIG_MIPS)
 #include <dma-coherence.h>
 #endif
 
@@ -3139,8 +3139,8 @@ static inline struct page *
 snd_pcm_default_page_ops(struct snd_pcm_substream *substream, unsigned long ofs)
 {
 	void *vaddr = substream->runtime->dma_area + ofs;
-#if defined(CONFIG_MIPS) && defined(CONFIG_DMA_NONCOHERENT)
-	if (substream->dma_buffer.dev.type == SNDRV_DMA_TYPE_DEV)
+#if defined(CONFIG_MIPS)
+	if (substream->dma_buffer.dev.type == SNDRV_DMA_TYPE_DEV && !plat_device_is_coherent(NULL))
 		return virt_to_page(CAC_ADDR(vaddr));
 #endif
 #if defined(CONFIG_PPC32) && defined(CONFIG_NOT_COHERENT_CACHE)
@@ -3219,7 +3219,7 @@ int snd_pcm_lib_default_mmap(struct snd_pcm_substream *substream,
 					 substream->runtime->dma_area,
 					 substream->runtime->dma_addr,
 					 area->vm_end - area->vm_start);
-#elif defined(CONFIG_MIPS) && defined(CONFIG_DMA_NONCOHERENT)
+#elif defined(CONFIG_MIPS)
 	if (substream->dma_buffer.dev.type == SNDRV_DMA_TYPE_DEV &&
 	    !plat_device_is_coherent(substream->dma_buffer.dev.dev))
 		area->vm_page_prot = pgprot_noncached(area->vm_page_prot);
@@ -3300,6 +3300,12 @@ static int snd_pcm_mmap(struct file *file, struct vm_area_struct *area)
 	struct snd_pcm_substream *substream;	
 	unsigned long offset;
 	
+	if (!plat_device_is_coherent(NULL)) {
+		/* all mmap using uncached mode */
+		area->vm_page_prot = pgprot_noncached(area->vm_page_prot);
+		area->vm_flags |= ( VM_DONTEXPAND | VM_DONTDUMP | VM_IO);
+	}
+
 	pcm_file = file->private_data;
 	substream = pcm_file->substream;
 	if (PCM_RUNTIME_CHECK(substream))

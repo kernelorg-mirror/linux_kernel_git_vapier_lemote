@@ -42,8 +42,7 @@ static int __init setnocoherentio(char *str)
 }
 early_param("nocoherentio", setnocoherentio);
 
-static inline struct page *dma_addr_to_page(struct device *dev,
-	dma_addr_t dma_addr)
+struct page *dma_addr_to_page(struct device *dev, dma_addr_t dma_addr)
 {
 	return pfn_to_page(
 		plat_dma_addr_to_phys(dev, dma_addr) >> PAGE_SHIFT);
@@ -173,8 +172,7 @@ static void mips_dma_free_coherent(struct device *dev, size_t size, void *vaddr,
 	free_pages(addr, get_order(size));
 }
 
-static inline void __dma_sync_virtual(void *addr, size_t size,
-	enum dma_data_direction direction)
+void __dma_sync_virtual(void *addr, size_t size, enum dma_data_direction direction)
 {
 	switch (direction) {
 	case DMA_TO_DEVICE:
@@ -200,8 +198,7 @@ static inline void __dma_sync_virtual(void *addr, size_t size,
  * If highmem is not configured then the bulk of this loop gets
  * optimized out.
  */
-static inline void __dma_sync(struct page *page,
-	unsigned long offset, size_t size, enum dma_data_direction direction)
+void __dma_sync(struct page *page, unsigned long offset, size_t size, enum dma_data_direction direction)
 {
 	size_t left = size;
 

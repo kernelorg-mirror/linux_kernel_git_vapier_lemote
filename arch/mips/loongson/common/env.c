@@ -56,6 +56,7 @@ int cores_per_node;
 int cores_per_package;
 unsigned int has_systab = 0;
 unsigned long systab_addr;
+EXPORT_SYMBOL(cores_per_node);
 
 u32 loongson_dma_mask_bits;
 u64 loongson_workarounds;
@@ -65,6 +66,8 @@ u32 loongson_nr_uarts;
 struct uart_device loongson_uarts[MAX_UARTS];
 u32 loongson_nr_sensors;
 struct sensor_device loongson_sensors[MAX_SENSORS];
+unsigned int Loongson3B_uncache = 0;
+EXPORT_SYMBOL(Loongson3B_uncache);
 
 struct platform_controller_hub *loongson_pch;
 extern struct platform_controller_hub ls2h_pch;
@@ -139,12 +142,6 @@ void __init prom_init_env(void)
 		loongson_workarounds = WORKAROUND_CPUFREQ;
 	}
 	else if (cputype == Loongson_3B) {
-		cores_per_node = 4; /* Loongson 3B has two node in one package */
-		cores_per_package = 8;
-		smp_group[0] = 0x900000003ff01000;
-		smp_group[1] = 0x900010003ff05000;
-		smp_group[2] = 0x900020003ff09000;
-		smp_group[3] = 0x900030003ff0d000;
 		ht_control_base = 0x90001EFDFB000000;
 		loongson_chipcfg[0] = 0x900000001fe00180;
 		loongson_chipcfg[1] = 0x900020001fe00180;
@@ -159,6 +156,23 @@ void __init prom_init_env(void)
 		loongson_freqctrl[2] = 0x900040001fe001d0;
 		loongson_freqctrl[3] = 0x900060001fe001d0;
 		loongson_workarounds = WORKAROUND_CPUHOTPLUG;
+		if (ecpu->nr_cpus % 6 == 0) {   // 6-core version
+			cores_per_node = 3; /* Loongson 3B has two node in one package */
+			cores_per_package = 6;
+			smp_group[0] = 0x900000003ff01100;
+			smp_group[1] = 0x900010003ff05100;
+			smp_group[2] = 0x900020003ff09100;
+			smp_group[3] = 0x900030003ff0d100;
+		} else {
+			cores_per_node = 4; /* Loongson 3B has two node in one package */
+			cores_per_package = 8;
+			smp_group[0] = 0x900000003ff01000;
+			smp_group[1] = 0x900010003ff05000;
+			smp_group[2] = 0x900020003ff09000;
+			smp_group[3] = 0x900030003ff0d000;
+			if (!ecpu->cpu_startup_core_id)
+				Loongson3B_uncache = 1;
+		}
 	}
 	else {
 		cores_per_node = 1;

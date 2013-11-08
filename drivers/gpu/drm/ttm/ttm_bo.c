@@ -45,6 +45,7 @@
 #define TTM_DEBUG(fmt, arg...)
 #define TTM_BO_HASH_ORDER 13
 
+extern unsigned int Loongson3B_uncache;
 static int ttm_bo_setup_vm(struct ttm_buffer_object *bo);
 static int ttm_bo_swapout(struct ttm_mem_shrink *shrink);
 static void ttm_bo_global_kobj_release(struct kobject *kobj);
@@ -962,6 +963,9 @@ static uint32_t ttm_bo_select_caching(struct ttm_mem_type_manager *man,
 	uint32_t caching = proposed_placement & TTM_PL_MASK_CACHING;
 	uint32_t result = proposed_placement & ~TTM_PL_MASK_CACHING;
 
+	if (Loongson3B_uncache)
+		caching = proposed_placement & (TTM_PL_FLAG_WC | TTM_PL_FLAG_UNCACHED);
+
 	/**
 	 * Keep current caching if possible.
 	 */
@@ -1091,7 +1095,6 @@ int ttm_bo_mem_space(struct ttm_buffer_object *bo,
 		 */
 		ttm_flag_masked(&cur_flags, placement->busy_placement[i],
 				~TTM_PL_MASK_MEMTYPE);
-
 
 		if (mem_type == TTM_PL_SYSTEM) {
 			mem->mem_type = mem_type;

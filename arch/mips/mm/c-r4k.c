@@ -611,8 +611,6 @@ static void r4k_flush_icache_range(unsigned long start, unsigned long end)
 	instruction_hazard();
 }
 
-#ifdef CONFIG_DMA_NONCOHERENT
-
 static void r4k_dma_cache_wback_inv(unsigned long addr, unsigned long size)
 {
 	/* Catch bad driver code */
@@ -682,7 +680,6 @@ static void r4k_dma_cache_inv(unsigned long addr, unsigned long size)
 	bc_inv(addr, size);
 	__sync();
 }
-#endif /* CONFIG_DMA_NONCOHERENT */
 
 /*
  * While we're protected against bad userland addresses we don't care
@@ -1566,8 +1563,7 @@ void __cpuinit r4k_cache_init(void)
 	flush_icache_range	= r4k_flush_icache_range;
 	local_flush_icache_range	= local_r4k_flush_icache_range;
 
-#if defined(CONFIG_DMA_NONCOHERENT)
-	if (coherentio) {
+	if (coherentio || !Loongson3B_uncache) {
 		_dma_cache_wback_inv	= (void *)cache_noop;
 		_dma_cache_wback	= (void *)cache_noop;
 		_dma_cache_inv		= (void *)cache_noop;
@@ -1576,7 +1572,6 @@ void __cpuinit r4k_cache_init(void)
 		_dma_cache_wback	= r4k_dma_cache_wback_inv;
 		_dma_cache_inv		= r4k_dma_cache_inv;
 	}
-#endif
 
 	build_clear_page();
 	build_copy_page();

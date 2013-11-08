@@ -1505,9 +1505,17 @@ static void __cpuinit build_setup_pgd(void)
 					tlbmiss_handler_setup_pgd_size);
 }
 
+void uasm_i_sync(u32 **buf)
+{
+	**buf = 0xf;
+	(*buf)++;
+}
+
 static void __cpuinit
 iPTE_LW(u32 **p, unsigned int pte, unsigned int ptr)
 {
+	uasm_i_sync(p);
+
 #ifdef CONFIG_SMP
 # ifdef CONFIG_64BIT_PHYS_ADDR
 	if (cpu_has_64bits)

@@ -16,6 +16,8 @@
 #ifndef __ASM_MACH_LOONGSON_CPU_FEATURE_OVERRIDES_H
 #define __ASM_MACH_LOONGSON_CPU_FEATURE_OVERRIDES_H
 
+extern unsigned int Loongson3B_uncache;
+
 #define cpu_has_32fpr		1
 #define cpu_has_3k_cache	0
 #define cpu_has_4k_cache	1
@@ -46,7 +48,7 @@
 #define cpu_has_watch		1
 #define cpu_has_local_ebase	0
 #ifdef CONFIG_CPU_SUPPORTS_COHERENT_CACHE
-#define cpu_has_coherent_cache	1
+#define cpu_has_coherent_cache (!Loongson3B_uncache)
 #else
 #define cpu_has_coherent_cache	0
 #endif

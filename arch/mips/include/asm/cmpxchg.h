@@ -154,6 +154,7 @@ static inline unsigned long __xchg(unsigned long x, volatile void * ptr, int siz
 		"	" st "	$1, %1				\n"	\
 		"	beqzl	$1, 1b				\n"	\
 		"2:						\n"	\
+		"       sync					\n"	\
 		"	.set	pop				\n"	\
 		: "=&r" (__ret), "=R" (*m)				\
 		: "R" (*m), "Jr" (old), "Jr" (new)			\
@@ -170,6 +171,7 @@ static inline unsigned long __xchg(unsigned long x, volatile void * ptr, int siz
 		"	.set	mips3				\n"	\
 		"	" st "	$1, %1				\n"	\
 		"	beqz	$1, 1b				\n"	\
+		"       sync					\n"	\
 		"	.set	pop				\n"	\
 		"2:						\n"	\
 		: "=&r" (__ret), "=R" (*m)				\

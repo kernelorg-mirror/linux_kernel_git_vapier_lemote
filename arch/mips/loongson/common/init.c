@@ -13,8 +13,15 @@
 #include <loongson.h>
 #include <loongson-pch.h>
 
+#define HT_uncache_enable_reg0	*(volatile unsigned int *)(ht_control_base + 0xF0)
+#define HT_uncache_base_reg0	*(volatile unsigned int *)(ht_control_base + 0xF4)
+#define HT_uncache_enable_reg1	*(volatile unsigned int *)(ht_control_base + 0xF8)
+#define HT_uncache_base_reg1	*(volatile unsigned int *)(ht_control_base + 0xFC)
+
+extern enum loongson_cpu_type cputype;
 extern struct plat_smp_ops loongson3_smp_ops;
 extern void __init prom_init_numa_memory(void);
+extern unsigned int Loongson3B_uncache;
 
 /* Loongson CPU address windows config space base address */
 unsigned long __maybe_unused _loongson_addrwincfg_base;
@@ -47,6 +54,21 @@ void __init prom_init(void)
 #if defined(CONFIG_SMP)
 	register_smp_ops(&loongson3_smp_ops);
 #endif
+#ifdef CONFIG_CPU_LOONGSON3
+	if (Loongson3B_uncache) {
+		/* set HT-access uncache */
+		HT_uncache_enable_reg0	= 0xc0000000;
+		HT_uncache_base_reg0	= 0x0080fff0;
+
+		HT_uncache_enable_reg1	= 0xc0000000;
+		HT_uncache_base_reg1	= 0x00008000;
+	} else {
+		/* set HT-access cache */
+		HT_uncache_enable_reg0	= 0x0;
+		HT_uncache_enable_reg1	= 0x0;
+		printk("SET HT_DMA CACHED\n");
+	}
+#endif /* CONFIG_CPU_LOONGSON3 */
 }
 
 void __init prom_free_prom_memory(void)

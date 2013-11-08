@@ -94,6 +94,21 @@ static void ipi_set0_regs_init(void)
 	ipi_set0_regs[13] = (void *)(smp_core_group3_base + smp_core1_offset + SET0);
 	ipi_set0_regs[14] = (void *)(smp_core_group3_base + smp_core2_offset + SET0);
 	ipi_set0_regs[15] = (void *)(smp_core_group3_base + smp_core3_offset + SET0);
+
+	if (cores_per_node == 4) return;
+
+	ipi_set0_regs[0] = (void *)(smp_core_group0_base + smp_core0_offset + SET0);
+	ipi_set0_regs[1] = (void *)(smp_core_group0_base + smp_core1_offset + SET0);
+	ipi_set0_regs[2] = (void *)(smp_core_group0_base + smp_core2_offset + SET0);
+	ipi_set0_regs[3] = (void *)(smp_core_group1_base + smp_core0_offset + SET0);
+	ipi_set0_regs[4] = (void *)(smp_core_group1_base + smp_core1_offset + SET0);
+	ipi_set0_regs[5] = (void *)(smp_core_group1_base + smp_core2_offset + SET0);
+	ipi_set0_regs[6] = (void *)(smp_core_group2_base + smp_core0_offset + SET0);
+	ipi_set0_regs[7] = (void *)(smp_core_group2_base + smp_core1_offset + SET0);
+	ipi_set0_regs[8] = (void *)(smp_core_group2_base + smp_core2_offset + SET0);
+	ipi_set0_regs[9] = (void *)(smp_core_group3_base + smp_core0_offset + SET0);
+	ipi_set0_regs[10] = (void *)(smp_core_group3_base + smp_core1_offset + SET0);
+	ipi_set0_regs[11] = (void *)(smp_core_group3_base + smp_core2_offset + SET0);
 }
 
 static void ipi_clear0_regs_init(void)
@@ -114,6 +129,21 @@ static void ipi_clear0_regs_init(void)
 	ipi_clear0_regs[13] = (void *)(smp_core_group3_base + smp_core1_offset + CLEAR0);
 	ipi_clear0_regs[14] = (void *)(smp_core_group3_base + smp_core2_offset + CLEAR0);
 	ipi_clear0_regs[15] = (void *)(smp_core_group3_base + smp_core3_offset + CLEAR0);
+
+	if (cores_per_node == 4) return;
+
+	ipi_clear0_regs[0] = (void *)(smp_core_group0_base + smp_core0_offset + CLEAR0);
+	ipi_clear0_regs[1] = (void *)(smp_core_group0_base + smp_core1_offset + CLEAR0);
+	ipi_clear0_regs[2] = (void *)(smp_core_group0_base + smp_core2_offset + CLEAR0);
+	ipi_clear0_regs[3] = (void *)(smp_core_group1_base + smp_core0_offset + CLEAR0);
+	ipi_clear0_regs[4] = (void *)(smp_core_group1_base + smp_core1_offset + CLEAR0);
+	ipi_clear0_regs[5] = (void *)(smp_core_group1_base + smp_core2_offset + CLEAR0);
+	ipi_clear0_regs[6] = (void *)(smp_core_group2_base + smp_core0_offset + CLEAR0);
+	ipi_clear0_regs[7] = (void *)(smp_core_group2_base + smp_core1_offset + CLEAR0);
+	ipi_clear0_regs[8] = (void *)(smp_core_group2_base + smp_core2_offset + CLEAR0);
+	ipi_clear0_regs[9] = (void *)(smp_core_group3_base + smp_core0_offset + CLEAR0);
+	ipi_clear0_regs[10] = (void *)(smp_core_group3_base + smp_core1_offset + CLEAR0);
+	ipi_clear0_regs[11] = (void *)(smp_core_group3_base + smp_core2_offset + CLEAR0);
 }
 
 static void ipi_status0_regs_init(void)
@@ -134,6 +164,21 @@ static void ipi_status0_regs_init(void)
 	ipi_status0_regs[13] = (void *)(smp_core_group3_base + smp_core1_offset + STATUS0);
 	ipi_status0_regs[14] = (void *)(smp_core_group3_base + smp_core2_offset + STATUS0);
 	ipi_status0_regs[15] = (void *)(smp_core_group3_base + smp_core3_offset + STATUS0);
+
+	if (cores_per_node == 4) return;
+
+	ipi_status0_regs[0] = (void *)(smp_core_group0_base + smp_core0_offset + STATUS0);
+	ipi_status0_regs[1] = (void *)(smp_core_group0_base + smp_core1_offset + STATUS0);
+	ipi_status0_regs[2] = (void *)(smp_core_group0_base + smp_core2_offset + STATUS0);
+	ipi_status0_regs[3] = (void *)(smp_core_group1_base + smp_core0_offset + STATUS0);
+	ipi_status0_regs[4] = (void *)(smp_core_group1_base + smp_core1_offset + STATUS0);
+	ipi_status0_regs[5] = (void *)(smp_core_group1_base + smp_core2_offset + STATUS0);
+	ipi_status0_regs[6] = (void *)(smp_core_group2_base + smp_core0_offset + STATUS0);
+	ipi_status0_regs[7] = (void *)(smp_core_group2_base + smp_core1_offset + STATUS0);
+	ipi_status0_regs[8] = (void *)(smp_core_group2_base + smp_core2_offset + STATUS0);
+	ipi_status0_regs[9] = (void *)(smp_core_group3_base + smp_core0_offset + STATUS0);
+	ipi_status0_regs[10] = (void *)(smp_core_group3_base + smp_core1_offset + STATUS0);
+	ipi_status0_regs[11] = (void *)(smp_core_group3_base + smp_core2_offset + STATUS0);
 }
 
 static void ipi_en0_regs_init(void)
@@ -154,6 +199,21 @@ static void ipi_en0_regs_init(void)
 	ipi_en0_regs[13] = (void *)(smp_core_group3_base + smp_core1_offset + EN0);
 	ipi_en0_regs[14] = (void *)(smp_core_group3_base + smp_core2_offset + EN0);
 	ipi_en0_regs[15] = (void *)(smp_core_group3_base + smp_core3_offset + EN0);
+
+	if (cores_per_node == 4) return;
+
+	ipi_en0_regs[0] = (void *)(smp_core_group0_base + smp_core0_offset + EN0);
+	ipi_en0_regs[1] = (void *)(smp_core_group0_base + smp_core1_offset + EN0);
+	ipi_en0_regs[2] = (void *)(smp_core_group0_base + smp_core2_offset + EN0);
+	ipi_en0_regs[3] = (void *)(smp_core_group1_base + smp_core0_offset + EN0);
+	ipi_en0_regs[4] = (void *)(smp_core_group1_base + smp_core1_offset + EN0);
+	ipi_en0_regs[5] = (void *)(smp_core_group1_base + smp_core2_offset + EN0);
+	ipi_en0_regs[6] = (void *)(smp_core_group2_base + smp_core0_offset + EN0);
+	ipi_en0_regs[7] = (void *)(smp_core_group2_base + smp_core1_offset + EN0);
+	ipi_en0_regs[8] = (void *)(smp_core_group2_base + smp_core2_offset + EN0);
+	ipi_en0_regs[9] = (void *)(smp_core_group3_base + smp_core0_offset + EN0);
+	ipi_en0_regs[10] = (void *)(smp_core_group3_base + smp_core1_offset + EN0);
+	ipi_en0_regs[11] = (void *)(smp_core_group3_base + smp_core2_offset + EN0);
 }
 
 static void ipi_mailbox_buf_init(void)
@@ -174,6 +234,21 @@ static void ipi_mailbox_buf_init(void)
 	ipi_mailbox_buf[13] = (void *)(smp_core_group3_base + smp_core1_offset + BUF);
 	ipi_mailbox_buf[14] = (void *)(smp_core_group3_base + smp_core2_offset + BUF);
 	ipi_mailbox_buf[15] = (void *)(smp_core_group3_base + smp_core3_offset + BUF);
+
+	if (cores_per_node == 4) return;
+
+	ipi_mailbox_buf[0] = (void *)(smp_core_group0_base + smp_core0_offset + BUF);
+	ipi_mailbox_buf[1] = (void *)(smp_core_group0_base + smp_core1_offset + BUF);
+	ipi_mailbox_buf[2] = (void *)(smp_core_group0_base + smp_core2_offset + BUF);
+	ipi_mailbox_buf[3] = (void *)(smp_core_group1_base + smp_core0_offset + BUF);
+	ipi_mailbox_buf[4] = (void *)(smp_core_group1_base + smp_core1_offset + BUF);
+	ipi_mailbox_buf[5] = (void *)(smp_core_group1_base + smp_core2_offset + BUF);
+	ipi_mailbox_buf[6] = (void *)(smp_core_group2_base + smp_core0_offset + BUF);
+	ipi_mailbox_buf[7] = (void *)(smp_core_group2_base + smp_core1_offset + BUF);
+	ipi_mailbox_buf[8] = (void *)(smp_core_group2_base + smp_core2_offset + BUF);
+	ipi_mailbox_buf[9] = (void *)(smp_core_group3_base + smp_core0_offset + BUF);
+	ipi_mailbox_buf[10] = (void *)(smp_core_group3_base + smp_core1_offset + BUF);
+	ipi_mailbox_buf[11] = (void *)(smp_core_group3_base + smp_core2_offset + BUF);
 }
 
 /*
