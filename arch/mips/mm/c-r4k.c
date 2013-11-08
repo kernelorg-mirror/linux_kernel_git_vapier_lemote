@@ -341,7 +341,10 @@ static void __cpuinit r4k_blast_scache_setup(void)
 
 static inline void local_r4k___flush_cache_all(void * args)
 {
-#if defined(CONFIG_CPU_LOONGSON2)
+	if (cpu_has_coherent_cache && !cpu_has_dc_aliases)
+		return;
+
+#if defined(CONFIG_CPU_LOONGSON2) || defined(CONFIG_CPU_LOONGSON3)
 	r4k_blast_scache();
 	return;
 #endif
@@ -394,6 +397,9 @@ static inline void local_r4k_flush_cache_range(void * args)
 {
 	struct vm_area_struct *vma = args;
 	int exec = vma->vm_flags & VM_EXEC;
+
+	if (cpu_has_coherent_cache && !cpu_has_dc_aliases)
+		return;
 
 	if (!(has_valid_asid(vma->vm_mm)))
 		return;
@@ -464,6 +470,9 @@ static inline void local_r4k_flush_cache_page(void *args)
 	pmd_t *pmdp;
 	pte_t *ptep;
 	void *vaddr;
+
+	if (cpu_has_coherent_cache && !cpu_has_dc_aliases)
+		return;
 
 	/*
 	 * If ownes no valid ASID yet, cannot possibly have gotten
@@ -538,6 +547,9 @@ static void r4k_flush_cache_page(struct vm_area_struct *vma,
 
 static inline void local_r4k_flush_data_cache_page(void * addr)
 {
+	if (cpu_has_coherent_cache && !cpu_has_dc_aliases)
+		return;
+
 	r4k_blast_dcache_page((unsigned long) addr);
 }
 
@@ -680,6 +692,9 @@ static void local_r4k_flush_cache_sigtramp(void * arg)
 	unsigned long dc_lsize = cpu_dcache_line_size();
 	unsigned long sc_lsize = cpu_scache_line_size();
 	unsigned long addr = (unsigned long) arg;
+
+	if (cpu_has_coherent_cache && !cpu_has_dc_aliases)
+		return;
 
 	R4600_HIT_CACHEOP_WAR_IMPL;
 	if (dc_lsize)
