@@ -58,5 +58,11 @@
 #define cpu_has_vtag_icache	0
 #define cpu_has_watch		1
 #define cpu_has_local_ebase	0
+#ifdef CONFIG_CPU_SUPPORTS_COHERENT_CACHE
+#define cpu_has_coherent_cache	1
+#else
+#define cpu_has_coherent_cache	0
+#endif
+
 
 #endif /* __ASM_MACH_LOONGSON_CPU_FEATURE_OVERRIDES_H */
