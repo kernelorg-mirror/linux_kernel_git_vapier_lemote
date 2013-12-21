@@ -21,6 +21,7 @@
 #include <asm/idle.h>
 
 #include <loongson.h>
+#include <workarounds.h>
 
 int cpufreq_enabled = 0;
 EXPORT_SYMBOL(cpufreq_enabled);
@@ -231,7 +232,7 @@ static int __init cpufreq_init(void)
 	if (num_online_cpus() == 1) /* smp_init() has finished at this time */
 		cpufreq_enabled = 1;
 
-	if (!cpufreq_workaround)
+	if (!(loongson_workarounds & WORKAROUND_CPUFREQ))
 		cpufreq_enabled = 1;
 
 	/* Register platform stuff */
