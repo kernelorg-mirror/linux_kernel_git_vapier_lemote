@@ -26,15 +26,17 @@
 
 #include <loongson.h>
 #include <ec_wpce775l.h>
+#include <loongson-pch.h>
 
 #define I8042_CTR_KBDINT	0x01
 #define I8042_CTR_KBDDIS	0x10
 #define I8042_KBD_IRQ		1
 
-extern void irq_router_init(void);
 extern void acpi_sleep_prepare(void);
 extern void acpi_sleep_complete(void);
 extern void acpi_registers_setup(void);
+extern void ls2h_irq_router_init(void);
+extern void rs780_irq_router_init(void);
 
 static u32 loongson_config4;
 static u32 loongson_config6;
@@ -87,7 +89,8 @@ int wakeup_loongson(void)
 void mach_suspend(suspend_state_t state)
 {
 	if (state == PM_SUSPEND_MEM) {
-		acpi_sleep_prepare();
+		if (loongson_pch->board_type != LS2H)
+			acpi_sleep_prepare();
 
 		if ((read_c0_prid() & 0xf) == PRID_REV_LOONGSON3A_R2) {
 			loongson_config4 = read_c0_config4();
@@ -110,8 +113,13 @@ void mach_resume(suspend_state_t state)
 			write_c0_config6(loongson_config6);
 		}
 
-		irq_router_init();
-		acpi_registers_setup();
-		acpi_sleep_complete();
+		loongson_pch->early_config();
+		if (loongson_pch->board_type == LS2H)
+			ls2h_irq_router_init();
+		else {
+			rs780_irq_router_init();
+			acpi_registers_setup();
+			acpi_sleep_complete();
+		}
 	}
 }

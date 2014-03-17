@@ -6,6 +6,7 @@
 #include <linux/bootmem.h>
 
 #include <asm/bootinfo.h>
+#include <loongson-pch.h>
 #include <dma-coherence.h>
 
 static void *loongson_dma_alloc_coherent(struct device *dev, size_t size,
@@ -34,7 +35,7 @@ static void *loongson_dma_alloc_coherent(struct device *dev, size_t size,
 	else
 #endif
 	;
-	gfp |= __GFP_NORETRY;
+	gfp |= __GFP_NORETRY|__GFP_NOWARN;
 
 	ret = swiotlb_alloc_coherent(dev, size, dma_handle, gfp);
 	mb();
@@ -52,14 +53,22 @@ static void loongson_dma_free_coherent(struct device *dev, size_t size,
 	swiotlb_free_coherent(dev, size, vaddr, dma_handle);
 }
 
+#define PCIE_DMA_ALIGN 16
+
 static dma_addr_t loongson_dma_map_page(struct device *dev, struct page *page,
 				unsigned long offset, size_t size,
 				enum dma_data_direction dir,
 				struct dma_attrs *attrs)
 {
-	dma_addr_t daddr = swiotlb_map_page(dev, page, offset, size,
-					dir, attrs);
+	dma_addr_t daddr;
+
+	if (offset % PCIE_DMA_ALIGN)
+		daddr = swiotlb_map_page(dev, page, offset, size, dir, &dev->archdata.dma_attrs);
+	else
+		daddr = swiotlb_map_page(dev, page, offset, size, dir, NULL);
+
 	mb();
+
 	return daddr;
 }
 
@@ -67,7 +76,8 @@ static int loongson_dma_map_sg(struct device *dev, struct scatterlist *sg,
 				int nents, enum dma_data_direction dir,
 				struct dma_attrs *attrs)
 {
-	int r = swiotlb_map_sg_attrs(dev, sg, nents, dir, NULL);
+	int r = swiotlb_map_sg_attrs(dev, sg, nents, dir,
+					&dev->archdata.dma_attrs);
 	mb();
 
 	return r;
@@ -89,7 +99,20 @@ static void loongson_dma_sync_sg_for_device(struct device *dev,
 	mb();
 }
 
-static dma_addr_t loongson_unity_phys_to_dma(struct device *dev, phys_addr_t paddr)
+static dma_addr_t loongson_ls2h_phys_to_dma(struct device *dev, phys_addr_t paddr)
+{
+	if (paddr >= 0x200000000)
+		return -1ULL; /* Physical address should be below 8GB */
+
+	return paddr & 0xffffffff;
+}
+
+static phys_addr_t loongson_ls2h_dma_to_phys(struct device *dev, dma_addr_t daddr)
+{
+	return (daddr < 0x10000000) ? daddr : (daddr | 0x100000000);
+}
+
+static dma_addr_t loongson_rs780_phys_to_dma(struct device *dev, phys_addr_t paddr)
 {
 	long nid;
 	dma_addr_t daddr;
@@ -105,7 +128,7 @@ static dma_addr_t loongson_unity_phys_to_dma(struct device *dev, phys_addr_t pad
 	return daddr;
 }
 
-static phys_addr_t loongson_unity_dma_to_phys(struct device *dev, dma_addr_t daddr)
+static phys_addr_t loongson_rs780_dma_to_phys(struct device *dev, dma_addr_t daddr)
 {
 	long nid;
 
@@ -170,12 +193,17 @@ static struct loongson_dma_map_ops loongson_linear_dma_map_ops = {
 		.dma_supported = swiotlb_dma_supported,
 		.set_dma_mask = loongson_dma_set_mask
 	},
-	.phys_to_dma = loongson_unity_phys_to_dma,
-	.dma_to_phys = loongson_unity_dma_to_phys
+	.phys_to_dma = loongson_rs780_phys_to_dma,
+	.dma_to_phys = loongson_rs780_dma_to_phys
 };
 
 void __init plat_swiotlb_setup(void)
 {
 	swiotlb_init(1);
 	mips_dma_map_ops = &loongson_linear_dma_map_ops.dma_map_ops;
+
+	if (loongson_pch && loongson_pch->board_type == LS2H) {
+		loongson_linear_dma_map_ops.phys_to_dma = loongson_ls2h_phys_to_dma;
+		loongson_linear_dma_map_ops.dma_to_phys = loongson_ls2h_dma_to_phys;
+	}
 }

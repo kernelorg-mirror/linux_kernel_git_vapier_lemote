@@ -193,6 +193,7 @@ extern u64 vgabios_addr;
 
 extern u32 loongson_nr_uarts;
 extern struct uart_device loongson_uarts[MAX_UARTS];
+extern u32 loongson_ec_sci_irq;
 extern char loongson_ecname[32];
 extern u32 loongson_nr_sensors;
 extern struct sensor_device loongson_sensors[MAX_SENSORS];
