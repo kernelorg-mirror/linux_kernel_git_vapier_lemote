@@ -92,9 +92,9 @@ void sci_interrupt_setup(void)
 	/* enable to generate SCI P180 */
 	pm_iowrite(0x10, pm_ioread(0x10) | 1);
 
-	/* gpm9 enable P227 */
+	/* gpm3/gpm9 enable P227 */
 	temp32 = inl(ACPI_GPE0_BLK + 4);
-	outl(temp32 | (1 << 14), ACPI_GPE0_BLK + 4);
+	outl(temp32 | (1 << 14) | (1 << 22), ACPI_GPE0_BLK + 4);
 
 	/* set gpm9 as input P205 */
 	pm_iowrite(0x8d, pm_ioread(0x8d) & (~(1 << 1)));
@@ -102,8 +102,19 @@ void sci_interrupt_setup(void)
 	/* set gpm9 not as output P207 */
 	pm_iowrite(0x94, pm_ioread(0x94) | (1 << 3));
 
+	/* gpm3 config ACPI trigger SCIOUT P187 */
+	pm_iowrite(0x33, pm_ioread(0x33) & (~(3 << 4)));
+
 	/* gpm9 config ACPI trigger SCIOUT P191 */
 	pm_iowrite(0x3d, pm_ioread(0x3d) & (~(3 << 2)));
+
+	/* gpm3 config falling edge trigger */
+	pm_iowrite(0x37, pm_ioread(0x37) & (~(1 << 6)));
+
+	/* set gpm3 pull-down enable, P258 */
+	temp32 = pm2_ioread(0xf6);
+	temp32 |= ((1 << 7) | (1 << 3));
+	pm2_iowrite(0xf6, temp32);
 
 	/* set gpm9 pull-down enable, P258 */
 	temp32 = pm2_ioread(0xf8);
