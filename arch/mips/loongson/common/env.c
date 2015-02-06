@@ -37,6 +37,9 @@ u64 pci_mem_start_addr, pci_mem_end_addr;
 u64 loongson_pciio_base;
 u64 vgabios_addr;
 u64 poweroff_addr, restart_addr, suspend_addr;
+u32 vram_type;
+u64 uma_vram_addr;
+u64 uma_vram_size;
 
 u64 loongson_chipcfg[MAX_PACKAGES] = {0xffffffffbfc00180};
 u64 loongson_chiptemp[MAX_PACKAGES];
